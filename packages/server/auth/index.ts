@@ -1,1 +1,1 @@
-export * as default from './Auth';
+export { default } from './Auth';
