@@ -1,2 +1,7 @@
-export * as resolvers from './resolvers';
-export { default as schema } from './schema';
+import resolvers from './resolvers';
+import typeDefs from './schema';
+
+export default {
+  typeDefs,
+  resolvers,
+};

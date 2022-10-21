@@ -1,6 +1,5 @@
 import { join } from 'path';
 import { readdirSync, readFileSync } from 'fs';
-import { makeExecutableSchema } from '@graphql-tools/schema';
 
 const gqlFiles = readdirSync(join(__dirname, './schema'));
 
@@ -12,9 +11,4 @@ const typeDefs = gqlFiles
   )
   .join('\n');
 
-const schema = makeExecutableSchema({
-  typeDefs,
-  // resolvers pending...
-});
-
-export default schema;
+export default typeDefs;
