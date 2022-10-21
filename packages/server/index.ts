@@ -1,5 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import { graphqlHTTP } from 'express-graphql';
+import { schema } from './graphql';
+
 dotenv.config({
   debug: true,
 });
@@ -8,8 +11,11 @@ const port = process.env.PORT;
 
 const app = express();
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+app.use('/graphql', () => {
+  graphqlHTTP(() => ({
+    schema,
+    graphiql: true,
+  }));
 });
 
 app.listen(port, () => {
