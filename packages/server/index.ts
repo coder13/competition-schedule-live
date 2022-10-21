@@ -1,5 +1,6 @@
 import http from 'http';
 import express from 'express';
+import morgan from 'morgan';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { json } from 'body-parser';
@@ -17,6 +18,11 @@ const port = process.env.PORT;
 async function init() {
   const app = express();
 
+  app.use(cors<cors.CorsRequest>());
+  app.use(json());
+
+  app.use(morgan('tiny'));
+
   const httpServer = http.createServer(app);
 
   // Same ApolloServer initialization as before, plus the drain plugin
@@ -31,8 +37,10 @@ async function init() {
 
   app.use(
     '/graphql',
-    cors<cors.CorsRequest>(),
-    json(),
+    (req, res, next) => {
+      console.log('graphql', req.body.query);
+      return next();
+    },
     expressMiddleware(server)
   );
 
