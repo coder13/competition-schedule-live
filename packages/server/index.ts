@@ -9,7 +9,7 @@ import jwt from 'jsonwebtoken';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import graphqlServerConfig from './graphql';
-import { ApolloServer, BaseContext } from '@apollo/server';
+import { ApolloServer } from '@apollo/server';
 import AuthRouter from './auth';
 
 dotenv.config({
@@ -52,7 +52,7 @@ async function init() {
         return next(err);
       }
 
-      req.user = decoded;
+      req.user = decoded as User | undefined;
       next(null);
     });
   });
@@ -61,7 +61,7 @@ async function init() {
 
   // Same ApolloServer initialization as before, plus the drain plugin
   // for our httpServer.
-  const server = new ApolloServer<BaseContext>({
+  const server = new ApolloServer<AppContext>({
     ...graphqlServerConfig,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   });
@@ -75,7 +75,9 @@ async function init() {
       console.log('graphql', req.body.query);
       return next();
     },
-    expressMiddleware(server)
+    expressMiddleware(server, {
+      context: async ({ req }) => ({ user: req.user }),
+    })
   );
 
   return app;
