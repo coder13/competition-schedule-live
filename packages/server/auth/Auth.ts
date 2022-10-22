@@ -1,4 +1,10 @@
+import fs from 'fs';
 import express from 'express';
+import jwt from 'jsonwebtoken';
+
+// TODO Should really be fetched from environment variables
+// Depending on how we want to deploy this
+const PRIVATE_KEY = fs.readFileSync('private.key');
 
 const WCA_ORIGIN = 'https://staging.worldcubeassociation.org';
 const CLIENT_ID = 'example-application-id';
@@ -7,7 +13,10 @@ const REDIRECT_URI = 'http://localhost:8080/auth/wca/callback';
 
 const router = express.Router();
 
-router.get('/wca/', (req, res) => {
+/**
+ * Redirects user to WCA OAuth2 authorization page.
+ */
+router.get('/wca/', (_, res) => {
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     response_type: 'code',
@@ -18,6 +27,10 @@ router.get('/wca/', (req, res) => {
   res.redirect(`${WCA_ORIGIN}/oauth/authorize?${params.toString()}`);
 });
 
+/**
+ * Handles WCA OAuth2 callback. Fetches access token and user info.
+ * Returns JWT token.
+ */
 router.get('/wca/callback', async (req, res) => {
   const { code } = req.query;
 
@@ -60,7 +73,42 @@ router.get('/wca/callback', async (req, res) => {
       throw await profileRes.json();
     }
 
-    res.json(await profileRes.json());
+    const profile = await profileRes.json();
+
+    jwt.sign(
+      {
+        type: 1, // we'll  just use this incase we want to modify this data. We can throw away older tokens and require reauthentication
+
+        // We really only need the id and name, but we'll include the rest of the data to not be too demanding on the WCA website
+        id: profile.me.id,
+        name: profile.me.name,
+        wcaId: profile.me.wca_id,
+        countryId: profile.me.country_iso2,
+        avatar: profile.me.avatar,
+
+        accessToken: token.access_token,
+        wcaExpAt: new Date(Date.now() + token.expires_in * 1000).getTime(),
+        refreshToken: token.refresh_token,
+      },
+      PRIVATE_KEY,
+      {
+        algorithm: 'RS256',
+        expiresIn: 2 * 24 * 60 * 60,
+      },
+      (err, token) => {
+        if (err !== null) {
+          res.status(500).json(err);
+          return;
+        }
+
+        if (token !== undefined) {
+          res.json({ jwt: token });
+          return;
+        }
+
+        res.status(500).json({ message: 'Token is undefined' });
+      }
+    );
   } catch (e) {
     console.error(e);
     res.status(500).send(e);

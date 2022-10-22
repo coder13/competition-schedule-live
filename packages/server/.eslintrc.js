@@ -19,5 +19,6 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'error',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-misused-promises': 'off',
+    '@typescript-eslint/strict-boolean-expressions': 'off',
   },
 };

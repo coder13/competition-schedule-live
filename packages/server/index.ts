@@ -1,9 +1,11 @@
+import fs from 'fs';
 import http from 'http';
 import express from 'express';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { json } from 'body-parser';
+import jwt from 'jsonwebtoken';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import graphqlServerConfig from './graphql';
@@ -15,6 +17,7 @@ dotenv.config({
 });
 
 const port = process.env.PORT ?? '8080';
+const PUBLIC_KEY = fs.readFileSync('public.key');
 
 async function init() {
   const app = express();
@@ -25,6 +28,34 @@ async function init() {
   app.use(morgan('tiny'));
 
   app.use('/auth', AuthRouter);
+
+  // TODO: This should be moved to a separate file
+  // Authenticates user by verifying JWT token
+  app.use((req, _, next) => {
+    const { headers } = req;
+
+    const split = headers?.authorization?.split(/\s/);
+
+    if (!split || split.length < 2) {
+      next();
+      return;
+    }
+
+    if (split[0] !== 'Bearer') {
+      next(null);
+    }
+
+    const token = split[1];
+
+    jwt.verify(token, PUBLIC_KEY, (err, decoded) => {
+      if (err) {
+        return next(err);
+      }
+
+      req.user = decoded;
+      next(null);
+    });
+  });
 
   const httpServer = http.createServer(app);
 

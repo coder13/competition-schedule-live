@@ -1,8 +1,8 @@
-import { UserQueries } from './User';
+import { CompetitionQueries } from './Competition';
 
 const Resolvers = {
   Query: {
-    ...UserQueries,
+    ...CompetitionQueries,
   },
 };
 
