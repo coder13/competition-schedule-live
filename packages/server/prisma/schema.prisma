@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model CompetitionAccess {
+  competitionId     String @db.VarChar(255)
+  userId            Int
+  roomId            Int
+  @@unique([competitionId, userId])
+}
+
+model ActivityHistory {
+  competitionId     String @db.VarChar(255)
+  activityId        Int
+  startTime         Int
+  endTime           Int
+  @@unique([competitionId, activityId])
+}
+
+enum HTTPMethod {
+  GET
+  POST
+  PATCH
+  PUT
+  DELETE
+	@@map("Method")
+}
+
+model Webhooks {
+  id                Int     @default(autoincrement()) @id
+  competitionId     String @db.VarChar(255)
+  url               String @db.VarChar(255)
+  method            HTTPMethod
+  headers           Json @db.Json
+  @@unique([competitionId, url])
+}

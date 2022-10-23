@@ -1,3 +1,6 @@
 type Query {
   competition: Competition
+  activityHistory(competitionId: String!): [ActivityHistory]!
+  webhooks(competitionId: String!): [Webhook]!
+  competitionAccess(competitionId: String!): [CompetitionAccess]!
 }

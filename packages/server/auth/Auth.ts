@@ -13,6 +13,11 @@ const REDIRECT_URI = 'http://localhost:8080/auth/wca/callback';
 
 const router = express.Router();
 
+const createHeaders = (token: string) => ({
+  Authorization: `Bearer ${token}`,
+  'Content-Type': 'application/x-www-form-urlencoded',
+});
+
 /**
  * Redirects user to WCA OAuth2 authorization page.
  */
@@ -63,10 +68,7 @@ router.get('/wca/callback', async (req, res) => {
     const token = await response.json();
 
     const profileRes = await fetch(`${WCA_ORIGIN}/api/v0/me`, {
-      headers: {
-        Authorization: `Bearer ${token.access_token as string}`,
-        'Content-Type': 'application/json',
-      },
+      headers: createHeaders(token.access_token),
     });
 
     if (!profileRes.ok) {
@@ -97,13 +99,11 @@ router.get('/wca/callback', async (req, res) => {
       },
       (err, token) => {
         if (err !== null) {
-          res.status(500).json(err);
-          return;
+          return res.status(500).json(err);
         }
 
         if (token !== undefined) {
-          res.json({ jwt: token });
-          return;
+          return res.json({ jwt: token });
         }
 
         res.status(500).json({ message: 'Token is undefined' });

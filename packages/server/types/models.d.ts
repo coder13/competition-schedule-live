@@ -19,4 +19,5 @@ interface User {
 
 interface AppContext {
   user?: User;
+  db: PrismaClient;
 }

@@ -11,6 +11,7 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import graphqlServerConfig from './graphql';
 import { ApolloServer } from '@apollo/server';
 import AuthRouter from './auth';
+import db from './db';
 
 dotenv.config({
   debug: true,
@@ -76,7 +77,7 @@ async function init() {
       return next();
     },
     expressMiddleware(server, {
-      context: async ({ req }) => ({ user: req.user }),
+      context: async ({ req }) => ({ user: req.user, db }),
     })
   );
 

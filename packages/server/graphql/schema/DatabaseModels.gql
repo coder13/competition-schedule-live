@@ -1,0 +1,30 @@
+type CompetitionAccess {
+  competitionId: String!
+  userId: Int!
+  roomId: Int!
+}
+
+type ActivityHistory {
+  competitionId: Int!
+  activityId: Int!
+  startTime: Int!
+  endTime: Int
+}
+
+enum HTTPMethod {
+  GET
+  POST
+  PATCH
+  PUT
+  DELETE
+}
+
+scalar JSON
+
+type Webhook {
+  id: ID!
+  competitionId: String!
+  url: String!
+  method: HTTPMethod!
+  headers: JSON
+}
