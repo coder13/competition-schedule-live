@@ -2,3 +2,4 @@ node_modules
 .eslintrc.js
 generated/
 db-data
+prisma/generated

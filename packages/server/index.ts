@@ -8,10 +8,14 @@ import { json } from 'body-parser';
 import jwt from 'jsonwebtoken';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import graphqlServerConfig from './graphql';
 import { ApolloServer } from '@apollo/server';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/lib/use/ws';
+import { PubSub } from 'graphql-subscriptions';
+import graphqlServerConfig from './graphql';
 import AuthRouter from './auth';
 import db from './db';
+import { makeExecutableSchema } from '@graphql-tools/schema';
 
 dotenv.config({
   debug: true,
@@ -19,6 +23,12 @@ dotenv.config({
 
 const port = process.env.PORT ?? '8080';
 const PUBLIC_KEY = fs.readFileSync('public.key');
+
+export interface AppContext {
+  user?: User;
+  db: typeof db;
+  pubsub: PubSub;
+}
 
 async function init() {
   const app = express();
@@ -60,11 +70,46 @@ async function init() {
 
   const httpServer = http.createServer(app);
 
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: '/graphql',
+  });
+
+  const pubsub = new PubSub();
+
+  const getDynamicContext = () => ({
+    pubsub,
+  });
+
+  const serverCleanup = useServer(
+    {
+      schema: makeExecutableSchema(graphqlServerConfig),
+      context: () => {
+        return getDynamicContext();
+      },
+    },
+    wsServer
+  );
+
+  const shutdownWSPlugin = {
+    async serverWillStart() {
+      return {
+        async drainServer() {
+          await serverCleanup.dispose();
+        },
+      };
+    },
+  };
+
   // Same ApolloServer initialization as before, plus the drain plugin
   // for our httpServer.
   const server = new ApolloServer<AppContext>({
     ...graphqlServerConfig,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      // Proper shutdown for the WebSocket server.
+      shutdownWSPlugin,
+    ],
   });
 
   // Ensure we wait for our server to start
@@ -73,15 +118,19 @@ async function init() {
   app.use(
     '/graphql',
     (req, _, next) => {
+      if (req?.body?.query?.includes?.('IntrospectionQuery')) {
+        return next();
+      }
+
       console.log('graphql', req.body.query);
       return next();
     },
     expressMiddleware(server, {
-      context: async ({ req }) => ({ user: req.user, db }),
+      context: async ({ req }) => ({ user: req.user, db, pubsub }),
     })
   );
 
-  return app;
+  return httpServer;
 }
 
 init()

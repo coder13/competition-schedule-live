@@ -16,8 +16,3 @@ interface User {
 
   exp: number;
 }
-
-interface AppContext {
-  user?: User;
-  db: PrismaClient;
-}

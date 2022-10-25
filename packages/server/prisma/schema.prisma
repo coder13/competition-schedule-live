@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output = "./generated/client"
 }
 
 datasource db {
@@ -20,8 +21,8 @@ model CompetitionAccess {
 model ActivityHistory {
   competitionId     String @db.VarChar(255)
   activityId        Int
-  startTime         Int
-  endTime           Int
+  startTime         DateTime
+  endTime           DateTime?
   @@unique([competitionId, activityId])
 }
 

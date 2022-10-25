@@ -1,6 +1,8 @@
+scalar DateTime
+
 type Query {
   competition: Competition
-  activityHistory(competitionId: String!): [ActivityHistory]!
+  activities(competitionId: String!): [Activity]!
   webhooks(competitionId: String!): [Webhook]!
   competitionAccess(competitionId: String!): [CompetitionAccess]!
 }

@@ -1,3 +1,4 @@
+import { AppContext } from '../../..';
 import { QueryResolvers } from '../../../generated/graphql';
 
 export const competitionAccess: QueryResolvers<AppContext>['competitionAccess'] =

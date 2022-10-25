@@ -1,7 +1,11 @@
+import { DateTimeResolver, DateTimeTypeDefinition } from 'graphql-scalars';
 import resolvers from './resolvers';
-import typeDefs from './schema';
+import typeDefs, { joinTypeDefs } from './schema';
 
 export default {
-  typeDefs,
-  resolvers,
+  typeDefs: joinTypeDefs([DateTimeTypeDefinition, ...typeDefs]),
+  resolvers: {
+    DateTime: DateTimeResolver,
+    ...resolvers,
+  },
 };

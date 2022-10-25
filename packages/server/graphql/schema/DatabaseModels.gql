@@ -4,11 +4,11 @@ type CompetitionAccess {
   roomId: Int!
 }
 
-type ActivityHistory {
-  competitionId: Int!
+type Activity {
+  competitionId: String!
   activityId: Int!
-  startTime: Int!
-  endTime: Int
+  startTime: DateTime!
+  endTime: DateTime
 }
 
 enum HTTPMethod {

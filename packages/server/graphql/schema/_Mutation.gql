@@ -1,0 +1,4 @@
+type Mutation {
+  startActivity(competitionId: String!, activityId: Int!): Activity
+  stopActivity(competitionId: String!, activityId: Int!): Activity
+}

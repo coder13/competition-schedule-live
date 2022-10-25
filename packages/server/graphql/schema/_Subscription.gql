@@ -1,0 +1,4 @@
+type Subscription {
+  activityStarted(competitionId: String!, roomId: Int): Activity
+  activityStopped(competitionId: String!, roomId: Int): Activity
+}
