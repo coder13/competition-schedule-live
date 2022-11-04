@@ -14,6 +14,15 @@ A spec for the webhooks will be well communicated once finalized so that anyone 
 - [Database schema](./packages/server/prisma/schema.prisma)
 - [Graphql schema](./packages/server/graphql/schema)
 
+
+The question should be asked: How does the server know who is in what group? The main answer to this is through the [WCIF](https://github.com/thewca/wcif/blob/master/specification.md). But the other question is does this data get saved?
+**An argument for saving the data in databases**: potentially faster, could cache, only retreive the data you need.
+**Arguments for not saving it**: If changes are made, removes the need to reimport a competition.
+
+Now, a "webhook" application could manage this problem on it's own. We can send as little as just the competitionId and the activityId to a webhook application, and it should be able to look up in it's own cache or retreive the WCIF to determine who is in the group. This offloads resources from the main server onto all of the consumer ones. For ones I prebuild, this could be just fine if they all reuse the same database tables. A webhook application would likely already need a database to keep track of wca users and their communication channel identifiers.
+Alternatively: The main server can cache this information and have a standarized method to communicate the competitionId, list of people and their assignments to the webhook server and the webhook server wouldn't need to lookup much more. The webhook server can also be a consumer of the graphql api to ask for a specific subset of information of the competition when needed thus avoiding consuming too much of the WCA website's resources.
+I leave this problem still unsolved. 
+
 ### `packages/expo_app`
 
 This is the main app that competition owners will 
