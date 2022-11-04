@@ -1,5 +1,5 @@
 # competition-schedule-live
-Bundle of apps and services that tracks a WCA Competition schedule
+Bundle of apps and services that manages a WCA Competition schedule live
 
 ## packages
 
@@ -21,3 +21,10 @@ This is the main app that competition owners will
 - `stage manager`: A delegate, organizer, or authorized individual who is allowed to progress the activities in this service
 - `Activity`: Per the [WCIF spec](https://github.com/thewca/wcif/blob/master/specification.md), an activity is a very flexible concept. It is a recursive data structure that makes up a schedule. It represents all of the rounds you see on the schedule but also "lunch", "awards" and so on. Activities also have childActivities. Round activities will children in the form of "groups". To break it down further, "group" activities could have attempts. Only FMC or Multi-blind need attempt activities however.
 - `JWT`: JSON web token
+
+## Roadmap
+
+- [ ] Competition owners can track the current ongoing group for a respective stage
+- [ ] Users can get notified of their groups in real time via SMS messages
+- [ ] Competition owners can reflect on the performance of their comp schedule through looking at the activity history
+- [ ] Competition owners can update the WCA schedule based on the actual performance of the comp schedule.
