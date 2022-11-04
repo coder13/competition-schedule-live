@@ -11,6 +11,9 @@ Bundled also in this monorepo will be serverless applications that listen for th
 
 A spec for the webhooks will be well communicated once finalized so that anyone can create these serverless applications.
 
+- [Database schema](./packages/server/prisma/schema.prisma)
+- [Graphql schema](./packages/server/graphql/schema)
+
 `packages/expo_app`
 
 This is the main app that competition owners will 
