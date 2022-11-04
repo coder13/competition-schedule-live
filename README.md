@@ -3,7 +3,7 @@ Bundle of apps and services that manages a WCA Competition schedule live
 
 ## packages
 
-`packages/server`
+### `packages/server`
 
 This is the main beast that drives events. It is a nodejs, express, graphql server. It handles authentication as well as real time tracking of the ongoing activity. Users will receive a JWT token when they authenticate which can then be used across these other services to verify their identity. When a user imports a competition, it saves a subset of data to a database. The list of users is also saved and will be able to be edited in the future. After a user has imported a competition, any user (authenticated or not), can "subscribe" to the activity events to listen for activities starting and stopping. This server also sends webhooks when an activity is started and these can be configured however the competition owner chooses.
 
@@ -14,7 +14,7 @@ A spec for the webhooks will be well communicated once finalized so that anyone 
 - [Database schema](./packages/server/prisma/schema.prisma)
 - [Graphql schema](./packages/server/graphql/schema)
 
-`packages/expo_app`
+### `packages/expo_app`
 
 This is the main app that competition owners will 
 
