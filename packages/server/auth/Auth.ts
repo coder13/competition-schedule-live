@@ -5,10 +5,14 @@ import jwt from 'jsonwebtoken';
 // TODO Should really be fetched from environment variables
 // Depending on how we want to deploy this
 const PRIVATE_KEY = fs.readFileSync('private.key');
+const PUBLIC_KEY = fs.readFileSync('public.key');
 
-const WCA_ORIGIN = 'https://staging.worldcubeassociation.org';
-const CLIENT_ID = 'example-application-id';
-const CLIENT_SECRET = 'example-secret';
+console.log(process.env.CLIENT_ID, process.env.WCA_ORIGIN);
+
+const WCA_ORIGIN =
+  process.env.WCA_ORIGIN ?? 'https://staging.worldcubeassociation.org';
+const CLIENT_ID = process.env.CLIENT_ID ?? 'example-application-id';
+const CLIENT_SECRET = process.env.CLIENT_SECRET ?? 'example-secret';
 const REDIRECT_URI = 'http://localhost:8080/auth/wca/callback';
 
 const router = express.Router();
@@ -18,14 +22,21 @@ const createHeaders = (token: string) => ({
   'Content-Type': 'application/x-www-form-urlencoded',
 });
 
+router.get('/keys/', (_, res) => {
+  res.send(PUBLIC_KEY);
+});
+
 /**
  * Redirects user to WCA OAuth2 authorization page.
  */
-router.get('/wca/', (_, res) => {
+router.get('/wca/', (req, res) => {
+  const redirectUri = req.query.redirect_uri?.toString() ?? REDIRECT_URI;
+  console.log(26, redirectUri);
+
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     response_type: 'code',
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: redirectUri,
     scope: 'public email manage_competitions',
   });
 
@@ -38,6 +49,7 @@ router.get('/wca/', (_, res) => {
  */
 router.get('/wca/callback', async (req, res) => {
   const { code } = req.query;
+  const redirectUri = req.query.redirect_uri?.toString() ?? REDIRECT_URI;
 
   if (typeof code !== 'string') {
     res.status(400).send('Missing code');
@@ -49,7 +61,7 @@ router.get('/wca/callback', async (req, res) => {
     code,
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: redirectUri,
   });
 
   try {
@@ -62,7 +74,7 @@ router.get('/wca/callback', async (req, res) => {
     });
 
     if (!response.ok) {
-      throw await response.json();
+      throw await response.text();
     }
 
     const token = await response.json();
@@ -76,6 +88,8 @@ router.get('/wca/callback', async (req, res) => {
     }
 
     const profile = await profileRes.json();
+
+    console.log(92, PRIVATE_KEY);
 
     jwt.sign(
       {
@@ -92,17 +106,29 @@ router.get('/wca/callback', async (req, res) => {
         wcaExpAt: new Date(Date.now() + token.expires_in * 1000).getTime(),
         refreshToken: token.refresh_token,
       },
-      PRIVATE_KEY,
+      String(PRIVATE_KEY),
       {
         algorithm: 'RS256',
         expiresIn: 2 * 24 * 60 * 60,
       },
       (err, token) => {
         if (err !== null) {
+          console.error(err);
           return res.status(500).json(err);
         }
 
         if (token !== undefined) {
+          const parts = token.split('.');
+          console.log(121, token);
+          console.log(
+            122,
+            parts.map((p) => Buffer.from(p, 'base64').toString())
+          );
+          jwt.verify(token, String(PUBLIC_KEY), (err2, decoded) => {
+            err2 && console.error(err2);
+            console.log(123, decoded);
+          });
+
           return res.json({ jwt: token });
         }
 

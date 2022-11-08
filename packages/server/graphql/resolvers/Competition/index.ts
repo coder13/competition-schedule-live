@@ -1,1 +1,2 @@
-export * as CompetitionQueries from './CompetitionQueries';
+export * from './Activities';
+export * from './CompetitionAccess';

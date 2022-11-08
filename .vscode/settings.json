@@ -1,4 +1,4 @@
 {
-  "eslint.workingDirectories": ["packages/server"],
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "eslint.workingDirectories": ["packages/server", "packages/expo_app"],
+  "typescript.tsdk": "./node_modules/typescript/lib"
 }

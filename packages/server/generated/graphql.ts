@@ -26,8 +26,13 @@ export type Activity = {
 
 export type Competition = {
   __typename?: 'Competition';
+  activities?: Maybe<Array<Maybe<Activity>>>;
+  competitionAccess?: Maybe<Array<Maybe<CompetitionAccess>>>;
+  country: Scalars['String'];
+  endDate?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   name: Scalars['String'];
+  startDate?: Maybe<Scalars['String']>;
 };
 
 export type CompetitionAccess = {
@@ -47,8 +52,14 @@ export enum HttpMethod {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  importCompetition?: Maybe<Competition>;
   startActivity?: Maybe<Activity>;
   stopActivity?: Maybe<Activity>;
+};
+
+
+export type MutationImportCompetitionArgs = {
+  competitionId: Scalars['String'];
 };
 
 
@@ -65,24 +76,12 @@ export type MutationStopActivityArgs = {
 
 export type Query = {
   __typename?: 'Query';
-  activities: Array<Maybe<Activity>>;
   competition?: Maybe<Competition>;
-  competitionAccess: Array<Maybe<CompetitionAccess>>;
-  webhooks: Array<Maybe<Webhook>>;
+  competitions: Array<Maybe<Competition>>;
 };
 
 
-export type QueryActivitiesArgs = {
-  competitionId: Scalars['String'];
-};
-
-
-export type QueryCompetitionAccessArgs = {
-  competitionId: Scalars['String'];
-};
-
-
-export type QueryWebhooksArgs = {
+export type QueryCompetitionArgs = {
   competitionId: Scalars['String'];
 };
 
@@ -224,8 +223,13 @@ export type ActivityResolvers<ContextType = any, ParentType extends ResolversPar
 };
 
 export type CompetitionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Competition'] = ResolversParentTypes['Competition']> = {
+  activities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType>;
+  competitionAccess?: Resolver<Maybe<Array<Maybe<ResolversTypes['CompetitionAccess']>>>, ParentType, ContextType>;
+  country?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  endDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  startDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -245,15 +249,14 @@ export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes
 }
 
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
+  importCompetition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<MutationImportCompetitionArgs, 'competitionId'>>;
   startActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStartActivityArgs, 'activityId' | 'competitionId'>>;
   stopActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStopActivityArgs, 'activityId' | 'competitionId'>>;
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
-  activities?: Resolver<Array<Maybe<ResolversTypes['Activity']>>, ParentType, ContextType, RequireFields<QueryActivitiesArgs, 'competitionId'>>;
-  competition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType>;
-  competitionAccess?: Resolver<Array<Maybe<ResolversTypes['CompetitionAccess']>>, ParentType, ContextType, RequireFields<QueryCompetitionAccessArgs, 'competitionId'>>;
-  webhooks?: Resolver<Array<Maybe<ResolversTypes['Webhook']>>, ParentType, ContextType, RequireFields<QueryWebhooksArgs, 'competitionId'>>;
+  competition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<QueryCompetitionArgs, 'competitionId'>>;
+  competitions?: Resolver<Array<Maybe<ResolversTypes['Competition']>>, ParentType, ContextType>;
 };
 
 export type SubscriptionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {

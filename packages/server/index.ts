@@ -1,8 +1,23 @@
+/* eslint-disable import/first */
+import path from 'path';
+import dotenv from 'dotenv';
+
+const CONFIG_PATH = path.join(
+  __dirname,
+  `.env.${process.env.NODE_ENV ?? 'development'}`
+);
+
+console.log('Loading env files from', CONFIG_PATH);
+
+dotenv.config({
+  debug: process.env.NODE_ENV !== 'production',
+  path: CONFIG_PATH,
+});
+
 import fs from 'fs';
 import http from 'http';
 import express from 'express';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import { json } from 'body-parser';
 import jwt from 'jsonwebtoken';
@@ -16,10 +31,7 @@ import graphqlServerConfig from './graphql';
 import AuthRouter from './auth';
 import db from './db';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-
-dotenv.config({
-  debug: true,
-});
+import WcaApi from './graphql/datasources/WcaApi';
 
 const port = process.env.PORT ?? '8080';
 const PUBLIC_KEY = fs.readFileSync('public.key');
@@ -28,6 +40,7 @@ export interface AppContext {
   user?: User;
   db: typeof db;
   pubsub: PubSub;
+  wcaApi: WcaApi;
 }
 
 async function init() {
@@ -126,7 +139,15 @@ async function init() {
       return next();
     },
     expressMiddleware(server, {
-      context: async ({ req }) => ({ user: req.user, db, pubsub }),
+      context: async ({ req }) => ({
+        user: req.user,
+        db,
+        pubsub,
+        wcaApi: new WcaApi(
+          process.env.WCA_ORIGIN ?? 'https://staging.worldcubeassociation.org',
+          req.user?.accessToken
+        ),
+      }),
     })
   );
 

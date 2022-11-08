@@ -1,4 +1,5 @@
 type Mutation {
+  importCompetition(competitionId: String!): Competition
   startActivity(competitionId: String!, activityId: Int!): Activity
   stopActivity(competitionId: String!, activityId: Int!): Activity
 }

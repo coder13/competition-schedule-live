@@ -1,23 +1,13 @@
-import { CompetitionQueries } from './Competition';
-import { CompetitionAccessQueries } from './CompetitionAccess';
-import {
-  ActivityQueries,
-  ActivityMutations,
-  ActivitySubscriptions,
-} from './Activities';
+import * as queries from './queries';
+import * as mutations from './mutations';
+import * as subscriptions from './subscriptions';
+import * as CompetitionResolvers from './Competition';
 
 const Resolvers = {
-  Query: {
-    ...CompetitionQueries,
-    ...CompetitionAccessQueries,
-    ...ActivityQueries,
-  },
-  Mutation: {
-    ...ActivityMutations,
-  },
-  Subscription: {
-    ...ActivitySubscriptions,
-  },
+  Query: queries,
+  Mutation: mutations,
+  Subscription: subscriptions,
+  Competition: CompetitionResolvers,
 };
 
 export default Resolvers;

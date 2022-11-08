@@ -1,3 +1,13 @@
+type Competition {
+  id: String!
+  name: String!
+  country: String!
+  startDate: String
+  endDate: String
+  competitionAccess: [CompetitionAccess]
+  activities: [Activity]
+}
+
 type CompetitionAccess {
   competitionId: String!
   userId: Int!

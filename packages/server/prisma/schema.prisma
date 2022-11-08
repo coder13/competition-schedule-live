@@ -3,7 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output = "./generated/client"
+  output   = "./generated/client"
 }
 
 datasource db {
@@ -11,18 +11,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Competition {
+  id                String              @id
+  name              String
+  importedAt        DateTime            @default(now())
+  country           String
+  startDate         String
+  endDate           String
+  competitionAccess CompetitionAccess[]
+  activityHistory   ActivityHistory[]
+  webhooks          Webhook[]
+}
+
 model CompetitionAccess {
-  competitionId     String @db.VarChar(255)
-  userId            Int
-  roomId            Int
+  competitionId String      @db.VarChar(255)
+  userId        Int
+  roomId        Int
+  competition   Competition @relation(fields: [competitionId], references: [id])
+
   @@unique([competitionId, userId])
 }
 
 model ActivityHistory {
-  competitionId     String @db.VarChar(255)
-  activityId        Int
-  startTime         DateTime
-  endTime           DateTime?
+  competitionId String      @db.VarChar(255)
+  activityId    Int
+  startTime     DateTime
+  endTime       DateTime?
+  competition   Competition @relation(fields: [competitionId], references: [id])
+
   @@unique([competitionId, activityId])
 }
 
@@ -32,14 +48,18 @@ enum HTTPMethod {
   PATCH
   PUT
   DELETE
-	@@map("Method")
+
+  @@map("Method")
 }
 
-model Webhooks {
-  id                Int     @default(autoincrement()) @id
-  competitionId     String @db.VarChar(255)
-  url               String @db.VarChar(255)
-  method            HTTPMethod
-  headers           Json @db.Json
+model Webhook {
+  id            Int        @id @default(autoincrement())
+  competitionId String     @db.VarChar(255)
+  url           String     @db.VarChar(255)
+  method        HTTPMethod
+  headers       Json       @db.Json
+
+  competition Competition @relation(fields: [competitionId], references: [id])
+
   @@unique([competitionId, url])
 }
