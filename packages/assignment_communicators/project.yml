@@ -1,0 +1,17 @@
+environment: {}
+parameters: {}
+packages:
+  - name: sms_service
+    environment: {}
+    parameters: {}
+    annotations: {}
+    functions:
+      - name: sms_service
+        binary: false
+        main: ''
+        runtime: 'nodejs:default'
+        web: true
+        parameters: {}
+        environment: {}
+        annotations: {}
+        limits: {}
