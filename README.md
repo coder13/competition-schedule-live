@@ -40,3 +40,27 @@ This is the main app that competition owners will
 - [ ] Users can get notified of their groups in real time via SMS messages
 - [ ] Competition owners can reflect on the performance of their comp schedule through looking at the activity history
 - [ ] Competition owners can update the WCA schedule based on the actual performance of the comp schedule.
+
+# Overview
+
+```mermaid
+graph TD
+    H(Competition Owners) --> E --> H
+    subgraph my provided infrastructure
+    A[Root Backend] --> B[(Root Database)]
+    C[SMS Service] --> F[(SMS Service Database)]
+    D[Telegram Service] --> G[(Telegram Service Database)]
+    A -->|webhooks| C
+    A -->|webhooks| D
+    E[Competition Schedule Live Mobile App] --> A
+    end
+    C --> I[Competitors]
+    D --> I
+    
+    subgraph somone else's infrastructure
+    A -->|webhooks| J[Some other service]
+    J --> K[(Their database)]
+    end
+
+    J[Some other service] --> I
+  ```
