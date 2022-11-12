@@ -5,7 +5,7 @@ Bundle of apps and services that manages a WCA Competition schedule live
 
 ### `packages/server`
 
-This is the main beast that drives events. It is a nodejs, express, graphql server. It handles authentication as well as real time tracking of the ongoing activity. Users will receive a JWT token when they authenticate which can then be used across these other services to verify their identity. When a user imports a competition, it saves a subset of data to a database. The list of users is also saved and will be able to be edited in the future. After a user has imported a competition, any user (authenticated or not), can "subscribe" to the activity events to listen for activities starting and stopping. This server also sends webhooks when an activity is started and these can be configured however the competition owner chooses.
+This is the main beast that drives events. It is a nodejs, express, graphql server. It handles authentication as well as real time tracking of the ongoing activity. Clients will receive a JWT token when they authenticate which can then be used across these other services to verify their identity. When a competition owner imports a competition, it saves a subset of data to a database. The list of competition owners is also saved and will be able to be edited in the future. After a competition owner has imported a competition, any client (authenticated or not), can "subscribe" to the activity events to listen for activities starting and stopping. This server also sends webhooks when an activity is started and these can be configured however the competition owner chooses.
 
 Bundled also in this monorepo will be serverless applications that listen for these webhooks and do actions such as send SMS messages, send discord messages, send telegram messages, or more
 
@@ -13,6 +13,15 @@ A spec for the webhooks will be well communicated once finalized so that anyone 
 
 - [Database schema](./packages/server/prisma/schema.prisma)
 - [Graphql schema](./packages/server/graphql/schema)
+
+
+The question should be asked: How does the server know who is in what group? The main answer to this is through the [WCIF](https://github.com/thewca/wcif/blob/master/specification.md). But the other question is does this data get saved?
+**An argument for saving the data in databases**: potentially faster, could cache, only retreive the data you need.
+**Arguments for not saving it**: If changes are made, removes the need to reimport a competition.
+
+Now, a "webhook" application could manage this problem on it's own. We can send as little as just the competitionId and the activityId to a webhook application, and it should be able to look up in it's own cache or retreive the WCIF to determine who is in the group. This offloads resources from the main server onto all of the consumer ones. For ones I prebuild, this could be just fine if they all reuse the same database tables. A webhook application would likely already need a database to keep track of wca users and their communication channel identifiers.
+Alternatively: The main server can cache this information and have a standarized method to communicate the competitionId, list of people and their assignments to the webhook server and the webhook server wouldn't need to lookup much more. The webhook server can also be a consumer of the graphql api to ask for a specific subset of information of the competition when needed thus avoiding consuming too much of the WCA website's resources.
+I leave this problem still unsolved. 
 
 ### `packages/expo_app`
 
