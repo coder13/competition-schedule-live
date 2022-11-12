@@ -53,12 +53,9 @@ graph TD
     A -->|webhooks| D
     E[Competition Schedule Live Mobile App] --> A
     end
-    D --> I
     
     subgraph Somone else's infrastructure
     A -->|webhooks| J[Some other service]
     J --> K[(Their database)]
     end
-
-    J[Some other service] --> I
 ```
