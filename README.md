@@ -46,7 +46,7 @@ This is the main app that competition owners will
 ```mermaid
 graph TD
     H(Competition Owners) --> E --> H
-    subgraph my provided infrastructure
+    subgraph My provided infrastructure (this repository)
     A[Root Backend] --> B[(Root Database)]
     C[SMS Service] --> F[(SMS Service Database)]
     D[Telegram Service] --> G[(Telegram Service Database)]
@@ -57,7 +57,7 @@ graph TD
     C --> I[Competitors]
     D --> I
     
-    subgraph somone else's infrastructure
+    subgraph Somone else's infrastructure
     A -->|webhooks| J[Some other service]
     J --> K[(Their database)]
     end
