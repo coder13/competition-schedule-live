@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "concurrently \"yarn prisma:generate:watch\" \"yarn graphql:generate:watch\" \"NODE_ENV=development nodemon index.ts\"",
-    "pre:start": "yarn prisma:generate && yarn prisma:migrate",
+    "prestart": "yarn prisma:generate && yarn prisma:migrate",
     "start": "ts-node index.ts",
     "lint": "eslint ./",
     "prisma:migrate": "prisma migrate",
