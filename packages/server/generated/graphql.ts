@@ -76,8 +76,14 @@ export type MutationStopActivityArgs = {
 
 export type Query = {
   __typename?: 'Query';
+  activities: Array<Maybe<Activity>>;
   competition?: Maybe<Competition>;
   competitions: Array<Maybe<Competition>>;
+};
+
+
+export type QueryActivitiesArgs = {
+  competitionId: Scalars['String'];
 };
 
 
@@ -255,6 +261,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
+  activities?: Resolver<Array<Maybe<ResolversTypes['Activity']>>, ParentType, ContextType, RequireFields<QueryActivitiesArgs, 'competitionId'>>;
   competition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<QueryCompetitionArgs, 'competitionId'>>;
   competitions?: Resolver<Array<Maybe<ResolversTypes['Competition']>>, ParentType, ContextType>;
 };

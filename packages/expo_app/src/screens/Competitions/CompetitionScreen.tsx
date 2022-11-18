@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import { FlatList, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Avatar, List } from 'react-native-paper';
+import { Venue, Room } from '@wca/helpers';
 import { CompetitionScreenProps } from '../../navigation/types';
-import { ScrollView } from 'react-native-gesture-handler';
 import { useWCIF } from '../../providers/WCIFProvider';
 
 const style = StyleSheet.create({
@@ -28,7 +28,10 @@ const style = StyleSheet.create({
 //   }
 // `;
 
-export default function CompetitionScreen({ route }: CompetitionScreenProps) {
+export default function CompetitionScreen({
+  route,
+  navigation,
+}: CompetitionScreenProps) {
   const { wcif, setCompetitionId, loading } = useWCIF();
 
   const competition = route.params;
@@ -52,8 +55,16 @@ export default function CompetitionScreen({ route }: CompetitionScreenProps) {
     wcif?.schedule.venues.map((venue) => venue.rooms).flat().length
   );
 
+  const navigateToRoom = useCallback((room: Room) => {
+    console.log(room);
+    navigation.navigate('RootCompetitions', {
+      screen: 'Room',
+      params: room,
+    });
+  }, []);
+
   return (
-    <ScrollView style={style.container}>
+    <View style={style.container}>
       {loading && <ActivityIndicator />}
       {/* <NestedListScrollView
         data={wcif?.schedule.venues || []}
@@ -71,40 +82,46 @@ export default function CompetitionScreen({ route }: CompetitionScreenProps) {
         }}
         keepOpenedState={true}
       /> */}
-      {wcif?.schedule?.venues.map((venue) => (
-        <List.Section>
-          <List.Subheader>{venue.name || ''}</List.Subheader>
-          <FlatList
-            data={venue.rooms}
-            renderItem={({ item }) => (
-              <List.Item
-                title={item.name}
-                description={`Current Activity: none`}
-                left={() => (
-                  <List.Icon
-                    style={{
-                      padding: 0,
-                      marginLeft: 0,
-                      marginRight: 0,
-                    }}
-                    icon={() => (
-                      <Avatar.Text
-                        size={24}
-                        label={''}
-                        color={item.color}
-                        style={{
-                          backgroundColor: item.color,
-                        }}
-                      />
-                    )}
-                  />
-                )}
-              />
-            )}
-            keyExtractor={(item) => item.id.toString()}
-          />
-        </List.Section>
-      ))}
-    </ScrollView>
+      <FlatList
+        data={wcif?.schedule?.venues ?? ([] as Venue[])}
+        renderItem={({ item: venue }) => (
+          <List.Section>
+            <List.Subheader>{venue.name || ''}</List.Subheader>
+            <FlatList
+              data={venue.rooms}
+              renderItem={({ item: room }) => (
+                <List.Item
+                  title={room.name}
+                  description={`Current Activity: none`}
+                  left={() => (
+                    <List.Icon
+                      style={{
+                        padding: 0,
+                        marginLeft: 0,
+                        marginRight: 0,
+                      }}
+                      icon={() => (
+                        <Avatar.Text
+                          size={24}
+                          label={''}
+                          color={room.color}
+                          style={{
+                            backgroundColor: room.color,
+                          }}
+                        />
+                      )}
+                    />
+                  )}
+                  onPress={() => {
+                    navigateToRoom(room);
+                  }}
+                />
+              )}
+              keyExtractor={(item) => item.id.toString()}
+            />
+          </List.Section>
+        )}
+      />
+    </View>
   );
 }

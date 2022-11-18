@@ -34,7 +34,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import WcaApi from './graphql/datasources/WcaApi';
 
 const port = process.env.PORT ?? '8080';
-const PUBLIC_KEY = fs.readFileSync('public.key');
+const PUBLIC_KEY = process.env.PUBLIC_KEY ?? fs.readFileSync('public.key');
 
 export interface AppContext {
   user?: User;
@@ -145,7 +145,7 @@ async function init() {
         pubsub,
         wcaApi: new WcaApi(
           process.env.WCA_ORIGIN ?? 'https://staging.worldcubeassociation.org',
-          req.user?.accessToken
+          req.user?.wca.accessToken
         ),
       }),
     })

@@ -4,8 +4,8 @@ import jwt from 'jsonwebtoken';
 
 // TODO Should really be fetched from environment variables
 // Depending on how we want to deploy this
-const PRIVATE_KEY = fs.readFileSync('private.key');
-const PUBLIC_KEY = fs.readFileSync('public.key');
+const PRIVATE_KEY = process.env.PRIVATE_KEY ?? fs.readFileSync('private.key');
+const PUBLIC_KEY = process.env.PUBLIC_KEY ?? fs.readFileSync('public.key');
 
 console.log(process.env.CLIENT_ID, process.env.WCA_ORIGIN);
 
@@ -14,6 +14,7 @@ const WCA_ORIGIN =
 const CLIENT_ID = process.env.CLIENT_ID ?? 'example-application-id';
 const CLIENT_SECRET = process.env.CLIENT_SECRET ?? 'example-secret';
 const REDIRECT_URI = 'http://localhost:8080/auth/wca/callback';
+const SCOPE = 'public email manage_competitions';
 
 const router = express.Router();
 
@@ -37,11 +38,66 @@ router.get('/wca/', (req, res) => {
     client_id: CLIENT_ID,
     response_type: 'code',
     redirect_uri: redirectUri,
-    scope: 'public email manage_competitions',
+    scope: SCOPE,
   });
 
   res.redirect(`${WCA_ORIGIN}/oauth/authorize?${params.toString()}`);
 });
+
+const signJWT = async (
+  profile: {
+    me: {
+      id: number;
+      name: string;
+      wca_id: string;
+      country_iso2: string;
+      avatar: {
+        url: string;
+        thumbUrl: string;
+      };
+    };
+  },
+  token: {
+    access_token: string;
+    refresh_token: string;
+    expires_in: number;
+  }
+) =>
+  new Promise<string>((resolve, reject) => {
+    jwt.sign(
+      {
+        type: 1, // we'll  just use this incase we want to modify this data. We can throw away older tokens and require reauthentication
+
+        // We really only need the id and name, but we'll include the rest of the data to not be too demanding on the WCA website
+        id: profile.me.id,
+        name: profile.me.name,
+        wcaId: profile.me.wca_id,
+        countryId: profile.me.country_iso2,
+        avatar: profile.me.avatar,
+        wca: {
+          accessToken: token.access_token,
+          exp: new Date(Date.now() + token.expires_in * 1000).getTime(),
+          refreshToken: token.refresh_token,
+        },
+      },
+      String(PRIVATE_KEY),
+      {
+        algorithm: 'RS256',
+        expiresIn: 2 * 24 * 60 * 60,
+      },
+      (err, token) => {
+        if (err) {
+          return reject(err);
+        }
+
+        if (!token) {
+          return reject(new Error('Token is not defined'));
+        }
+
+        resolve(token);
+      }
+    );
+  });
 
 /**
  * Handles WCA OAuth2 callback. Fetches access token and user info.
@@ -77,10 +133,10 @@ router.get('/wca/callback', async (req, res) => {
       throw await response.text();
     }
 
-    const token = await response.json();
+    const wcaToken = await response.json();
 
     const profileRes = await fetch(`${WCA_ORIGIN}/api/v0/me`, {
-      headers: createHeaders(token.access_token),
+      headers: createHeaders(wcaToken.access_token),
     });
 
     if (!profileRes.ok) {
@@ -88,56 +144,42 @@ router.get('/wca/callback', async (req, res) => {
     }
 
     const profile = await profileRes.json();
+    const token = await signJWT(profile, wcaToken);
 
-    console.log(92, PRIVATE_KEY);
+    return res.json({ jwt: token });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json(err);
+  }
+});
 
-    jwt.sign(
-      {
-        type: 1, // we'll  just use this incase we want to modify this data. We can throw away older tokens and require reauthentication
+router.post('/wca/refresh', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).send('Unauthorized');
+  }
 
-        // We really only need the id and name, but we'll include the rest of the data to not be too demanding on the WCA website
-        id: profile.me.id,
-        name: profile.me.name,
-        wcaId: profile.me.wca_id,
-        countryId: profile.me.country_iso2,
-        avatar: profile.me.avatar,
+  const params = new URLSearchParams({
+    grant_type: 'authorization_code',
+    client_id: CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    refresh_token: req.user.wca.refreshToken,
+    scope: SCOPE,
+  });
 
-        accessToken: token.access_token,
-        wcaExpAt: new Date(Date.now() + token.expires_in * 1000).getTime(),
-        refreshToken: token.refresh_token,
+  try {
+    const response = await fetch(`${WCA_ORIGIN}/oauth/token`, {
+      method: 'POST',
+      body: params,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      String(PRIVATE_KEY),
-      {
-        algorithm: 'RS256',
-        expiresIn: 2 * 24 * 60 * 60,
-      },
-      (err, token) => {
-        if (err !== null) {
-          console.error(err);
-          return res.status(500).json(err);
-        }
+    });
 
-        if (token !== undefined) {
-          const parts = token.split('.');
-          console.log(121, token);
-          console.log(
-            122,
-            parts.map((p) => Buffer.from(p, 'base64').toString())
-          );
-          jwt.verify(token, String(PUBLIC_KEY), (err2, decoded) => {
-            err2 && console.error(err2);
-            console.log(123, decoded);
-          });
-
-          return res.json({ jwt: token });
-        }
-
-        res.status(500).json({ message: 'Token is undefined' });
-      }
-    );
+    console.log(response);
+    res.end();
   } catch (e) {
     console.error(e);
-    res.status(500).send(e);
+    res.status(500).json(e);
   }
 });
 

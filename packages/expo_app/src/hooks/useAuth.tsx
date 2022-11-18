@@ -17,6 +17,8 @@ interface User {
     thumb_url?: string;
     url: string;
   };
+  exp: number;
+  iat: number;
 }
 
 interface IAuthContext {
@@ -36,25 +38,39 @@ export default function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<null | User>(null);
 
   useEffect(() => {
-    if (token) {
-      try {
-        void SecureStore.setItemAsync('token', token);
-      } catch (e) {
-        console.error(e);
-      }
+    if (!token) {
+      return;
+    }
 
-      const decoded = jwtDecode<User>(token);
-      setUser(decoded);
+    try {
+      void SecureStore.setItemAsync('token', token);
+    } catch (e) {
+      console.error(e);
+    }
+
+    const decoded = jwtDecode<User>(token);
+
+    console.log(50, decoded);
+    setUser(decoded);
+
+    if (decoded.exp * 1000 < Date.now()) {
+      console.log(
+        'expired at',
+        new Date(decoded.exp * 1000).toLocaleDateString()
+      );
+      // refetch token
     }
   }, [token]);
 
   useEffect(() => {
     SecureStore.getItemAsync('token')
       .then((token) => {
-        if (token) {
-          console.log(46, token);
-          setToken(token);
+        if (!token) {
+          return;
         }
+
+        console.log(46, token);
+        setToken(token);
       })
       .catch((e) => console.error(e));
   }, []);

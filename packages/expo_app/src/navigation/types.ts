@@ -9,6 +9,7 @@ import {
   RouteProp,
 } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
+import { Room } from '@wca/helpers';
 import { Competition } from '../../../server/generated/graphql';
 
 export type RootCompetitionsParams =
@@ -21,7 +22,7 @@ export interface DrawerParamList extends ParamListBase {
 export interface CompetitionsStackParamList extends ParamListBase {
   Competitions: undefined;
   Competition: Competition;
-  Room: Competition;
+  Room: Room;
 }
 
 export type CompetitionsScreenProps = CompositeScreenProps<

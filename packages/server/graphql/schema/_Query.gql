@@ -3,4 +3,5 @@ scalar DateTime
 type Query {
   competitions: [Competition]!
   competition(competitionId: String!): Competition
+  activities(competitionId: String!): [Activity]!
 }

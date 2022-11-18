@@ -10,9 +10,11 @@ interface User {
     url: string;
   };
 
-  accessToken: string;
-  wcaExpAt: number;
-  refreshToken: string;
+  wca: {
+    accessToken: string;
+    exp: number;
+    refreshToken: string;
+  };
 
   exp: number;
 }
