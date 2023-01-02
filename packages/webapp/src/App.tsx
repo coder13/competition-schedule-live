@@ -17,6 +17,7 @@
  *
  */
 
+import { Container } from '@mui/material';
 import { Outlet, Route, Routes } from 'react-router-dom';
 import Mainbar from './components/Mainbar';
 import Home from './pages/Home';
@@ -27,7 +28,9 @@ function Layout() {
   return (
     <>
       <Mainbar />
-      <Outlet />
+      <Container maxWidth="md">
+        <Outlet />
+      </Container>
     </>
   );
 }

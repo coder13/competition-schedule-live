@@ -7,11 +7,13 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  LinearProgress,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Slide,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -21,6 +23,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ApiCompetition } from '../types';
 import { useAuth } from '../providers/AuthProvider';
 import { gql, useMutation } from '@apollo/client';
+import { ImportCompetitionMutation } from '../graphql';
 
 const FlagIcon = FlagIconFactory(React, { useCssModules: false });
 
@@ -36,11 +39,13 @@ const Transition = forwardRef(function Transition(
 interface ImportCompetitionDialogProps {
   open: boolean;
   onClose: () => void;
+  alreadyImported: string[];
 }
 
 function ImportCompetitionDialog({
   open,
   onClose,
+  alreadyImported,
 }: ImportCompetitionDialogProps) {
   const { user } = useAuth();
   const theme = useTheme();
@@ -63,15 +68,8 @@ function ImportCompetitionDialog({
     },
   });
 
-  const [importCompetition] = useMutation(
-    gql`
-      mutation ImportCompetition($competitionId: ID!) {
-        importCompetition(competitionId: $competitionId) {
-          id
-          name
-        }
-      }
-    `,
+  const [importCompetition, { loading }] = useMutation(
+    ImportCompetitionMutation,
     {
       onCompleted: (data) => {
         console.log(`imported competition ${data.importCompetition.id}`);
@@ -79,11 +77,13 @@ function ImportCompetitionDialog({
       onError: (error) => {
         console.error(error);
       },
+      refetchQueries: ['GetCompetitions'],
     }
   );
 
-  console.log(48, user);
-  console.log(isLoading, error, data);
+  const filteredCompetitions =
+    data?.filter((competition) => !alreadyImported.includes(competition.id)) ||
+    [];
 
   return (
     <Dialog
@@ -91,39 +91,54 @@ function ImportCompetitionDialog({
       onClose={onClose}
       fullScreen={fullScreen}
       TransitionComponent={Transition}>
-      <DialogTitle>Import Competition</DialogTitle>
+      <DialogTitle>Import Competitions</DialogTitle>
       <Divider />
+      {loading ? <LinearProgress /> : null}
       <DialogContent sx={{ p: 0 }}>
-        <List>
-          {data
-            ?.sort(
-              (a, b) =>
-                new Date(a.start_date).getTime() -
-                new Date(b.start_date).getTime()
-            )
-            .map((competition) => (
-              <ListItemButton key={competition.id} onClick={() => }>
-                <ListItemIcon>
-                  {!competition.country_iso2 ||
-                  RegExp('(x|X)', 'g').test(
-                    competition.country_iso2.toLowerCase()
-                  ) ? (
-                    <PublicIcon />
-                  ) : (
-                    <FlagIcon
-                      code={competition.country_iso2.toLowerCase()}
-                      size="lg"
-                    />
-                  )}
-                </ListItemIcon>
+        {filteredCompetitions.length === 0 ? (
+          <div style={{ padding: theme.spacing(1) }}>
+            <Typography>No competitions to import.</Typography>
+          </div>
+        ) : (
+          <List>
+            {filteredCompetitions
+              .sort(
+                (a, b) =>
+                  new Date(a.start_date).getTime() -
+                  new Date(b.start_date).getTime()
+              )
+              .map((competition) => (
+                <ListItemButton
+                  key={competition.id}
+                  onClick={() =>
+                    importCompetition({
+                      variables: {
+                        competitionId: competition.id,
+                      },
+                    })
+                  }>
+                  <ListItemIcon>
+                    {!competition.country_iso2 ||
+                    RegExp('(x|X)', 'g').test(
+                      competition.country_iso2.toLowerCase()
+                    ) ? (
+                      <PublicIcon />
+                    ) : (
+                      <FlagIcon
+                        code={competition.country_iso2.toLowerCase()}
+                        size="lg"
+                      />
+                    )}
+                  </ListItemIcon>
 
-                <ListItemText
-                  primary={competition.name}
-                  secondary={competition.start_date}
-                />
-              </ListItemButton>
-            ))}
-        </List>
+                  <ListItemText
+                    primary={competition.name}
+                    secondary={competition.start_date}
+                  />
+                </ListItemButton>
+              ))}
+          </List>
+        )}
       </DialogContent>
       <Divider />
       <DialogActions>

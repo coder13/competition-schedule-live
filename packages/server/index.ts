@@ -46,6 +46,11 @@ export interface AppContext {
 async function init() {
   const app = express();
 
+  app.use((req, _, next) => {
+    console.log(50, req.path);
+    return next();
+  });
+
   app.use(cors<cors.CorsRequest>());
   app.use(json());
 
@@ -130,6 +135,9 @@ async function init() {
 
   app.use(
     '/graphql',
+    cors<cors.CorsRequest>({
+      origin: ['*', 'https://studio.apollographql.com'],
+    }),
     (req, _, next) => {
       if (req?.body?.query?.includes?.('IntrospectionQuery')) {
         return next();

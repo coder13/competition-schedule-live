@@ -1,7 +1,7 @@
 interface User {
   type: number;
 
-  id: string;
+  id: number;
   name: string;
 
   wcaId: string;

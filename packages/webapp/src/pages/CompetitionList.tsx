@@ -1,36 +1,26 @@
 import { useState } from 'react';
-import { gql, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import {
   Fab,
   LinearProgress,
   List,
-  ListItem,
+  ListItemButton,
   ListItemText,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { Competition } from '../generated/graphql';
+import { User } from '../generated/graphql';
 import ImportCompetitionDialog from '../components/ImportCompetitionDialog';
-import { useAuth } from '../providers/AuthProvider';
-
-const GetCompetitionsQuery = gql`
-  query GetCompetitions {
-    competitions {
-      id
-      name
-      startDate
-      endDate
-      country
-    }
-  }
-`;
+import { GetCompetitionsQuery } from '../graphql';
 
 function CompetitionList() {
-  const { data, loading } = useQuery<{ competitions: Competition[] }>(
+  const { data, loading } = useQuery<{ currentUser: User }>(
     GetCompetitionsQuery,
     {
       fetchPolicy: 'cache-and-network',
     }
   );
+
+  console.log(35, data);
 
   const [importCompetitionDialogOpen, setImportCompetitionDialogOpen] =
     useState(false);
@@ -38,12 +28,15 @@ function CompetitionList() {
   return (
     <>
       {loading ? <LinearProgress /> : null}
-      {data ? (
+      {data?.currentUser?.competitions ? (
         <List>
-          {data.competitions.map((competition) => (
-            <ListItem key={competition.id}>
-              <ListItemText primary={competition.name} />
-            </ListItem>
+          {data.currentUser.competitions.map((competition) => (
+            <ListItemButton key={competition.id}>
+              <ListItemText
+                primary={competition.name}
+                secondary={competition.startDate}
+              />
+            </ListItemButton>
           ))}
         </List>
       ) : null}
@@ -61,6 +54,9 @@ function CompetitionList() {
       <ImportCompetitionDialog
         open={importCompetitionDialogOpen}
         onClose={() => setImportCompetitionDialogOpen(false)}
+        alreadyImported={
+          data?.currentUser?.competitions?.map((c) => c.id) ?? []
+        }
       />
     </>
   );
