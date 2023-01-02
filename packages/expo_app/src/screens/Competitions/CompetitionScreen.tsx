@@ -57,7 +57,7 @@ export default function CompetitionScreen({
 
   const navigateToRoom = useCallback((room: Room) => {
     console.log(room);
-    navigation.navigate('RootCompetitions', {
+    navigation.navigate('Competitions', {
       screen: 'Room',
       params: room,
     });

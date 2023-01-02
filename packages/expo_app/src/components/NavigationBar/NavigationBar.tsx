@@ -15,7 +15,8 @@ export default function NavigationBar({
   // const { wcif } = useWCIF();
 
   const title = useMemo(() => {
-    if (route.name !== 'RootCompetitions') {
+    console.log(17, route);
+    if (route.name !== 'Competitions') {
       return APP_NAME;
     }
 
@@ -36,7 +37,7 @@ export default function NavigationBar({
   return (
     <Appbar.Header>
       <Appbar.Action icon="menu" onPress={() => navigation.toggleDrawer()} />
-      <Appbar.Content title={title} subtitle="Red Stage" />
+      <Appbar.Content title={title} />
     </Appbar.Header>
   );
 }

@@ -16,17 +16,18 @@ export type RootCompetitionsParams =
   NavigatorScreenParams<CompetitionsStackParamList>;
 
 export interface DrawerParamList extends ParamListBase {
-  RootCompetitions: RootCompetitionsParams;
+  Competitions: RootCompetitionsParams;
+  ImportCompetition: undefined;
 }
 
 export interface CompetitionsStackParamList extends ParamListBase {
-  Competitions: undefined;
+  CompetitionList: undefined;
   Competition: Competition;
   Room: Room;
 }
 
 export type CompetitionsScreenProps = CompositeScreenProps<
-  StackScreenProps<CompetitionsStackParamList, 'Competitions'>,
+  StackScreenProps<CompetitionsStackParamList, 'CompetitionList'>,
   DrawerScreenProps<DrawerParamList>
 >;
 

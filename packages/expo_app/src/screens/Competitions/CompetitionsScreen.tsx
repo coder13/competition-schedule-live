@@ -32,13 +32,9 @@ export default function CompetitionsScreen({
 
   console.log(26, loading, data);
 
-  if (loading) {
-    return <Text>Fetching competitions...</Text>;
-  }
-
   const navigateToComp = useCallback((competition: Competition) => {
     console.log(competition);
-    navigation.navigate('RootCompetitions', {
+    navigation.navigate('Competitions', {
       screen: 'Competition',
       params: competition,
     });
@@ -49,6 +45,10 @@ export default function CompetitionsScreen({
       include: ['Competitions'],
     });
   }, []);
+
+  if (loading) {
+    return <Text>Fetching competitions...</Text>;
+  }
 
   return (
     <View style={style.container}>

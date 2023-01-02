@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
 
 const style = StyleSheet.create({
   container: {
@@ -8,5 +9,9 @@ const style = StyleSheet.create({
 });
 
 export default function ImportCompetitionScreen() {
-  return <View style={style.container}></View>;
+  return (
+    <View style={style.container}>
+      <Text>Hi</Text>
+    </View>
+  );
 }

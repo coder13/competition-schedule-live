@@ -5,7 +5,6 @@ import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItemList,
-  DrawerItem,
   DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import { useAuth } from './hooks/useAuth';
@@ -13,6 +12,7 @@ import NavigationBar from './components/NavigationBar/NavigationBar';
 import { Card, Title } from 'react-native-paper';
 import CompetitionsNavigation from './screens/Competitions/CompetitionsNavigation';
 import { DrawerParamList } from './navigation/types';
+import ImportCompetitionScreen from './screens/Competitions/ImportCompetitionScreen';
 
 maybeCompleteAuthSession();
 
@@ -32,10 +32,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         </Card>
       )}
       <DrawerItemList {...props} />
-      <DrawerItem
-        label="Toggle drawer"
-        onPress={() => props.navigation.toggleDrawer()}
-      />
     </DrawerContentScrollView>
   );
 }
@@ -50,14 +46,15 @@ export default function App() {
   return (
     <NavigationContainer>
       <Drawer.Navigator
-        initialRouteName="RootCompetitions"
+        initialRouteName="Competitions"
         screenOptions={{
           header: NavigationBar,
         }}
         drawerContent={(props) => <CustomDrawerContent {...props} />}>
+        <Drawer.Screen name="Competitions" component={CompetitionsNavigation} />
         <Drawer.Screen
-          name="RootCompetitions"
-          component={CompetitionsNavigation}
+          name="ImportCompetition"
+          component={ImportCompetitionScreen}
         />
       </Drawer.Navigator>
     </NavigationContainer>
