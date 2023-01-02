@@ -1,5 +1,11 @@
+import CompetitionList from './CompetitionList';
+
 function Home() {
-  return <>You're logged in!</>;
+  return (
+    <>
+      <CompetitionList />
+    </>
+  );
 }
 
 export default Home;
