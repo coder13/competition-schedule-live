@@ -1,6 +1,7 @@
 import fs from 'fs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import { authMiddlewareDecode } from './AuthMiddleware';
 
 // TODO Should really be fetched from environment variables
 // Depending on how we want to deploy this
@@ -99,13 +100,37 @@ const signJWT = async (
     );
   });
 
+const resignJWT = async (data: User) =>
+  new Promise<string>((resolve, reject) => {
+    jwt.sign(
+      data,
+      String(PRIVATE_KEY),
+      {
+        algorithm: 'RS256',
+        expiresIn: 2 * 24 * 60 * 60,
+      },
+      (err, token) => {
+        if (err) {
+          return reject(err);
+        }
+
+        if (!token) {
+          return reject(new Error('Token is not defined'));
+        }
+
+        resolve(token);
+      }
+    );
+  });
+
 /**
  * Handles WCA OAuth2 callback. Fetches access token and user info.
  * Returns JWT token.
  */
 router.get('/wca/callback', async (req, res) => {
-  const { code } = req.query;
-  const redirectUri = req.query.redirect_uri?.toString() ?? REDIRECT_URI;
+  const { code } = req.query as { code: string };
+  const redirectUri: string =
+    req.query.redirect_uri?.toString() ?? REDIRECT_URI;
 
   if (typeof code !== 'string') {
     res.status(400).send('Missing code');
@@ -153,13 +178,13 @@ router.get('/wca/callback', async (req, res) => {
   }
 });
 
-router.post('/wca/refresh', async (req, res) => {
+router.post('/wca/refresh', authMiddlewareDecode, async (req, res) => {
   if (!req.user) {
-    return res.status(401).send('Unauthorized');
+    return res.status(403).send('Unauthenticated');
   }
 
   const params = new URLSearchParams({
-    grant_type: 'authorization_code',
+    grant_type: 'refresh_token',
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
     refresh_token: req.user.wca.refreshToken,
@@ -175,8 +200,20 @@ router.post('/wca/refresh', async (req, res) => {
       },
     });
 
-    console.log(response);
-    res.end();
+    const tokens = await response.json();
+    console.log(204, tokens);
+
+    const token = await resignJWT({
+      ...req.user,
+      wca: {
+        ...req.user.wca,
+        accessToken: tokens.access_token,
+        exp: new Date(Date.now() + tokens.expires_in * 1000).getTime(),
+        refreshToken: tokens.refresh_token,
+      },
+    });
+
+    return res.json({ jwt: token });
   } catch (e) {
     console.error(e);
     res.status(500).json(e);

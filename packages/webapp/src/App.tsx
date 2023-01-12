@@ -20,6 +20,9 @@
 import { Container } from '@mui/material';
 import { Outlet, Route, Routes } from 'react-router-dom';
 import Mainbar from './components/Mainbar';
+import CompetitionHome from './pages/Competition/Home';
+import CompetitionLayout from './pages/Competition/Layout';
+import CompetitionRoom from './pages/Competition/Room';
 import Home from './pages/Home';
 import LoginPage from './pages/Login';
 import { useAuth } from './providers/AuthProvider';
@@ -28,23 +31,24 @@ function Layout() {
   return (
     <>
       <Mainbar />
-      <Container maxWidth="md">
-        <Outlet />
-      </Container>
+      <Outlet />
     </>
   );
 }
 
 function App() {
   const { jwt } = useAuth();
-  console.log(37, jwt);
 
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={jwt ? <Home /> : <LoginPage />} />
-        <Route path="competitions" element={<div>Competitions</div>} />
-        <Route path="import" element={<div>Competitions</div>} />
+        <Route
+          path="/competitions/:competitionId/"
+          element={<CompetitionLayout />}>
+          <Route index element={<CompetitionHome />} />
+          <Route path="rooms/:roomId" element={<CompetitionRoom />} />
+        </Route>
       </Route>
     </Routes>
   );

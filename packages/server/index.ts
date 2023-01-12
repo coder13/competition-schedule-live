@@ -14,13 +14,11 @@ dotenv.config({
   path: CONFIG_PATH,
 });
 
-import fs from 'fs';
 import http from 'http';
 import express from 'express';
 import morgan from 'morgan';
 import cors from 'cors';
 import { json } from 'body-parser';
-import jwt from 'jsonwebtoken';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { ApolloServer } from '@apollo/server';
@@ -32,9 +30,9 @@ import AuthRouter from './auth';
 import db from './db';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import WcaApi from './graphql/datasources/WcaApi';
+import { authMiddlewareVerify } from './auth/AuthMiddleware';
 
 const port = process.env.PORT ?? '8080';
-const PUBLIC_KEY = process.env.PUBLIC_KEY ?? fs.readFileSync('public.key');
 
 export interface AppContext {
   user?: User;
@@ -57,34 +55,6 @@ async function init() {
   app.use(morgan('tiny'));
 
   app.use('/auth', AuthRouter);
-
-  // TODO: This should be moved to a separate file
-  // Authenticates user by verifying JWT token
-  app.use((req, _, next) => {
-    const { headers } = req;
-
-    const split = headers?.authorization?.split(/\s/);
-
-    if (!split || split.length < 2) {
-      next();
-      return;
-    }
-
-    if (split[0] !== 'Bearer') {
-      next(null);
-    }
-
-    const token = split[1];
-
-    jwt.verify(token, PUBLIC_KEY, (err, decoded) => {
-      if (err) {
-        return next(err);
-      }
-
-      req.user = decoded as User | undefined;
-      next(null);
-    });
-  });
 
   const httpServer = http.createServer(app);
 
@@ -138,6 +108,7 @@ async function init() {
     cors<cors.CorsRequest>({
       origin: ['*', 'https://studio.apollographql.com'],
     }),
+    authMiddlewareVerify,
     (req, _, next) => {
       if (req?.body?.query?.includes?.('IntrospectionQuery')) {
         return next();

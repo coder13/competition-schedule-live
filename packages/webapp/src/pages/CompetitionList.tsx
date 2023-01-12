@@ -11,6 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 import { User } from '../generated/graphql';
 import ImportCompetitionDialog from '../components/ImportCompetitionDialog';
 import { GetCompetitionsQuery } from '../graphql';
+import { Link } from '../components/Link';
 
 function CompetitionList() {
   const { data, loading } = useQuery<{ currentUser: User }>(
@@ -19,8 +20,6 @@ function CompetitionList() {
       fetchPolicy: 'cache-and-network',
     }
   );
-
-  console.log(35, data);
 
   const [importCompetitionDialogOpen, setImportCompetitionDialogOpen] =
     useState(false);
@@ -31,7 +30,10 @@ function CompetitionList() {
       {data?.currentUser?.competitions ? (
         <List>
           {data.currentUser.competitions.map((competition) => (
-            <ListItemButton key={competition.id}>
+            <ListItemButton
+              component={Link}
+              to={`/competitions/${competition.id}`}
+              key={competition.id}>
               <ListItemText
                 primary={competition.name}
                 secondary={competition.startDate}

@@ -1,3 +1,4 @@
+import { useState, useContext } from 'react';
 import {
   AppBar,
   Divider,
@@ -6,15 +7,19 @@ import {
   List,
   ListItemButton,
   Toolbar,
+  Typography,
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MenuIcon from '@mui/icons-material/Menu';
-import { useState } from 'react';
+import { StoreContext } from '../providers/BasicStoreProvider';
+import { useAuth } from '../providers/AuthProvider';
 
 const navItems = [{ name: 'Competitions' }, { name: 'Import Competition' }];
 
 function Mainbar() {
   const [open, setOpen] = useState(false);
+  const { jwt, logout, login } = useAuth();
+  const [appTitle] = useContext(StoreContext).appTitle;
 
   const toggleDrawer = () => {
     setOpen(!open);
@@ -36,6 +41,7 @@ function Mainbar() {
             onClick={toggleDrawer}>
             <MenuIcon />
           </IconButton>
+          <Typography>{appTitle}</Typography>
         </Toolbar>
       </AppBar>
       <Drawer open={open}>
@@ -56,6 +62,14 @@ function Mainbar() {
             <ListItemButton key={item.name}>{item.name}</ListItemButton>
           ))}
         </List>
+        <Divider />
+        <div style={{ display: 'flex', flex: 1 }} />
+        <Divider />
+        <ListItemButton
+          style={{ display: 'flex', flexGrow: 0 }}
+          onClick={jwt ? logout : login}>
+          {jwt ? 'Logout' : 'Login'}
+        </ListItemButton>
       </Drawer>
     </>
   );

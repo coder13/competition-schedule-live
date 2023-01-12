@@ -50,7 +50,7 @@ function ImportCompetitionDialog({
   const { user } = useAuth();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  const { isLoading, error, data } = useQuery<ApiCompetition[]>({
+  const { isLoading, data } = useQuery<ApiCompetition[]>({
     queryKey: ['competitions'],
     queryFn: () => {
       const query = new URLSearchParams({
@@ -73,6 +73,7 @@ function ImportCompetitionDialog({
     {
       onCompleted: (data) => {
         console.log(`imported competition ${data.importCompetition.id}`);
+        onClose();
       },
       onError: (error) => {
         console.error(error);
@@ -93,7 +94,7 @@ function ImportCompetitionDialog({
       TransitionComponent={Transition}>
       <DialogTitle>Import Competitions</DialogTitle>
       <Divider />
-      {loading ? <LinearProgress /> : null}
+      {isLoading || loading ? <LinearProgress /> : null}
       <DialogContent sx={{ p: 0 }}>
         {filteredCompetitions.length === 0 ? (
           <div style={{ padding: theme.spacing(1) }}>

@@ -11,6 +11,7 @@ import { User } from '../types';
 
 interface AuthContext {
   login: () => void;
+  logout: () => void;
   jwt?: string;
   user?: User | null;
 }
@@ -36,8 +37,10 @@ function parseJwt(token: string): User {
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [jwt, setJWT] = useState<string>(localStorage.getItem('jwt') || '');
-  const user = jwt ? parseJwt(jwt) : null;
+  const [jwt, setJWT] = useState<string | undefined>(
+    localStorage.getItem('jwt') || undefined
+  );
+  const user = useMemo(() => (jwt ? parseJwt(jwt) : undefined), [jwt]);
   const query = useMemo(
     () => new URLSearchParams(location.search),
     [location.search]
@@ -51,6 +54,29 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     window.location.href = `http://10.0.0.234:8080/auth/wca?${query.toString()}`;
   }, [location]);
+
+  const logout = useCallback(() => {
+    setJWT(undefined);
+    localStorage.removeItem('jwt');
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    console.log(60, user);
+    if (new Date(user?.exp * 1000).getTime() < Date.now()) {
+      console.log(62, 'token expired');
+      fetch('http://10.0.0.234:8080/auth/wca/refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${jwt}`,
+        },
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!query) {
@@ -86,7 +112,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [query]);
 
   return (
-    <AuthContext.Provider value={{ jwt, login, user }}>
+    <AuthContext.Provider value={{ jwt, login, logout, user }}>
       {children}
     </AuthContext.Provider>
   );

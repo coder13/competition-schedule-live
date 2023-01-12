@@ -12,6 +12,7 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import App from './App';
 import './index.css';
 import AuthProvider from './providers/AuthProvider';
+import { StoreProvider } from './providers/BasicStoreProvider';
 const theme = createTheme();
 
 const httpLink = createHttpLink({
@@ -39,17 +40,19 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <BrowserRouter>
-        <AuthProvider>
-          <ApolloProvider client={client}>
-            <QueryClientProvider client={queryClient}>
-              <App />
-            </QueryClientProvider>
-          </ApolloProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+    <StoreProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <BrowserRouter>
+          <AuthProvider>
+            <ApolloProvider client={client}>
+              <QueryClientProvider client={queryClient}>
+                <App />
+              </QueryClientProvider>
+            </ApolloProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </StoreProvider>
   </>
 );
