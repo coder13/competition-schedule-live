@@ -9,6 +9,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Paper,
   Typography,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
@@ -143,36 +144,112 @@ function CompetitionRoom() {
   }, [wcif, nextActivity, currentActivities]);
 
   return (
-    <Container maxWidth="md">
-      {loadingWcif || loadingActivities ? <LinearProgress /> : null}
-      <h1>{room?.name}</h1>
-      <Divider />
-      <div style={{ marginTop: '1em', marginBottom: '1em' }}>
-        <Typography>
-          Current Activities:
-          {currentActivities?.length === 0 ? 'None' : null}
-          <List dense>
-            {currentActivities?.map((activity) => (
+    <div>
+      <Container maxWidth="md">
+        {loadingWcif || loadingActivities ? <LinearProgress /> : null}
+        <Typography variant="h4">{room?.name}</Typography>
+        <Divider />
+        <List dense>
+          {childActivities?.map((activity) => {
+            const liveActivity = activities?.activities.find(
+              (a) => a.activityId === activity.id
+            );
+            let secondaryText = '';
+
+            if (!liveActivity) {
+              secondaryText = new Date(activity.startTime).toLocaleString();
+            } else if (!!liveActivity?.startTime && !liveActivity.endTime) {
+              secondaryText = `Started ${formatDuration(
+                intervalToDuration({
+                  start: new Date(liveActivity.startTime),
+                  end: time,
+                })
+              )} ago`;
+            } else if (!!liveActivity?.startTime && !!liveActivity?.endTime) {
+              const minutes = Math.round(
+                (new Date(activity.endTime).getTime() -
+                  new Date(liveActivity.startTime).getTime()) /
+                  1000 /
+                  60
+              );
+              secondaryText = `Ended ${formatDuration({ minutes })} ${
+                minutes < 0 ? 'early' : 'late'
+              }`;
+            }
+
+            return (
               <ListItem
+                disabled={!!liveActivity?.endTime}
                 button
-                onClick={() => startStopActivity(activity.activityId)}
-                key={activity.activityId}>
+                onClick={() => startStopActivity(activity.id)}
+                key={activity.id}>
                 <ListItemText
-                  primary={
-                    childActivities?.find((a) => a.id === activity.activityId)
-                      ?.name
-                  }
-                  secondary={`Duration: ${formatDuration(
-                    intervalToDuration({
-                      start: new Date(activity.startTime),
-                      end: time,
-                    })
-                  )}`}
+                  primary={activity.name}
+                  secondary={secondaryText}
                 />
               </ListItem>
-            ))}
-          </List>
-        </Typography>
+            );
+          })}
+        </List>
+      </Container>
+      <Paper
+        elevation={3}
+        style={{
+          position: 'sticky',
+          width: '100%',
+          left: 0,
+          bottom: 0,
+        }}>
+        <div style={{ padding: '0.5em' }}>
+          <Typography>
+            Current {pluralize('Activity', currentActivities?.length)}:{' '}
+            {currentActivities?.length === 0 ? (
+              <b>None</b>
+            ) : (
+              <List dense>
+                {currentActivities?.map((activity) => (
+                  <ListItem
+                    button
+                    onClick={() => startStopActivity(activity.activityId)}
+                    key={activity.activityId}>
+                    <ListItemText
+                      primary={
+                        childActivities?.find(
+                          (a) => a.id === activity.activityId
+                        )?.name
+                      }
+                      secondary={`Duration: ${formatDuration(
+                        intervalToDuration({
+                          start: new Date(activity.startTime),
+                          end: time,
+                        })
+                      )}`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Typography>
+
+          <Divider sx={{ my: 1 }} />
+          {nextActivity ? (
+            <Typography>
+              Next Activity: <b>{nextActivity.name}</b> scheduled to start in{' '}
+              <b>
+                {formatDuration(
+                  intervalToDuration({
+                    start: time,
+                    end: new Date(nextActivity.startTime),
+                  })
+                )}
+              </b>
+            </Typography>
+          ) : (
+            <Typography>No more upcoming activities!</Typography>
+          )}
+        </div>
+
+        <Divider />
         <ButtonGroup>
           {currentActivities?.length && nextActivity ? (
             <Button
@@ -196,38 +273,8 @@ function CompetitionRoom() {
             </Button>
           ) : null}
         </ButtonGroup>
-      </div>
-      <Divider />
-      <div style={{ marginTop: '1em', marginBottom: '1em' }}>
-        {nextActivity ? (
-          <Typography>
-            Next Activity: <b>{nextActivity.name}</b> scheduled to start in{' '}
-            {formatDuration(
-              intervalToDuration({
-                start: time,
-                end: new Date(nextActivity.startTime),
-              })
-            )}
-          </Typography>
-        ) : (
-          <Typography>No more upcoming activities!</Typography>
-        )}
-      </div>
-      <Divider />
-      <List dense>
-        {childActivities?.map((activity) => (
-          <ListItem
-            button
-            onClick={() => startStopActivity(activity.id)}
-            key={activity.id}>
-            <ListItemText
-              primary={activity.name}
-              secondary={new Date(activity.startTime).toLocaleString()}
-            />
-          </ListItem>
-        ))}
-      </List>
-    </Container>
+      </Paper>
+    </div>
   );
 }
 

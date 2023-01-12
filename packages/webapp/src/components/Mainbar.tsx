@@ -27,7 +27,7 @@ function Mainbar() {
 
   return (
     <>
-      <AppBar position="relative">
+      <AppBar position="sticky">
         <Toolbar
           sx={{
             pr: '24px',
