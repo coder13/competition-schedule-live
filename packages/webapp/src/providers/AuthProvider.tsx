@@ -55,7 +55,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const query = new URLSearchParams({
       redirect_uri: redirectUri,
     });
-    window.location.href = `http://10.0.0.234:8080/auth/wca?${query.toString()}`;
+    window.location.href = `${API_URL}/auth/wca?${query.toString()}`;
   }, [location]);
 
   const myApiFetch = useCallback(

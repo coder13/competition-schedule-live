@@ -16,7 +16,7 @@ import { StoreProvider } from './providers/BasicStoreProvider';
 const theme = createTheme();
 
 const httpLink = createHttpLink({
-  uri: 'http://10.0.0.234:8080/graphql',
+  uri: `${import.meta.env.VITE_API_ORIGIN}/graphql`,
 });
 
 const authLink = setContext((_, { headers }) => {
