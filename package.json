@@ -11,5 +11,8 @@
   },
   "scripts": {
     "prepare": "husky install"
+  },
+  "engines": {
+    "node": "16.x"
   }
 }
