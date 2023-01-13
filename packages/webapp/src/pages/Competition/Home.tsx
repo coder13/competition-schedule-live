@@ -1,12 +1,15 @@
 import React from 'react';
 import {
   Avatar,
+  Button,
   Container,
+  Divider,
   List,
   ListItemAvatar,
   ListItemButton,
   ListItemText,
   ListSubheader,
+  Stack,
 } from '@mui/material';
 import { useWCIFContext } from './Layout';
 import { Link } from '../../components/Link';
@@ -36,6 +39,15 @@ function CompetitionHome() {
           </React.Fragment>
         ))}
       </List>
+      <Stack spacing={1}>
+        <Divider />
+        <Button fullWidth variant="outlined">
+          Configure webhooks
+        </Button>
+        <Button fullWidth variant="outlined">
+          Configure access
+        </Button>
+      </Stack>
     </Container>
   );
 }

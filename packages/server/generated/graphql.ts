@@ -26,13 +26,13 @@ export type Activity = {
 
 export type Competition = {
   __typename?: 'Competition';
-  activities?: Maybe<Array<Maybe<Activity>>>;
+  activities?: Maybe<Array<Activity>>;
   competitionAccess?: Maybe<Array<Maybe<CompetitionAccess>>>;
   country: Scalars['String'];
-  endDate?: Maybe<Scalars['String']>;
+  endDate: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
-  startDate?: Maybe<Scalars['String']>;
+  startDate: Scalars['String'];
 };
 
 export type CompetitionAccess = {
@@ -243,13 +243,13 @@ export type ActivityResolvers<ContextType = any, ParentType extends ResolversPar
 };
 
 export type CompetitionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Competition'] = ResolversParentTypes['Competition']> = {
-  activities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType>;
+  activities?: Resolver<Maybe<Array<ResolversTypes['Activity']>>, ParentType, ContextType>;
   competitionAccess?: Resolver<Maybe<Array<Maybe<ResolversTypes['CompetitionAccess']>>>, ParentType, ContextType>;
   country?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  endDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  endDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  startDate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  startDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

@@ -17,6 +17,14 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
         person.roles?.includes('organizer')
     );
 
+    // Have to calculate end Date
+    const endDate = new Date(
+      new Date(competition.schedule.startDate).getTime() +
+        1000 * 60 * 60 * 24 * competition.schedule.numberOfDays
+    )
+      .toISOString()
+      .split('T')[0];
+
     const newCompetition = await db.competition.create({
       include: {
         competitionAccess: true,
@@ -25,7 +33,7 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
         id: competition.id,
         name: competition.name,
         startDate: competition.schedule.startDate,
-        endDate: competition.schedule.startDate,
+        endDate,
         country: competition.schedule.venues[0].countryIso2,
         competitionAccess: {
           create: delegatesAndOrganizers.map((person) => ({

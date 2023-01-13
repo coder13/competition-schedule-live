@@ -2,10 +2,10 @@ type Competition {
   id: String!
   name: String!
   country: String!
-  startDate: String
-  endDate: String
+  startDate: String!
+  endDate: String!
   competitionAccess: [CompetitionAccess]
-  activities: [Activity]
+  activities: [Activity!]
 }
 
 type CompetitionAccess {
