@@ -7,7 +7,7 @@ import {
   Divider,
   LinearProgress,
   List,
-  ListItem,
+  ListItemButton,
   ListItemText,
   ListSubheader,
   Paper,
@@ -26,6 +26,9 @@ import {
 } from '../../graphql';
 import { useWCIFContext } from './Layout';
 
+const durationToMinutes = (start: Date, end: Date): number =>
+  Math.round((end.getTime() - start.getTime()) / 1000 / 60);
+
 import red from '@mui/material/colors/red';
 import yellow from '@mui/material/colors/yellow';
 
@@ -33,7 +36,6 @@ const colorForLate = (minutes: number): string => {
   if (minutes <= -5) {
     return 'white';
   }
-  console.log(minutes);
 
   if (minutes < 0) {
     return yellow[100];
@@ -257,11 +259,9 @@ function CompetitionRoom() {
                   !!liveActivity?.startTime &&
                   !!liveActivity?.endTime
                 ) {
-                  const minutes = Math.round(
-                    (new Date(activity.endTime).getTime() -
-                      new Date(liveActivity.startTime).getTime()) /
-                      1000 /
-                      60
+                  const minutes = durationToMinutes(
+                    new Date(liveActivity.startTime),
+                    new Date(liveActivity.endTime)
                   );
                   secondaryText = `Ended ${formatDuration({ minutes })} ${
                     minutes < 0 ? 'early' : 'late'
@@ -269,16 +269,15 @@ function CompetitionRoom() {
                 }
 
                 return (
-                  <ListItem
+                  <ListItemButton
                     disabled={!!liveActivity?.endTime}
-                    button
                     onClick={() => startStopActivity(activity.id)}
                     key={activity.id}>
                     <ListItemText
                       primary={activity.name}
                       secondary={secondaryText}
                     />
-                  </ListItem>
+                  </ListItemButton>
                 );
               })}
             </>
@@ -290,7 +289,7 @@ function CompetitionRoom() {
                 const liveActivity = activities?.activities.find(
                   (a) => a.activityId === activity.id
                 );
-                let secondaryText = '';
+                let secondaryText: JSX.Element | string = '';
 
                 if (!liveActivity) {
                   secondaryText = new Date(activity.startTime).toLocaleString();
@@ -305,28 +304,46 @@ function CompetitionRoom() {
                   !!liveActivity?.startTime &&
                   !!liveActivity?.endTime
                 ) {
-                  const minutes = Math.round(
+                  const minutesLate = Math.round(
                     (new Date(activity.endTime).getTime() -
                       new Date(liveActivity.startTime).getTime()) /
                       1000 /
                       60
                   );
-                  secondaryText = `Ended ${formatDuration({ minutes })} ${
-                    minutes < 0 ? 'early' : 'late'
-                  }`;
+                  const activityDuration = Math.round(
+                    (new Date(liveActivity.endTime).getTime() -
+                      new Date(liveActivity.startTime).getTime()) /
+                      1000
+                  );
+                  secondaryText = (
+                    <>
+                      Ended {formatDuration({ minutes: Math.abs(minutesLate) })}{' '}
+                      {minutesLate < 0 ? 'late' : 'early'}
+                      <br />
+                      Ran for{' '}
+                      {formatDuration({
+                        ...(activityDuration < 60
+                          ? {
+                              seconds: activityDuration,
+                            }
+                          : {
+                              minutes: Math.round(activityDuration / 60),
+                            }),
+                      })}
+                    </>
+                  );
                 }
 
                 return (
-                  <ListItem
+                  <ListItemButton
                     disabled={!!liveActivity?.endTime}
-                    button
                     onClick={() => startStopActivity(activity.id)}
                     key={activity.id}>
                     <ListItemText
                       primary={activity.name}
                       secondary={secondaryText}
                     />
-                  </ListItem>
+                  </ListItemButton>
                 );
               })}
             </>
@@ -334,7 +351,7 @@ function CompetitionRoom() {
         </List>
       </Container>
       <Paper
-        elevation={3}
+        elevation={7}
         style={{
           position: 'sticky',
           width: '100%',
@@ -349,58 +366,57 @@ function CompetitionRoom() {
               ? colorForLate(minutesTillNextActivity)
               : 'white',
           }}>
-          <Typography>
-            Current {pluralize('Activity', currentActivities?.length)}:{' '}
-            {currentActivities?.length === 0 ? (
-              <b>None</b>
-            ) : (
-              <List dense>
-                {currentActivities?.map((activity) => {
-                  const wcifActivity = childActivities?.find(
-                    (a) => a.id === activity.activityId
-                  );
-                  const duration = formatDuration(
-                    intervalToDuration({
-                      start: new Date(activity.startTime),
-                      end: time,
-                    })
-                  );
-
-                  return (
-                    <ListItem
-                      button
-                      onClick={() => startStopActivity(activity.activityId)}
-                      key={activity.activityId}>
-                      <ListItemText
-                        primary={
-                          childActivities?.find(
-                            (a) => a.id === activity.activityId
-                          )?.name
-                        }
-                        secondary={
-                          <>
-                            Duration: {duration}
-                            {wcifActivity ? (
-                              <>
-                                <br />
-                                Ends in:{' '}
-                                {formatDuration(
-                                  intervalToDuration({
-                                    start: time,
-                                    end: new Date(wcifActivity.endTime),
-                                  })
-                                )}
-                              </>
-                            ) : null}
-                          </>
-                        }
-                      />
-                    </ListItem>
-                  );
-                })}
-              </List>
-            )}
+          <Typography variant="h6">
+            Current {pluralize('Activity', currentActivities?.length)}
           </Typography>
+          {currentActivities?.length === 0 ? (
+            <b>None</b>
+          ) : (
+            <List dense>
+              {currentActivities?.map((activity) => {
+                const wcifActivity = childActivities?.find(
+                  (a) => a.id === activity.activityId
+                );
+                const duration = formatDuration(
+                  intervalToDuration({
+                    start: new Date(activity.startTime),
+                    end: time,
+                  })
+                );
+
+                return (
+                  <ListItemButton
+                    onClick={() => startStopActivity(activity.activityId)}
+                    key={activity.activityId}>
+                    <ListItemText
+                      primary={
+                        childActivities?.find(
+                          (a) => a.id === activity.activityId
+                        )?.name
+                      }
+                      secondary={
+                        <>
+                          Duration: {duration}
+                          {wcifActivity ? (
+                            <>
+                              <br />
+                              Ends in:{' '}
+                              {formatDuration({
+                                minutes: durationToMinutes(
+                                  time,
+                                  new Date(wcifActivity.endTime)
+                                ),
+                              })}
+                            </>
+                          ) : null}
+                        </>
+                      }
+                    />
+                  </ListItemButton>
+                );
+              })}
+            </List>
+          )}
 
           <Divider sx={{ my: 1 }} />
           {nextActivity ? (
@@ -408,10 +424,10 @@ function CompetitionRoom() {
               Next Activity: <b>{nextActivity.name}</b> scheduled to start{' '}
               <b>
                 {minutesTillNextActivity === 0
-                  ? `in ${formatDuration({
+                  ? 'now'
+                  : `in ${formatDuration({
                       minutes: -minutesTillNextActivity,
-                    })}`
-                  : 'now'}
+                    })}`}
               </b>
             </Typography>
           ) : (

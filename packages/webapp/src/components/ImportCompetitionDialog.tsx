@@ -47,7 +47,7 @@ function ImportCompetitionDialog({
   onClose,
   alreadyImported,
 }: ImportCompetitionDialogProps) {
-  const { user } = useAuth();
+  const { wcaApiFetch } = useAuth();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { isLoading, data } = useQuery<ApiCompetition[]>({
@@ -57,14 +57,7 @@ function ImportCompetitionDialog({
         managed_by_me: 'true',
         start: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
       });
-      return fetch(
-        `https://staging.worldcubeassociation.org/api/v0/competitions?${query.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.wca.accessToken}`,
-          },
-        }
-      ).then((res) => res.json());
+      return wcaApiFetch(`/api/v0/competitions?${query.toString()}`);
     },
   });
 

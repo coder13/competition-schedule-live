@@ -16,12 +16,12 @@ function CompetitionHome() {
 
   return (
     <Container maxWidth="md">
-      <h1>{wcif?.name}</h1>
-
       <List>
         {wcif?.schedule.venues.map((venue) => (
           <React.Fragment key={venue.id}>
-            <ListSubheader>{venue.name}</ListSubheader>
+            <ListSubheader sx={{ lineHeight: 1, mb: 2 }}>
+              {venue.name}
+            </ListSubheader>
             {venue.rooms.map((room) => (
               <ListItemButton
                 component={Link}

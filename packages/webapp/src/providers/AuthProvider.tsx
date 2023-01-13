@@ -9,11 +9,14 @@ import React, {
 import { useLocation, useNavigate } from 'react-router-dom';
 import { User } from '../types';
 
+const API_URL = import.meta.env.VITE_API_ORIGIN;
+
 interface AuthContext {
   login: () => void;
   logout: () => void;
   jwt?: string;
   user?: User | null;
+  wcaApiFetch: <T>(url: RequestInfo, options?: RequestInit) => Promise<T>;
 }
 
 const AuthContext = createContext<AuthContext>({} as AuthContext);
@@ -55,10 +58,57 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = `http://10.0.0.234:8080/auth/wca?${query.toString()}`;
   }, [location]);
 
+  const myApiFetch = useCallback(
+    (url: RequestInfo, { headers = {}, ...options } = {} as RequestInit) =>
+      fetch(`${API_URL}${url}`, {
+        ...(jwt && {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${jwt}`,
+            ...headers,
+          },
+        }),
+        ...options,
+      }),
+    [jwt]
+  );
+
+  const wcaApiFetch = useCallback(
+    async (
+      url: RequestInfo,
+      { headers = {}, ...options } = {} as RequestInit
+    ) => {
+      const res = await fetch(`${import.meta.env.VITE_WCA_API_ORIGIN}${url}`, {
+        ...(user?.wca.accessToken && {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.wca.accessToken}`,
+            ...headers,
+          },
+        }),
+        ...options,
+      });
+
+      if (!res.ok) {
+        console.error(await res.json());
+        return;
+      }
+
+      return res.json();
+    },
+    []
+  );
+
   const logout = useCallback(() => {
     setJWT(undefined);
     localStorage.removeItem('jwt');
   }, []);
+
+  const refreshToken = useCallback(() => {
+    myApiFetch('/auth/wca/refresh', {
+      method: 'POST',
+    });
+  }, [myApiFetch]);
 
   useEffect(() => {
     if (!user) {
@@ -68,14 +118,14 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log(60, user);
     if (new Date(user?.exp * 1000).getTime() < Date.now()) {
       console.log(62, 'token expired');
-      fetch('http://10.0.0.234:8080/auth/wca/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${jwt}`,
-        },
-      });
+      refreshToken();
     }
+
+    const timeout = setTimeout(refreshToken, 1000 * 5);
+
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [user]);
 
   useEffect(() => {
@@ -93,9 +143,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       navigate(location.pathname);
 
-      fetch(
-        `http://10.0.0.234:8080/auth/wca/callback?${queryString.toString()}`
-      )
+      myApiFetch(`/auth/wca/callback?${queryString.toString()}`)
         .then((res) => {
           if (!res.ok) {
             throw new Error('Failed to authenticate');
@@ -112,7 +160,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [query]);
 
   return (
-    <AuthContext.Provider value={{ jwt, login, logout, user }}>
+    <AuthContext.Provider value={{ jwt, login, logout, user, wcaApiFetch }}>
       {children}
     </AuthContext.Provider>
   );
