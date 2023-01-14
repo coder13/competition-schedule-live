@@ -23,14 +23,19 @@ export const authMiddlewareVerify = (
 
   const token = split[1];
 
-  jwt.verify(token, PUBLIC_KEY, (err, decoded) => {
-    if (err) {
-      return next(err);
-    }
+  try {
+    jwt.verify(token, PUBLIC_KEY, (err, decoded) => {
+      if (err) {
+        return next(err);
+      }
 
-    req.user = decoded as User | undefined;
-    next(null);
-  });
+      req.user = decoded as User | undefined;
+      next(null);
+    });
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
 };
 export const authMiddlewareDecode = (
   req: Request,

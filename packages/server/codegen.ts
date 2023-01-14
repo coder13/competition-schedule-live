@@ -20,6 +20,14 @@ const config: CodegenConfig = {
         },
       },
     },
+    '../projector/src/generated/graphql.ts': {
+      plugins: ['typescript', 'typescript-resolvers'],
+      config: {
+        scalars: {
+          DateTime: 'Date',
+        },
+      },
+    },
   },
 };
 

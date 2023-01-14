@@ -1,4 +1,9 @@
 {
-  "eslint.workingDirectories": ["./", "packages/server", "packages/webapp"],
+  "eslint.workingDirectories": [
+    "./",
+    "packages/server",
+    "packages/webapp",
+    "packages/projector"
+  ],
   "typescript.tsdk": "./node_modules/typescript/lib"
 }
