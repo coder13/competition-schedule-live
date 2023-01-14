@@ -7,6 +7,7 @@ import React, {
   useMemo,
 } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import formatDuration from 'date-fns/formatDuration';
 import { User } from '../types';
 
 const API_URL = import.meta.env.VITE_API_ORIGIN;
@@ -17,6 +18,7 @@ interface AuthContext {
   jwt?: string;
   user?: User | null;
   wcaApiFetch: <T>(url: RequestInfo, options?: RequestInit) => Promise<T>;
+  authenticating: boolean;
 }
 
 const AuthContext = createContext<AuthContext>({} as AuthContext);
@@ -40,6 +42,7 @@ function parseJwt(token: string): User {
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [authenticating, setAuthenticating] = useState(false);
   const [jwt, setJWT] = useState<string | undefined>(
     localStorage.getItem('jwt') || undefined
   );
@@ -48,6 +51,8 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     () => new URLSearchParams(location.search),
     [location.search]
   );
+
+  console.log(54, user?.wca);
 
   const login = useCallback(() => {
     const redirectUri = window.location.href;
@@ -104,10 +109,25 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('jwt');
   }, []);
 
-  const refreshToken = useCallback(() => {
-    myApiFetch('/auth/wca/refresh', {
+  const refreshToken = useCallback(async () => {
+    if (!user) {
+      return;
+    }
+
+    console.log('refreshing', user?.wca.exp - 1000 * 10);
+    setAuthenticating(true);
+
+    const res = await myApiFetch('/auth/wca/refresh', {
       method: 'POST',
     });
+
+    if (!res.ok) {
+      setAuthenticating(false);
+      throw await res.text();
+    }
+
+    setJWT((await res.json()).jwt);
+    setAuthenticating(false);
   }, [myApiFetch]);
 
   useEffect(() => {
@@ -115,13 +135,21 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    console.log(60, user);
-    if (new Date(user?.exp * 1000).getTime() < Date.now()) {
+    if (user?.wca.exp < Date.now()) {
       console.log(62, 'token expired');
       refreshToken();
+      return;
     }
 
-    const timeout = setTimeout(refreshToken, 1000 * 5);
+    const expiresIn = user?.wca.exp - Date.now() - 1000 * 10;
+    console.log(
+      'refreshing in',
+      formatDuration({
+        minutes: Math.round((expiresIn / 1000 / 60) % 60),
+        seconds: Math.round((expiresIn / 1000) % 60),
+      })
+    );
+    const timeout = setTimeout(refreshToken, expiresIn);
 
     return () => {
       clearTimeout(timeout);
@@ -136,6 +164,8 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const code = query.get('code');
 
     if (code) {
+      setAuthenticating(true);
+
       const queryString = new URLSearchParams({
         code,
         redirect_uri:
@@ -155,12 +185,14 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('Data', data);
           setJWT(data.jwt);
           localStorage.setItem('jwt', data.jwt);
+          setAuthenticating(false);
         });
     }
   }, [query]);
 
   return (
-    <AuthContext.Provider value={{ jwt, login, logout, user, wcaApiFetch }}>
+    <AuthContext.Provider
+      value={{ jwt, login, logout, user, wcaApiFetch, authenticating }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import fetch from 'node-fetch';
 import { authMiddlewareDecode } from './AuthMiddleware';
 
 // TODO Should really be fetched from environment variables
@@ -8,7 +9,10 @@ import { authMiddlewareDecode } from './AuthMiddleware';
 const PRIVATE_KEY = process.env.PRIVATE_KEY ?? fs.readFileSync('private.key');
 const PUBLIC_KEY = process.env.PUBLIC_KEY ?? fs.readFileSync('public.key');
 
-console.log(process.env.CLIENT_ID, process.env.WCA_ORIGIN);
+console.log('Loading values from environment variables', {
+  clientId: process.env.CLIENT_ID,
+  wcaOrigin: process.env.WCA_ORIGIN,
+});
 
 const WCA_ORIGIN =
   process.env.WCA_ORIGIN ?? 'https://staging.worldcubeassociation.org';
@@ -32,8 +36,7 @@ router.get('/keys/', (_, res) => {
  * Redirects user to WCA OAuth2 authorization page.
  */
 router.get('/wca/', (req, res) => {
-  const redirectUri = req.query.redirect_uri?.toString() ?? REDIRECT_URI;
-  console.log(26, redirectUri);
+  const redirectUri = req.get('Referer') ?? REDIRECT_URI;
 
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
@@ -45,25 +48,7 @@ router.get('/wca/', (req, res) => {
   res.redirect(`${WCA_ORIGIN}/oauth/authorize?${params.toString()}`);
 });
 
-const signJWT = async (
-  profile: {
-    me: {
-      id: number;
-      name: string;
-      wca_id: string;
-      country_iso2: string;
-      avatar: {
-        url: string;
-        thumbUrl: string;
-      };
-    };
-  },
-  token: {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-  }
-) =>
+const signJWT = async (profile: WcaprofileRes, token: WcaOauthRes) =>
   new Promise<string>((resolve, reject) => {
     jwt.sign(
       {
@@ -100,7 +85,7 @@ const signJWT = async (
     );
   });
 
-const resignJWT = async (data: User) =>
+const resignJWT = async ({ exp, iat, ...data }: User) =>
   new Promise<string>((resolve, reject) => {
     jwt.sign(
       data,
@@ -129,8 +114,7 @@ const resignJWT = async (data: User) =>
  */
 router.get('/wca/callback', async (req, res) => {
   const { code } = req.query as { code: string };
-  const redirectUri: string =
-    req.query.redirect_uri?.toString() ?? REDIRECT_URI;
+  const redirectUri: string = req.get('Referer') ?? REDIRECT_URI;
 
   if (typeof code !== 'string') {
     res.status(400).send('Missing code');
@@ -158,7 +142,7 @@ router.get('/wca/callback', async (req, res) => {
       throw await response.text();
     }
 
-    const wcaToken = await response.json();
+    const wcaToken = (await response.json()) as WcaOauthRes;
 
     const profileRes = await fetch(`${WCA_ORIGIN}/api/v0/me`, {
       headers: createHeaders(wcaToken.access_token),
@@ -168,7 +152,7 @@ router.get('/wca/callback', async (req, res) => {
       throw await profileRes.json();
     }
 
-    const profile = await profileRes.json();
+    const profile = (await profileRes.json()) as WcaprofileRes;
     const token = await signJWT(profile, wcaToken);
 
     return res.json({ jwt: token });
@@ -189,6 +173,7 @@ router.post('/wca/refresh', authMiddlewareDecode, async (req, res) => {
     client_secret: CLIENT_SECRET,
     refresh_token: req.user.wca.refreshToken,
     scope: SCOPE,
+    redirect_uri: req.get('Referer') ?? REDIRECT_URI,
   });
 
   try {
@@ -200,8 +185,11 @@ router.post('/wca/refresh', authMiddlewareDecode, async (req, res) => {
       },
     });
 
-    const tokens = await response.json();
-    console.log(204, tokens);
+    if (!response.ok) {
+      throw await response.json();
+    }
+
+    const tokens = (await response.json()) as WcaOauthRes;
 
     const token = await resignJWT({
       ...req.user,

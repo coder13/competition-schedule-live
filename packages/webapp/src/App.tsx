@@ -17,7 +17,7 @@
  *
  */
 
-import { Container } from '@mui/material';
+import { Backdrop, CircularProgress, Typography } from '@mui/material';
 import { Outlet, Route, Routes } from 'react-router-dom';
 import Mainbar from './components/Mainbar';
 import CompetitionHome from './pages/Competition/Home';
@@ -28,10 +28,17 @@ import LoginPage from './pages/Login';
 import { useAuth } from './providers/AuthProvider';
 
 function Layout() {
+  const { authenticating } = useAuth();
+
   return (
     <>
       <Mainbar />
       <Outlet />
+      <Backdrop
+        sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={authenticating}>
+        <CircularProgress color="inherit" />
+      </Backdrop>
     </>
   );
 }

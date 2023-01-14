@@ -18,6 +18,7 @@ export interface User {
   countryId: string;
   avatar: {
     url: string;
+    thumb_url: string;
   };
 
   wca: {
