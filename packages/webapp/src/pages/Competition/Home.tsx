@@ -39,7 +39,7 @@ function CompetitionHome() {
           </React.Fragment>
         ))}
       </List>
-      <Stack spacing={1}>
+      {/* <Stack spacing={1}>
         <Divider />
         <Button fullWidth variant="outlined">
           Configure webhooks
@@ -47,7 +47,7 @@ function CompetitionHome() {
         <Button fullWidth variant="outlined">
           Configure access
         </Button>
-      </Stack>
+      </Stack> */}
     </Container>
   );
 }

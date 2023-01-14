@@ -6,6 +6,7 @@ import {
   List,
   ListItemButton,
   ListItemText,
+  ListSubheader,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { User } from '../generated/graphql';
@@ -41,6 +42,7 @@ function CompetitionList() {
       {loading ? <LinearProgress /> : null}
       {competitions.length ? (
         <List>
+          <ListSubheader>My Upcoming Competitions</ListSubheader>
           {competitions.map((competition) => (
             <ListItemButton
               component={Link}
