@@ -25,8 +25,8 @@ export const ImportCompetitionMutation = gql`
 `;
 
 export const ActivitiesQuery = gql`
-  query Activities($competitionId: String!) {
-    activities(competitionId: $competitionId) {
+  query Activities($competitionId: String!, $roomId: Int) {
+    activities(competitionId: $competitionId, roomId: $roomId) {
       activityId
       startTime
       endTime
@@ -72,6 +72,16 @@ export const StopStartActivityMutation = gql`
       competitionId: $competitionId
       activityId: $startActivityId
     ) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
+export const ActivitiesSubscription = gql`
+  subscription Activities($competitionId: String!) {
+    activity: activityUpdated(competitionId: $competitionId) {
       activityId
       startTime
       endTime

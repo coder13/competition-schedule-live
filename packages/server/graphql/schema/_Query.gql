@@ -4,5 +4,5 @@ type Query {
   currentUser: User
   competitions(after: String): [Competition]!
   competition(competitionId: String!): Competition
-  activities(competitionId: String!): [Activity]!
+  activities(competitionId: String!, roomId: Int): [Activity]!
 }

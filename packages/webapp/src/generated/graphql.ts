@@ -85,6 +85,7 @@ export type Query = {
 
 export type QueryActivitiesArgs = {
   competitionId: Scalars['String'];
+  roomId?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -99,8 +100,16 @@ export type QueryCompetitionsArgs = {
 
 export type Subscription = {
   __typename?: 'Subscription';
+  activities?: Maybe<Array<Maybe<Activity>>>;
   activityStarted?: Maybe<Activity>;
   activityStopped?: Maybe<Activity>;
+  activityUpdated?: Maybe<Activity>;
+};
+
+
+export type SubscriptionActivitiesArgs = {
+  competitionId: Scalars['String'];
+  roomId?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -111,6 +120,12 @@ export type SubscriptionActivityStartedArgs = {
 
 
 export type SubscriptionActivityStoppedArgs = {
+  competitionId: Scalars['String'];
+  roomId?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type SubscriptionActivityUpdatedArgs = {
   competitionId: Scalars['String'];
   roomId?: InputMaybe<Scalars['Int']>;
 };
@@ -282,8 +297,10 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
 };
 
 export type SubscriptionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
+  activities?: SubscriptionResolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, "activities", ParentType, ContextType, RequireFields<SubscriptionActivitiesArgs, 'competitionId'>>;
   activityStarted?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityStarted", ParentType, ContextType, RequireFields<SubscriptionActivityStartedArgs, 'competitionId'>>;
   activityStopped?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityStopped", ParentType, ContextType, RequireFields<SubscriptionActivityStoppedArgs, 'competitionId'>>;
+  activityUpdated?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityUpdated", ParentType, ContextType, RequireFields<SubscriptionActivityUpdatedArgs, 'competitionId'>>;
 };
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {

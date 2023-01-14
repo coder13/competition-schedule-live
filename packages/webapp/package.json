@@ -21,6 +21,7 @@
     "@wca/helpers": "^1.1.2",
     "date-fns": "^2.29.3",
     "graphql": "^16.6.0",
+    "graphql-ws": "^5.11.2",
     "pluralize": "^8.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -16,9 +16,8 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
       },
     });
 
-    await pubsub.publish('ACTIVITY_STARTED', {
-      activityStarted: activity,
-    });
+    // TODO: Expose room somehow
+    await pubsub.publish('ACTIVITY_UPDATED', { activityUpdated: activity });
 
     return activity;
   };
@@ -41,9 +40,7 @@ export const stopActivity: MutationResolvers<AppContext>['stopActivity'] =
       },
     });
 
-    await pubsub.publish('ACTIVITY_STOPPED', {
-      activityStopped: activity,
-    });
+    await pubsub.publish('ACTIVITY_UPDATED', { activityUpdated: activity });
 
     return activity;
   };

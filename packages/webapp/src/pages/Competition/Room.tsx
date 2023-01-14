@@ -57,14 +57,13 @@ const colorForLate = (minutes: number): string => {
 };
 
 function CompetitionRoom() {
-  const { wcif, loading: loadingWcif } = useWCIFContext();
+  const {
+    wcif,
+    loading: loadingWcif,
+    activities,
+    activitiesLoading,
+  } = useWCIFContext();
   const { roomId } = useParams<{ roomId: string }>();
-  const { data: activities, loading: loadingActivities } = useQuery<{
-    activities: Activity[];
-  }>(ActivitiesQuery, {
-    variables: { competitionId: wcif?.id },
-    skip: !wcif?.id,
-  });
 
   const [time, setTime] = useState(new Date());
 
@@ -122,9 +121,7 @@ function CompetitionRoom() {
     )
     .flat();
 
-  const currentActivities = activities?.activities?.filter(
-    (activity) => !activity.endTime
-  );
+  const currentActivities = activities?.filter((activity) => !activity.endTime);
 
   const nextActivity = useMemo(() => {
     if (!childActivities || !activities) {
@@ -137,7 +134,7 @@ function CompetitionRoom() {
     );
 
     const nextActivity = sortedActivities.find(
-      (a) => !activities.activities.find((b) => b.activityId === a.id)
+      (a) => !activities.find((b) => b.activityId === a.id)
     );
 
     return nextActivity;
@@ -198,7 +195,7 @@ function CompetitionRoom() {
   const nextActivities = useMemo(
     () =>
       childActivities?.filter((activity) => {
-        const liveActivity = activities?.activities.find(
+        const liveActivity = activities?.find(
           (a) => a.activityId === activity.id
         );
 
@@ -233,7 +230,7 @@ function CompetitionRoom() {
           flexDirection: 'column',
           flexGrow: 1,
         }}>
-        {loadingWcif || loadingActivities ? <LinearProgress /> : null}
+        {loadingWcif || activitiesLoading ? <LinearProgress /> : null}
         <Typography variant="h4">{room?.name}</Typography>
         <Divider />
         <List dense>
@@ -241,7 +238,7 @@ function CompetitionRoom() {
             <>
               <ListSubheader disableSticky>Next</ListSubheader>
               {nextActivities?.map((activity) => {
-                const liveActivity = activities?.activities.find(
+                const liveActivity = activities?.find(
                   (a) => a.activityId === activity.id
                 );
                 let secondaryText = '';
@@ -286,7 +283,7 @@ function CompetitionRoom() {
             <>
               <ListSubheader disableSticky>Done</ListSubheader>
               {doneActivities.map((activity) => {
-                const liveActivity = activities?.activities.find(
+                const liveActivity = activities?.find(
                   (a) => a.activityId === activity.id
                 );
                 let secondaryText: JSX.Element | string = '';
