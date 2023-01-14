@@ -15,7 +15,7 @@ const httpLink = createHttpLink({
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: `ws://10.0.0.234:8080/graphql`,
+    url: `${import.meta.env.VITE_WS_ORIGIN}/graphql`,
   })
 );
 
