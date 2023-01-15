@@ -1,0 +1,28 @@
+# A Docker Compose must always start with the version tag.
+# We use '3' because it's the last version.
+version: '3'
+
+services:
+  api:
+    image: 'postgres:latest'
+
+    ports:
+      - 5432:5432
+
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: live_competition_group_tracker
+
+  noitfapi:
+    image: 'postgres:latest'
+
+    ports:
+      - 5433:5432
+
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: notifapi
+volumes:
+  app-volume: #

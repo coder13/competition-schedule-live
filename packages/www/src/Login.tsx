@@ -11,7 +11,9 @@ function Login() {
   const [code, setCode] = useState<string>('');
   const [error, setError] = useState<undefined | string>();
 
-  console.log(phoneNumber);
+  if (error) {
+    console.error(error);
+  }
 
   const handleSubmitNumber = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -21,8 +23,11 @@ function Login() {
         `${import.meta.env.VITE_NOTIFAPI_ORIGIN}/auth/number`,
         {
           method: 'POST',
+          mode: 'cors', // no-cors, *cors, same-origin
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': 'http://localhost:5173',
           },
           body: JSON.stringify({
             number: phoneNumber,
@@ -50,8 +55,11 @@ function Login() {
         `${import.meta.env.VITE_NOTIFAPI_ORIGIN}/auth/number/code`,
         {
           method: 'POST',
+          mode: 'cors', // no-cors, *cors, same-origin
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': 'http://localhost:5173',
           },
           body: JSON.stringify({ code }),
         }
@@ -104,7 +112,7 @@ function Login() {
                   </Form.Control>
                 </Form.Field>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button>Send Code</Button>
+                  <Button>{codeSent ? 'Resend Code' : 'Send Code'}</Button>
                 </div>
               </form>
               {codeSent ? (
