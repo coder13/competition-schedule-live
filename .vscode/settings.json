@@ -3,7 +3,9 @@
     "./",
     "packages/server",
     "packages/webapp",
-    "packages/projector"
+    "packages/projector",
+    "packages/www",
+    "packages/notifapi"
   ],
   "typescript.tsdk": "./node_modules/typescript/lib"
 }
