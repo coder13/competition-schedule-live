@@ -1,17 +1,24 @@
 import { Route, Routes } from 'react-router-dom';
-import Login from './Login';
+import Layout from './Layout';
+import Home from './pages/Home';
+import Login from './pages/Login';
+import { useAuth } from './Providers/UserProvider';
 
 function App() {
+  const { user } = useAuth();
+
+  console.log(10, user);
+
+  if (!user?.id) {
+    return <Login />;
+  }
+
   return (
-    <div
-      style={{
-        width: '100vw',
-        height: '100%',
-      }}>
-      <Routes>
-        <Route path="/" element={<Login />} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Home />} />
+      </Route>
+    </Routes>
   );
 }
 

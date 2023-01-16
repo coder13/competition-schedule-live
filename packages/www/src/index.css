@@ -1,7 +1,7 @@
 body,
 html,
 #root {
-  background-color: #56e39f;
+  background-color: #white;
   width: 100vw;
-  height: 100%;
+  height: 100vh;
 }

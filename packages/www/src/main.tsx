@@ -5,13 +5,20 @@ import 'bulma/css/bulma.min.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';
+import { UserProvider } from './Providers/UserProvider';
+import { ApolloProvider } from '@apollo/client';
+import client from './apolloClient';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <SnackbarProvider>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ApolloProvider client={client}>
+        <UserProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </UserProvider>
+      </ApolloProvider>
     </SnackbarProvider>
   </React.StrictMode>
 );

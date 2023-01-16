@@ -20,11 +20,19 @@ declare module 'express-session' {
   interface SessionData {
     auth: {
       number?: {
+        number: string;
         code: string;
         expires: number; // Unix timestamp
         verified?: boolean;
       };
     };
+    userId?: number;
+  }
+}
+
+declare module 'express' {
+  interface Request {
+    user?: User;
   }
 }
 
@@ -38,6 +46,7 @@ import prisma from './db';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 
 import api from './routes';
+import { User } from './prisma/generated/client';
 
 const port = process.env.PORT ? +process.env.PORT : 8090;
 

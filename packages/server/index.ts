@@ -44,11 +44,6 @@ export interface AppContext {
 async function init() {
   const app = express();
 
-  app.use((req, _, next) => {
-    console.log(50, req.path);
-    return next();
-  });
-
   app.use(cors<cors.CorsRequest>());
   app.use(json());
 

@@ -3,37 +3,32 @@ import { Block, Button, Container, Form, Panel } from 'react-bulma-components';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
 import { useSnackbar } from 'notistack';
+import { useAuth, User } from '../Providers/UserProvider';
+import { notifApiFetch } from '../notifapi';
 
 function Login() {
   const { enqueueSnackbar } = useSnackbar();
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
+  const { setUser } = useAuth();
+  const [phoneNumber, setPhoneNumber] = useState(
+    localStorage.getItem('compNotify.phoneNumber') || ''
+  );
+  const [codeSent, setCodeSent] = useState(
+    JSON.parse(localStorage.getItem('compNotify.codeSent') || 'false')
+  );
   const [code, setCode] = useState<string>('');
   const [error, setError] = useState<undefined | string>();
-
-  if (error) {
-    console.error(error);
-  }
 
   const handleSubmitNumber = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const res = await fetch(
-        `${import.meta.env.VITE_NOTIFAPI_ORIGIN}/auth/number`,
-        {
-          method: 'POST',
-          mode: 'cors', // no-cors, *cors, same-origin
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': 'http://localhost:5173',
-          },
-          body: JSON.stringify({
-            number: phoneNumber,
-          }),
-        }
-      );
+      localStorage.setItem('compNotify.phoneNumber', phoneNumber);
+
+      const res = await notifApiFetch('/auth/number', {
+        body: JSON.stringify({
+          number: phoneNumber,
+        }),
+      });
 
       if (!res.ok) {
         const err = await res.json();
@@ -42,6 +37,7 @@ function Login() {
         return;
       }
 
+      localStorage.setItem('compNotify.codeSent', 'true');
       setCodeSent(true);
     },
     [phoneNumber]
@@ -51,19 +47,16 @@ function Login() {
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
 
-      const res = await fetch(
-        `${import.meta.env.VITE_NOTIFAPI_ORIGIN}/auth/number/code`,
-        {
-          method: 'POST',
-          mode: 'cors', // no-cors, *cors, same-origin
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': 'http://localhost:5173',
-          },
-          body: JSON.stringify({ code }),
-        }
-      );
+      if (!code) {
+        setError('Please enter a code');
+        return;
+      }
+
+      const res = await notifApiFetch('/auth/code', {
+        body: JSON.stringify({
+          code,
+        }),
+      });
 
       if (!res.ok) {
         const err = await res.json();
@@ -71,8 +64,14 @@ function Login() {
         enqueueSnackbar(err.message, { variant: 'error' });
         return;
       }
+
+      const { user } = await res.json();
+
+      if (user) {
+        setUser(user as User);
+      }
     },
-    [phoneNumber]
+    [code]
   );
 
   return (
