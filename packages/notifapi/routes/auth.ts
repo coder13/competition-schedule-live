@@ -1,55 +1,29 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { Request, Router } from 'express';
 import twilio from 'twilio';
-import prisma from './db';
-import { genCode } from './lib/utils';
+import prisma from '../db';
+import { genCode } from '../lib/utils';
+import { getUser } from '../middlewares/user';
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_ACCOUNT_AUTH_TOKEN;
 console.log('twilio', { accountSid, authToken });
 const twilioClient = twilio(accountSid, authToken);
-const router = Router();
+const authRouter = Router();
 
-const getUser = async (req: Request, _: Response, next: NextFunction) => {
-  if (!req.session.userId) {
-    return next();
-  }
-
-  try {
-    const user = await prisma.user.findFirst({
-      where: {
-        id: req.session.userId,
-      },
-    });
-
-    if (!user) {
-      console.error('User not found', { userId: req.session.userId });
-      return next();
-    }
-
-    req.user = user;
-  } catch (e) {
-    console.error(e);
-  }
-
-  next();
-};
-
-router.get('/', getUser, (req: Request, res) => {
+authRouter.get('/test', getUser, (req: Request, res) => {
   if (!req.user) {
     res.status(401).json({ success: false });
     return;
   }
 
-  console.log(req.user);
-
-  res.json({ success: true });
+  res.json({ success: true, user: req.user });
 });
 
 /**
  * POST /auth/number
  * Body: { number: string }
  */
-router.post('/auth/number', async (req, res) => {
+authRouter.post('/number', async (req, res) => {
   const { number } = req.body;
 
   try {
@@ -76,7 +50,7 @@ router.post('/auth/number', async (req, res) => {
   }
 });
 
-router.post('/auth/number/code', async (req, res) => {
+authRouter.post('/number/code', async (req, res) => {
   if (!req.session.auth?.number) {
     res
       .status(400)
@@ -121,7 +95,4 @@ router.post('/auth/number/code', async (req, res) => {
   }
 });
 
-router.post('/subscribe/competitionId/:competitionId');
-router.post('/subscribe/competitor/:competitorId/code');
-
-export default router;
+export default authRouter;

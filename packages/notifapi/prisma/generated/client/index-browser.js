@@ -94,7 +94,28 @@ exports.Prisma.AuditLogScalarFieldEnum = makeEnum({
   action: 'action',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  userId: 'userId'
+  userId: 'userId',
+  competitionId: 'competitionId'
+});
+
+exports.Prisma.CompetitionSubscriptionScalarFieldEnum = makeEnum({
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId',
+  competitionId: 'competitionId',
+  type: 'type',
+  value: 'value'
+});
+
+exports.Prisma.CompetitorSubscriptionScalarFieldEnum = makeEnum({
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId',
+  wcaUserId: 'wcaUserId',
+  verified: 'verified',
+  code: 'code'
 });
 
 exports.Prisma.QueryMode = makeEnum({
@@ -114,17 +135,6 @@ exports.Prisma.SortOrder = makeEnum({
   desc: 'desc'
 });
 
-exports.Prisma.TokenScalarFieldEnum = makeEnum({
-  id: 'id',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  type: 'type',
-  emailToken: 'emailToken',
-  valid: 'valid',
-  expiration: 'expiration',
-  userId: 'userId'
-});
-
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
   ReadCommitted: 'ReadCommitted',
@@ -136,16 +146,17 @@ exports.Prisma.UserScalarFieldEnum = makeEnum({
   id: 'id',
   phoneNumber: 'phoneNumber'
 });
-exports.TokenType = makeEnum({
-  EMAIL: 'EMAIL',
-  NUMBER: 'NUMBER'
+exports.CompetitionSubscriptionType = makeEnum({
+  activity: 'activity',
+  competitor: 'competitor'
 });
 
 exports.Prisma.ModelName = makeEnum({
   AuditLog: 'AuditLog',
   User: 'User',
   Session: 'Session',
-  Token: 'Token'
+  CompetitionSubscription: 'CompetitionSubscription',
+  CompetitorSubscription: 'CompetitorSubscription'
 });
 
 /**

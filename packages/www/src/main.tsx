@@ -8,17 +8,22 @@ import './index.css';
 import { UserProvider } from './Providers/UserProvider';
 import { ApolloProvider } from '@apollo/client';
 import client from './apolloClient';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <SnackbarProvider>
-      <ApolloProvider client={client}>
-        <UserProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </UserProvider>
-      </ApolloProvider>
-    </SnackbarProvider>
+    <QueryClientProvider client={queryClient}>
+      <SnackbarProvider>
+        <ApolloProvider client={client}>
+          <UserProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </UserProvider>
+        </ApolloProvider>
+      </SnackbarProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );

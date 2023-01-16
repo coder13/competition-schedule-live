@@ -24,21 +24,19 @@ function Login() {
 
       localStorage.setItem('compNotify.phoneNumber', phoneNumber);
 
-      const res = await notifApiFetch('/auth/number', {
-        body: JSON.stringify({
-          number: phoneNumber,
-        }),
-      });
+      try {
+        await notifApiFetch('/auth/number', {
+          method: 'POST',
+          body: JSON.stringify({
+            number: phoneNumber,
+          }),
+        });
 
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message);
-        enqueueSnackbar(err.message, { variant: 'error' });
-        return;
+        localStorage.setItem('compNotify.codeSent', 'true');
+        setCodeSent(true);
+      } catch (e) {
+        console.error(e);
       }
-
-      localStorage.setItem('compNotify.codeSent', 'true');
-      setCodeSent(true);
     },
     [phoneNumber]
   );
@@ -52,23 +50,19 @@ function Login() {
         return;
       }
 
-      const res = await notifApiFetch('/auth/code', {
-        body: JSON.stringify({
-          code,
-        }),
-      });
+      try {
+        const { user } = await notifApiFetch('/auth/number/code', {
+          method: 'POST',
+          body: JSON.stringify({
+            code,
+          }),
+        });
 
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.message);
-        enqueueSnackbar(err.message, { variant: 'error' });
-        return;
-      }
-
-      const { user } = await res.json();
-
-      if (user) {
-        setUser(user as User);
+        if (user) {
+          setUser(user as User);
+        }
+      } catch (e) {
+        console.error(e);
       }
     },
     [code]

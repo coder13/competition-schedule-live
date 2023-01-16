@@ -12,11 +12,12 @@ datasource db {
 }
 
 model AuditLog {
-  id        Int      @id @default(autoincrement())
-  action    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    Int
+  id            Int      @id @default(autoincrement())
+  action        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  userId        Int
+  competitionId String
 
   user User @relation(fields: [userId], references: [id])
 }
@@ -26,32 +27,49 @@ model User {
   phoneNumber String @unique
 
   // Relation fields
-  AuditLog AuditLog[]
-  Token    Token[]
+  AuditLog                AuditLog[]
+  CompetitionSubscription CompetitionSubscription[]
+  CompetitorSubscription  CompetitorSubscription[]
 }
 
 model Session {
   id        String   @id
   sid       String   @unique
   data      String
-  expiresAt   DateTime
+  expiresAt DateTime
 }
 
-model Token {
-  id         Int       @id @default(autoincrement())
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  type       TokenType
-  emailToken String?   @unique // Only used for short lived email tokens
-  valid      Boolean   @default(true)
-  expiration DateTime
+model CompetitionSubscription {
+  id            Int                         @id @default(autoincrement())
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  userId        Int
+  competitionId String
+  type          CompetitionSubscriptionType
+  value         String
 
   // Relation fields
-  user   User @relation(fields: [userId], references: [id])
-  userId Int
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, competitionId, type, value])
 }
 
-enum TokenType {
-  EMAIL
-  NUMBER
+enum CompetitionSubscriptionType {
+  activity
+  competitor
+}
+
+model CompetitorSubscription {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+  wcaUserId Int
+  verified  Boolean  @default(false)
+  code      String
+
+  // Relation fields
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, wcaUserId])
 }

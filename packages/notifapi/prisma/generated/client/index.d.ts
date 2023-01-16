@@ -22,6 +22,7 @@ export type AuditLog = {
   createdAt: Date
   updatedAt: Date
   userId: number
+  competitionId: string
 }
 
 /**
@@ -45,18 +46,31 @@ export type Session = {
 }
 
 /**
- * Model Token
+ * Model CompetitionSubscription
  * 
  */
-export type Token = {
+export type CompetitionSubscription = {
   id: number
   createdAt: Date
   updatedAt: Date
-  type: TokenType
-  emailToken: string | null
-  valid: boolean
-  expiration: Date
   userId: number
+  competitionId: string
+  type: CompetitionSubscriptionType
+  value: string
+}
+
+/**
+ * Model CompetitorSubscription
+ * 
+ */
+export type CompetitorSubscription = {
+  id: number
+  createdAt: Date
+  updatedAt: Date
+  userId: number
+  wcaUserId: number
+  verified: boolean
+  code: string
 }
 
 
@@ -67,12 +81,12 @@ export type Token = {
 // Based on
 // https://github.com/microsoft/TypeScript/issues/3192#issuecomment-261720275
 
-export const TokenType: {
-  EMAIL: 'EMAIL',
-  NUMBER: 'NUMBER'
+export const CompetitionSubscriptionType: {
+  activity: 'activity',
+  competitor: 'competitor'
 };
 
-export type TokenType = (typeof TokenType)[keyof typeof TokenType]
+export type CompetitionSubscriptionType = (typeof CompetitionSubscriptionType)[keyof typeof CompetitionSubscriptionType]
 
 
 /**
@@ -223,14 +237,24 @@ export class PrismaClient<
   get session(): Prisma.SessionDelegate<GlobalReject>;
 
   /**
-   * `prisma.token`: Exposes CRUD operations for the **Token** model.
+   * `prisma.competitionSubscription`: Exposes CRUD operations for the **CompetitionSubscription** model.
     * Example usage:
     * ```ts
-    * // Fetch zero or more Tokens
-    * const tokens = await prisma.token.findMany()
+    * // Fetch zero or more CompetitionSubscriptions
+    * const competitionSubscriptions = await prisma.competitionSubscription.findMany()
     * ```
     */
-  get token(): Prisma.TokenDelegate<GlobalReject>;
+  get competitionSubscription(): Prisma.CompetitionSubscriptionDelegate<GlobalReject>;
+
+  /**
+   * `prisma.competitorSubscription`: Exposes CRUD operations for the **CompetitorSubscription** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CompetitorSubscriptions
+    * const competitorSubscriptions = await prisma.competitorSubscription.findMany()
+    * ```
+    */
+  get competitorSubscription(): Prisma.CompetitorSubscriptionDelegate<GlobalReject>;
 }
 
 export namespace Prisma {
@@ -718,7 +742,8 @@ export namespace Prisma {
     AuditLog: 'AuditLog',
     User: 'User',
     Session: 'Session',
-    Token: 'Token'
+    CompetitionSubscription: 'CompetitionSubscription',
+    CompetitorSubscription: 'CompetitorSubscription'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -890,12 +915,14 @@ export namespace Prisma {
 
   export type UserCountOutputType = {
     AuditLog: number
-    Token: number
+    CompetitionSubscription: number
+    CompetitorSubscription: number
   }
 
   export type UserCountOutputTypeSelect = {
     AuditLog?: boolean
-    Token?: boolean
+    CompetitionSubscription?: boolean
+    CompetitorSubscription?: boolean
   }
 
   export type UserCountOutputTypeGetPayload<S extends boolean | null | undefined | UserCountOutputTypeArgs> =
@@ -962,6 +989,7 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     userId: number | null
+    competitionId: string | null
   }
 
   export type AuditLogMaxAggregateOutputType = {
@@ -970,6 +998,7 @@ export namespace Prisma {
     createdAt: Date | null
     updatedAt: Date | null
     userId: number | null
+    competitionId: string | null
   }
 
   export type AuditLogCountAggregateOutputType = {
@@ -978,6 +1007,7 @@ export namespace Prisma {
     createdAt: number
     updatedAt: number
     userId: number
+    competitionId: number
     _all: number
   }
 
@@ -998,6 +1028,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     userId?: true
+    competitionId?: true
   }
 
   export type AuditLogMaxAggregateInputType = {
@@ -1006,6 +1037,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     userId?: true
+    competitionId?: true
   }
 
   export type AuditLogCountAggregateInputType = {
@@ -1014,6 +1046,7 @@ export namespace Prisma {
     createdAt?: true
     updatedAt?: true
     userId?: true
+    competitionId?: true
     _all?: true
   }
 
@@ -1115,6 +1148,7 @@ export namespace Prisma {
     createdAt: Date
     updatedAt: Date
     userId: number
+    competitionId: string
     _count: AuditLogCountAggregateOutputType | null
     _avg: AuditLogAvgAggregateOutputType | null
     _sum: AuditLogSumAggregateOutputType | null
@@ -1142,6 +1176,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     userId?: boolean
+    competitionId?: boolean
     user?: boolean | UserArgs
   }
 
@@ -2141,14 +2176,16 @@ export namespace Prisma {
     id?: boolean
     phoneNumber?: boolean
     AuditLog?: boolean | User$AuditLogArgs
-    Token?: boolean | User$TokenArgs
+    CompetitionSubscription?: boolean | User$CompetitionSubscriptionArgs
+    CompetitorSubscription?: boolean | User$CompetitorSubscriptionArgs
     _count?: boolean | UserCountOutputTypeArgs
   }
 
 
   export type UserInclude = {
     AuditLog?: boolean | User$AuditLogArgs
-    Token?: boolean | User$TokenArgs
+    CompetitionSubscription?: boolean | User$CompetitionSubscriptionArgs
+    CompetitorSubscription?: boolean | User$CompetitorSubscriptionArgs
     _count?: boolean | UserCountOutputTypeArgs
   } 
 
@@ -2160,14 +2197,16 @@ export namespace Prisma {
     ? User  & {
     [P in TruthyKeys<S['include']>]:
         P extends 'AuditLog' ? Array < AuditLogGetPayload<S['include'][P]>>  :
-        P extends 'Token' ? Array < TokenGetPayload<S['include'][P]>>  :
+        P extends 'CompetitionSubscription' ? Array < CompetitionSubscriptionGetPayload<S['include'][P]>>  :
+        P extends 'CompetitorSubscription' ? Array < CompetitorSubscriptionGetPayload<S['include'][P]>>  :
         P extends '_count' ? UserCountOutputTypeGetPayload<S['include'][P]> :  never
   } 
     : S extends { select: any } & (UserArgs | UserFindManyArgs)
       ? {
     [P in TruthyKeys<S['select']>]:
         P extends 'AuditLog' ? Array < AuditLogGetPayload<S['select'][P]>>  :
-        P extends 'Token' ? Array < TokenGetPayload<S['select'][P]>>  :
+        P extends 'CompetitionSubscription' ? Array < CompetitionSubscriptionGetPayload<S['select'][P]>>  :
+        P extends 'CompetitorSubscription' ? Array < CompetitorSubscriptionGetPayload<S['select'][P]>>  :
         P extends '_count' ? UserCountOutputTypeGetPayload<S['select'][P]> :  P extends keyof User ? User[P] : never
   } 
       : User
@@ -2544,7 +2583,9 @@ export namespace Prisma {
 
     AuditLog<T extends User$AuditLogArgs= {}>(args?: Subset<T, User$AuditLogArgs>): PrismaPromise<Array<AuditLogGetPayload<T>>| Null>;
 
-    Token<T extends User$TokenArgs= {}>(args?: Subset<T, User$TokenArgs>): PrismaPromise<Array<TokenGetPayload<T>>| Null>;
+    CompetitionSubscription<T extends User$CompetitionSubscriptionArgs= {}>(args?: Subset<T, User$CompetitionSubscriptionArgs>): PrismaPromise<Array<CompetitionSubscriptionGetPayload<T>>| Null>;
+
+    CompetitorSubscription<T extends User$CompetitorSubscriptionArgs= {}>(args?: Subset<T, User$CompetitorSubscriptionArgs>): PrismaPromise<Array<CompetitorSubscriptionGetPayload<T>>| Null>;
 
     private get _document();
     /**
@@ -2973,25 +3014,48 @@ export namespace Prisma {
 
 
   /**
-   * User.Token
+   * User.CompetitionSubscription
    */
-  export type User$TokenArgs = {
+  export type User$CompetitionSubscriptionArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
-    where?: TokenWhereInput
-    orderBy?: Enumerable<TokenOrderByWithRelationInput>
-    cursor?: TokenWhereUniqueInput
+    include?: CompetitionSubscriptionInclude | null
+    where?: CompetitionSubscriptionWhereInput
+    orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
+    cursor?: CompetitionSubscriptionWhereUniqueInput
     take?: number
     skip?: number
-    distinct?: Enumerable<TokenScalarFieldEnum>
+    distinct?: Enumerable<CompetitionSubscriptionScalarFieldEnum>
+  }
+
+
+  /**
+   * User.CompetitorSubscription
+   */
+  export type User$CompetitorSubscriptionArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    where?: CompetitorSubscriptionWhereInput
+    orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
+    cursor?: CompetitorSubscriptionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<CompetitorSubscriptionScalarFieldEnum>
   }
 
 
@@ -3935,410 +3999,402 @@ export namespace Prisma {
 
 
   /**
-   * Model Token
+   * Model CompetitionSubscription
    */
 
 
-  export type AggregateToken = {
-    _count: TokenCountAggregateOutputType | null
-    _avg: TokenAvgAggregateOutputType | null
-    _sum: TokenSumAggregateOutputType | null
-    _min: TokenMinAggregateOutputType | null
-    _max: TokenMaxAggregateOutputType | null
+  export type AggregateCompetitionSubscription = {
+    _count: CompetitionSubscriptionCountAggregateOutputType | null
+    _avg: CompetitionSubscriptionAvgAggregateOutputType | null
+    _sum: CompetitionSubscriptionSumAggregateOutputType | null
+    _min: CompetitionSubscriptionMinAggregateOutputType | null
+    _max: CompetitionSubscriptionMaxAggregateOutputType | null
   }
 
-  export type TokenAvgAggregateOutputType = {
+  export type CompetitionSubscriptionAvgAggregateOutputType = {
     id: number | null
     userId: number | null
   }
 
-  export type TokenSumAggregateOutputType = {
+  export type CompetitionSubscriptionSumAggregateOutputType = {
     id: number | null
     userId: number | null
   }
 
-  export type TokenMinAggregateOutputType = {
-    id: number | null
-    createdAt: Date | null
-    updatedAt: Date | null
-    type: TokenType | null
-    emailToken: string | null
-    valid: boolean | null
-    expiration: Date | null
-    userId: number | null
-  }
-
-  export type TokenMaxAggregateOutputType = {
+  export type CompetitionSubscriptionMinAggregateOutputType = {
     id: number | null
     createdAt: Date | null
     updatedAt: Date | null
-    type: TokenType | null
-    emailToken: string | null
-    valid: boolean | null
-    expiration: Date | null
     userId: number | null
+    competitionId: string | null
+    type: CompetitionSubscriptionType | null
+    value: string | null
   }
 
-  export type TokenCountAggregateOutputType = {
+  export type CompetitionSubscriptionMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    userId: number | null
+    competitionId: string | null
+    type: CompetitionSubscriptionType | null
+    value: string | null
+  }
+
+  export type CompetitionSubscriptionCountAggregateOutputType = {
     id: number
     createdAt: number
     updatedAt: number
-    type: number
-    emailToken: number
-    valid: number
-    expiration: number
     userId: number
+    competitionId: number
+    type: number
+    value: number
     _all: number
   }
 
 
-  export type TokenAvgAggregateInputType = {
+  export type CompetitionSubscriptionAvgAggregateInputType = {
     id?: true
     userId?: true
   }
 
-  export type TokenSumAggregateInputType = {
+  export type CompetitionSubscriptionSumAggregateInputType = {
     id?: true
     userId?: true
   }
 
-  export type TokenMinAggregateInputType = {
+  export type CompetitionSubscriptionMinAggregateInputType = {
     id?: true
     createdAt?: true
     updatedAt?: true
-    type?: true
-    emailToken?: true
-    valid?: true
-    expiration?: true
     userId?: true
+    competitionId?: true
+    type?: true
+    value?: true
   }
 
-  export type TokenMaxAggregateInputType = {
+  export type CompetitionSubscriptionMaxAggregateInputType = {
     id?: true
     createdAt?: true
     updatedAt?: true
-    type?: true
-    emailToken?: true
-    valid?: true
-    expiration?: true
     userId?: true
+    competitionId?: true
+    type?: true
+    value?: true
   }
 
-  export type TokenCountAggregateInputType = {
+  export type CompetitionSubscriptionCountAggregateInputType = {
     id?: true
     createdAt?: true
     updatedAt?: true
-    type?: true
-    emailToken?: true
-    valid?: true
-    expiration?: true
     userId?: true
+    competitionId?: true
+    type?: true
+    value?: true
     _all?: true
   }
 
-  export type TokenAggregateArgs = {
+  export type CompetitionSubscriptionAggregateArgs = {
     /**
-     * Filter which Token to aggregate.
+     * Filter which CompetitionSubscription to aggregate.
      * 
     **/
-    where?: TokenWhereInput
+    where?: CompetitionSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Tokens to fetch.
+     * Determine the order of CompetitionSubscriptions to fetch.
      * 
     **/
-    orderBy?: Enumerable<TokenOrderByWithRelationInput>
+    orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
      * 
     **/
-    cursor?: TokenWhereUniqueInput
+    cursor?: CompetitionSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Tokens from the position of the cursor.
+     * Take `±n` CompetitionSubscriptions from the position of the cursor.
      * 
     **/
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Tokens.
+     * Skip the first `n` CompetitionSubscriptions.
      * 
     **/
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
-     * Count returned Tokens
+     * Count returned CompetitionSubscriptions
     **/
-    _count?: true | TokenCountAggregateInputType
+    _count?: true | CompetitionSubscriptionCountAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to average
     **/
-    _avg?: TokenAvgAggregateInputType
+    _avg?: CompetitionSubscriptionAvgAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to sum
     **/
-    _sum?: TokenSumAggregateInputType
+    _sum?: CompetitionSubscriptionSumAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the minimum value
     **/
-    _min?: TokenMinAggregateInputType
+    _min?: CompetitionSubscriptionMinAggregateInputType
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
      * Select which fields to find the maximum value
     **/
-    _max?: TokenMaxAggregateInputType
+    _max?: CompetitionSubscriptionMaxAggregateInputType
   }
 
-  export type GetTokenAggregateType<T extends TokenAggregateArgs> = {
-        [P in keyof T & keyof AggregateToken]: P extends '_count' | 'count'
+  export type GetCompetitionSubscriptionAggregateType<T extends CompetitionSubscriptionAggregateArgs> = {
+        [P in keyof T & keyof AggregateCompetitionSubscription]: P extends '_count' | 'count'
       ? T[P] extends true
         ? number
-        : GetScalarType<T[P], AggregateToken[P]>
-      : GetScalarType<T[P], AggregateToken[P]>
+        : GetScalarType<T[P], AggregateCompetitionSubscription[P]>
+      : GetScalarType<T[P], AggregateCompetitionSubscription[P]>
   }
 
 
 
 
-  export type TokenGroupByArgs = {
-    where?: TokenWhereInput
-    orderBy?: Enumerable<TokenOrderByWithAggregationInput>
-    by: Array<TokenScalarFieldEnum>
-    having?: TokenScalarWhereWithAggregatesInput
+  export type CompetitionSubscriptionGroupByArgs = {
+    where?: CompetitionSubscriptionWhereInput
+    orderBy?: Enumerable<CompetitionSubscriptionOrderByWithAggregationInput>
+    by: Array<CompetitionSubscriptionScalarFieldEnum>
+    having?: CompetitionSubscriptionScalarWhereWithAggregatesInput
     take?: number
     skip?: number
-    _count?: TokenCountAggregateInputType | true
-    _avg?: TokenAvgAggregateInputType
-    _sum?: TokenSumAggregateInputType
-    _min?: TokenMinAggregateInputType
-    _max?: TokenMaxAggregateInputType
+    _count?: CompetitionSubscriptionCountAggregateInputType | true
+    _avg?: CompetitionSubscriptionAvgAggregateInputType
+    _sum?: CompetitionSubscriptionSumAggregateInputType
+    _min?: CompetitionSubscriptionMinAggregateInputType
+    _max?: CompetitionSubscriptionMaxAggregateInputType
   }
 
 
-  export type TokenGroupByOutputType = {
+  export type CompetitionSubscriptionGroupByOutputType = {
     id: number
     createdAt: Date
     updatedAt: Date
-    type: TokenType
-    emailToken: string | null
-    valid: boolean
-    expiration: Date
     userId: number
-    _count: TokenCountAggregateOutputType | null
-    _avg: TokenAvgAggregateOutputType | null
-    _sum: TokenSumAggregateOutputType | null
-    _min: TokenMinAggregateOutputType | null
-    _max: TokenMaxAggregateOutputType | null
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
+    _count: CompetitionSubscriptionCountAggregateOutputType | null
+    _avg: CompetitionSubscriptionAvgAggregateOutputType | null
+    _sum: CompetitionSubscriptionSumAggregateOutputType | null
+    _min: CompetitionSubscriptionMinAggregateOutputType | null
+    _max: CompetitionSubscriptionMaxAggregateOutputType | null
   }
 
-  type GetTokenGroupByPayload<T extends TokenGroupByArgs> = PrismaPromise<
+  type GetCompetitionSubscriptionGroupByPayload<T extends CompetitionSubscriptionGroupByArgs> = PrismaPromise<
     Array<
-      PickArray<TokenGroupByOutputType, T['by']> &
+      PickArray<CompetitionSubscriptionGroupByOutputType, T['by']> &
         {
-          [P in ((keyof T) & (keyof TokenGroupByOutputType))]: P extends '_count'
+          [P in ((keyof T) & (keyof CompetitionSubscriptionGroupByOutputType))]: P extends '_count'
             ? T[P] extends boolean
               ? number
-              : GetScalarType<T[P], TokenGroupByOutputType[P]>
-            : GetScalarType<T[P], TokenGroupByOutputType[P]>
+              : GetScalarType<T[P], CompetitionSubscriptionGroupByOutputType[P]>
+            : GetScalarType<T[P], CompetitionSubscriptionGroupByOutputType[P]>
         }
       >
     >
 
 
-  export type TokenSelect = {
+  export type CompetitionSubscriptionSelect = {
     id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    type?: boolean
-    emailToken?: boolean
-    valid?: boolean
-    expiration?: boolean
-    user?: boolean | UserArgs
     userId?: boolean
+    competitionId?: boolean
+    type?: boolean
+    value?: boolean
+    user?: boolean | UserArgs
   }
 
 
-  export type TokenInclude = {
+  export type CompetitionSubscriptionInclude = {
     user?: boolean | UserArgs
   } 
 
-  export type TokenGetPayload<S extends boolean | null | undefined | TokenArgs> =
+  export type CompetitionSubscriptionGetPayload<S extends boolean | null | undefined | CompetitionSubscriptionArgs> =
     S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? Token :
+    S extends true ? CompetitionSubscription :
     S extends undefined ? never :
-    S extends { include: any } & (TokenArgs | TokenFindManyArgs)
-    ? Token  & {
+    S extends { include: any } & (CompetitionSubscriptionArgs | CompetitionSubscriptionFindManyArgs)
+    ? CompetitionSubscription  & {
     [P in TruthyKeys<S['include']>]:
         P extends 'user' ? UserGetPayload<S['include'][P]> :  never
   } 
-    : S extends { select: any } & (TokenArgs | TokenFindManyArgs)
+    : S extends { select: any } & (CompetitionSubscriptionArgs | CompetitionSubscriptionFindManyArgs)
       ? {
     [P in TruthyKeys<S['select']>]:
-        P extends 'user' ? UserGetPayload<S['select'][P]> :  P extends keyof Token ? Token[P] : never
+        P extends 'user' ? UserGetPayload<S['select'][P]> :  P extends keyof CompetitionSubscription ? CompetitionSubscription[P] : never
   } 
-      : Token
+      : CompetitionSubscription
 
 
-  type TokenCountArgs = Merge<
-    Omit<TokenFindManyArgs, 'select' | 'include'> & {
-      select?: TokenCountAggregateInputType | true
+  type CompetitionSubscriptionCountArgs = Merge<
+    Omit<CompetitionSubscriptionFindManyArgs, 'select' | 'include'> & {
+      select?: CompetitionSubscriptionCountAggregateInputType | true
     }
   >
 
-  export interface TokenDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+  export interface CompetitionSubscriptionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
     /**
-     * Find zero or one Token that matches the filter.
-     * @param {TokenFindUniqueArgs} args - Arguments to find a Token
+     * Find zero or one CompetitionSubscription that matches the filter.
+     * @param {CompetitionSubscriptionFindUniqueArgs} args - Arguments to find a CompetitionSubscription
      * @example
-     * // Get one Token
-     * const token = await prisma.token.findUnique({
+     * // Get one CompetitionSubscription
+     * const competitionSubscription = await prisma.competitionSubscription.findUnique({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
     **/
-    findUnique<T extends TokenFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, TokenFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Token'> extends True ? Prisma__TokenClient<TokenGetPayload<T>> : Prisma__TokenClient<TokenGetPayload<T> | null, null>
+    findUnique<T extends CompetitionSubscriptionFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, CompetitionSubscriptionFindUniqueArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitionSubscription'> extends True ? Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>> : Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T> | null, null>
 
     /**
-     * Find one Token that matches the filter or throw an error  with `error.code='P2025'` 
+     * Find one CompetitionSubscription that matches the filter or throw an error  with `error.code='P2025'` 
      *     if no matches were found.
-     * @param {TokenFindUniqueOrThrowArgs} args - Arguments to find a Token
+     * @param {CompetitionSubscriptionFindUniqueOrThrowArgs} args - Arguments to find a CompetitionSubscription
      * @example
-     * // Get one Token
-     * const token = await prisma.token.findUniqueOrThrow({
+     * // Get one CompetitionSubscription
+     * const competitionSubscription = await prisma.competitionSubscription.findUniqueOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends TokenFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, TokenFindUniqueOrThrowArgs>
-    ): Prisma__TokenClient<TokenGetPayload<T>>
+    findUniqueOrThrow<T extends CompetitionSubscriptionFindUniqueOrThrowArgs>(
+      args?: SelectSubset<T, CompetitionSubscriptionFindUniqueOrThrowArgs>
+    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
 
     /**
-     * Find the first Token that matches the filter.
+     * Find the first CompetitionSubscription that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TokenFindFirstArgs} args - Arguments to find a Token
+     * @param {CompetitionSubscriptionFindFirstArgs} args - Arguments to find a CompetitionSubscription
      * @example
-     * // Get one Token
-     * const token = await prisma.token.findFirst({
+     * // Get one CompetitionSubscription
+     * const competitionSubscription = await prisma.competitionSubscription.findFirst({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
     **/
-    findFirst<T extends TokenFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, TokenFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Token'> extends True ? Prisma__TokenClient<TokenGetPayload<T>> : Prisma__TokenClient<TokenGetPayload<T> | null, null>
+    findFirst<T extends CompetitionSubscriptionFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, CompetitionSubscriptionFindFirstArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitionSubscription'> extends True ? Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>> : Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T> | null, null>
 
     /**
-     * Find the first Token that matches the filter or
+     * Find the first CompetitionSubscription that matches the filter or
      * throw `NotFoundError` if no matches were found.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TokenFindFirstOrThrowArgs} args - Arguments to find a Token
+     * @param {CompetitionSubscriptionFindFirstOrThrowArgs} args - Arguments to find a CompetitionSubscription
      * @example
-     * // Get one Token
-     * const token = await prisma.token.findFirstOrThrow({
+     * // Get one CompetitionSubscription
+     * const competitionSubscription = await prisma.competitionSubscription.findFirstOrThrow({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
     **/
-    findFirstOrThrow<T extends TokenFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, TokenFindFirstOrThrowArgs>
-    ): Prisma__TokenClient<TokenGetPayload<T>>
+    findFirstOrThrow<T extends CompetitionSubscriptionFindFirstOrThrowArgs>(
+      args?: SelectSubset<T, CompetitionSubscriptionFindFirstOrThrowArgs>
+    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
 
     /**
-     * Find zero or more Tokens that matches the filter.
+     * Find zero or more CompetitionSubscriptions that matches the filter.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TokenFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @param {CompetitionSubscriptionFindManyArgs=} args - Arguments to filter and select certain fields only.
      * @example
-     * // Get all Tokens
-     * const tokens = await prisma.token.findMany()
+     * // Get all CompetitionSubscriptions
+     * const competitionSubscriptions = await prisma.competitionSubscription.findMany()
      * 
-     * // Get first 10 Tokens
-     * const tokens = await prisma.token.findMany({ take: 10 })
+     * // Get first 10 CompetitionSubscriptions
+     * const competitionSubscriptions = await prisma.competitionSubscription.findMany({ take: 10 })
      * 
      * // Only select the `id`
-     * const tokenWithIdOnly = await prisma.token.findMany({ select: { id: true } })
+     * const competitionSubscriptionWithIdOnly = await prisma.competitionSubscription.findMany({ select: { id: true } })
      * 
     **/
-    findMany<T extends TokenFindManyArgs>(
-      args?: SelectSubset<T, TokenFindManyArgs>
-    ): PrismaPromise<Array<TokenGetPayload<T>>>
+    findMany<T extends CompetitionSubscriptionFindManyArgs>(
+      args?: SelectSubset<T, CompetitionSubscriptionFindManyArgs>
+    ): PrismaPromise<Array<CompetitionSubscriptionGetPayload<T>>>
 
     /**
-     * Create a Token.
-     * @param {TokenCreateArgs} args - Arguments to create a Token.
+     * Create a CompetitionSubscription.
+     * @param {CompetitionSubscriptionCreateArgs} args - Arguments to create a CompetitionSubscription.
      * @example
-     * // Create one Token
-     * const Token = await prisma.token.create({
+     * // Create one CompetitionSubscription
+     * const CompetitionSubscription = await prisma.competitionSubscription.create({
      *   data: {
-     *     // ... data to create a Token
+     *     // ... data to create a CompetitionSubscription
      *   }
      * })
      * 
     **/
-    create<T extends TokenCreateArgs>(
-      args: SelectSubset<T, TokenCreateArgs>
-    ): Prisma__TokenClient<TokenGetPayload<T>>
+    create<T extends CompetitionSubscriptionCreateArgs>(
+      args: SelectSubset<T, CompetitionSubscriptionCreateArgs>
+    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
 
     /**
-     * Create many Tokens.
-     *     @param {TokenCreateManyArgs} args - Arguments to create many Tokens.
+     * Create many CompetitionSubscriptions.
+     *     @param {CompetitionSubscriptionCreateManyArgs} args - Arguments to create many CompetitionSubscriptions.
      *     @example
-     *     // Create many Tokens
-     *     const token = await prisma.token.createMany({
+     *     // Create many CompetitionSubscriptions
+     *     const competitionSubscription = await prisma.competitionSubscription.createMany({
      *       data: {
      *         // ... provide data here
      *       }
      *     })
      *     
     **/
-    createMany<T extends TokenCreateManyArgs>(
-      args?: SelectSubset<T, TokenCreateManyArgs>
+    createMany<T extends CompetitionSubscriptionCreateManyArgs>(
+      args?: SelectSubset<T, CompetitionSubscriptionCreateManyArgs>
     ): PrismaPromise<BatchPayload>
 
     /**
-     * Delete a Token.
-     * @param {TokenDeleteArgs} args - Arguments to delete one Token.
+     * Delete a CompetitionSubscription.
+     * @param {CompetitionSubscriptionDeleteArgs} args - Arguments to delete one CompetitionSubscription.
      * @example
-     * // Delete one Token
-     * const Token = await prisma.token.delete({
+     * // Delete one CompetitionSubscription
+     * const CompetitionSubscription = await prisma.competitionSubscription.delete({
      *   where: {
-     *     // ... filter to delete one Token
+     *     // ... filter to delete one CompetitionSubscription
      *   }
      * })
      * 
     **/
-    delete<T extends TokenDeleteArgs>(
-      args: SelectSubset<T, TokenDeleteArgs>
-    ): Prisma__TokenClient<TokenGetPayload<T>>
+    delete<T extends CompetitionSubscriptionDeleteArgs>(
+      args: SelectSubset<T, CompetitionSubscriptionDeleteArgs>
+    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
 
     /**
-     * Update one Token.
-     * @param {TokenUpdateArgs} args - Arguments to update one Token.
+     * Update one CompetitionSubscription.
+     * @param {CompetitionSubscriptionUpdateArgs} args - Arguments to update one CompetitionSubscription.
      * @example
-     * // Update one Token
-     * const token = await prisma.token.update({
+     * // Update one CompetitionSubscription
+     * const competitionSubscription = await prisma.competitionSubscription.update({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -4348,34 +4404,34 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends TokenUpdateArgs>(
-      args: SelectSubset<T, TokenUpdateArgs>
-    ): Prisma__TokenClient<TokenGetPayload<T>>
+    update<T extends CompetitionSubscriptionUpdateArgs>(
+      args: SelectSubset<T, CompetitionSubscriptionUpdateArgs>
+    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
 
     /**
-     * Delete zero or more Tokens.
-     * @param {TokenDeleteManyArgs} args - Arguments to filter Tokens to delete.
+     * Delete zero or more CompetitionSubscriptions.
+     * @param {CompetitionSubscriptionDeleteManyArgs} args - Arguments to filter CompetitionSubscriptions to delete.
      * @example
-     * // Delete a few Tokens
-     * const { count } = await prisma.token.deleteMany({
+     * // Delete a few CompetitionSubscriptions
+     * const { count } = await prisma.competitionSubscription.deleteMany({
      *   where: {
      *     // ... provide filter here
      *   }
      * })
      * 
     **/
-    deleteMany<T extends TokenDeleteManyArgs>(
-      args?: SelectSubset<T, TokenDeleteManyArgs>
+    deleteMany<T extends CompetitionSubscriptionDeleteManyArgs>(
+      args?: SelectSubset<T, CompetitionSubscriptionDeleteManyArgs>
     ): PrismaPromise<BatchPayload>
 
     /**
-     * Update zero or more Tokens.
+     * Update zero or more CompetitionSubscriptions.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TokenUpdateManyArgs} args - Arguments to update one or more rows.
+     * @param {CompetitionSubscriptionUpdateManyArgs} args - Arguments to update one or more rows.
      * @example
-     * // Update many Tokens
-     * const token = await prisma.token.updateMany({
+     * // Update many CompetitionSubscriptions
+     * const competitionSubscription = await prisma.competitionSubscription.updateMany({
      *   where: {
      *     // ... provide filter here
      *   },
@@ -4385,59 +4441,59 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends TokenUpdateManyArgs>(
-      args: SelectSubset<T, TokenUpdateManyArgs>
+    updateMany<T extends CompetitionSubscriptionUpdateManyArgs>(
+      args: SelectSubset<T, CompetitionSubscriptionUpdateManyArgs>
     ): PrismaPromise<BatchPayload>
 
     /**
-     * Create or update one Token.
-     * @param {TokenUpsertArgs} args - Arguments to update or create a Token.
+     * Create or update one CompetitionSubscription.
+     * @param {CompetitionSubscriptionUpsertArgs} args - Arguments to update or create a CompetitionSubscription.
      * @example
-     * // Update or create a Token
-     * const token = await prisma.token.upsert({
+     * // Update or create a CompetitionSubscription
+     * const competitionSubscription = await prisma.competitionSubscription.upsert({
      *   create: {
-     *     // ... data to create a Token
+     *     // ... data to create a CompetitionSubscription
      *   },
      *   update: {
      *     // ... in case it already exists, update
      *   },
      *   where: {
-     *     // ... the filter for the Token we want to update
+     *     // ... the filter for the CompetitionSubscription we want to update
      *   }
      * })
     **/
-    upsert<T extends TokenUpsertArgs>(
-      args: SelectSubset<T, TokenUpsertArgs>
-    ): Prisma__TokenClient<TokenGetPayload<T>>
+    upsert<T extends CompetitionSubscriptionUpsertArgs>(
+      args: SelectSubset<T, CompetitionSubscriptionUpsertArgs>
+    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
 
     /**
-     * Count the number of Tokens.
+     * Count the number of CompetitionSubscriptions.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TokenCountArgs} args - Arguments to filter Tokens to count.
+     * @param {CompetitionSubscriptionCountArgs} args - Arguments to filter CompetitionSubscriptions to count.
      * @example
-     * // Count the number of Tokens
-     * const count = await prisma.token.count({
+     * // Count the number of CompetitionSubscriptions
+     * const count = await prisma.competitionSubscription.count({
      *   where: {
-     *     // ... the filter for the Tokens we want to count
+     *     // ... the filter for the CompetitionSubscriptions we want to count
      *   }
      * })
     **/
-    count<T extends TokenCountArgs>(
-      args?: Subset<T, TokenCountArgs>,
+    count<T extends CompetitionSubscriptionCountArgs>(
+      args?: Subset<T, CompetitionSubscriptionCountArgs>,
     ): PrismaPromise<
       T extends _Record<'select', any>
         ? T['select'] extends true
           ? number
-          : GetScalarType<T['select'], TokenCountAggregateOutputType>
+          : GetScalarType<T['select'], CompetitionSubscriptionCountAggregateOutputType>
         : number
     >
 
     /**
-     * Allows you to perform aggregations operations on a Token.
+     * Allows you to perform aggregations operations on a CompetitionSubscription.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TokenAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @param {CompetitionSubscriptionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
      * @example
      * // Ordered by age ascending
      * // Where email contains prisma.io
@@ -4457,13 +4513,13 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends TokenAggregateArgs>(args: Subset<T, TokenAggregateArgs>): PrismaPromise<GetTokenAggregateType<T>>
+    aggregate<T extends CompetitionSubscriptionAggregateArgs>(args: Subset<T, CompetitionSubscriptionAggregateArgs>): PrismaPromise<GetCompetitionSubscriptionAggregateType<T>>
 
     /**
-     * Group by Token.
+     * Group by CompetitionSubscription.
      * Note, that providing `undefined` is treated as the value not being there.
      * Read more here: https://pris.ly/d/null-undefined
-     * @param {TokenGroupByArgs} args - Group by arguments.
+     * @param {CompetitionSubscriptionGroupByArgs} args - Group by arguments.
      * @example
      * // Group by city, order by createdAt, get count
      * const result = await prisma.user.groupBy({
@@ -4478,14 +4534,14 @@ export namespace Prisma {
      * 
     **/
     groupBy<
-      T extends TokenGroupByArgs,
+      T extends CompetitionSubscriptionGroupByArgs,
       HasSelectOrTake extends Or<
         Extends<'skip', Keys<T>>,
         Extends<'take', Keys<T>>
       >,
       OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: TokenGroupByArgs['orderBy'] }
-        : { orderBy?: TokenGroupByArgs['orderBy'] },
+        ? { orderBy: CompetitionSubscriptionGroupByArgs['orderBy'] }
+        : { orderBy?: CompetitionSubscriptionGroupByArgs['orderBy'] },
       OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
       ByFields extends TupleToUnion<T['by']>,
       ByValid extends Has<ByFields, OrderFields>,
@@ -4534,17 +4590,17 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, TokenGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTokenGroupByPayload<T> : PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, CompetitionSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitionSubscriptionGroupByPayload<T> : PrismaPromise<InputErrors>
 
   }
 
   /**
-   * The delegate class that acts as a "Promise-like" for Token.
+   * The delegate class that acts as a "Promise-like" for CompetitionSubscription.
    * Why is this prefixed with `Prisma__`?
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__TokenClient<T, Null = never> implements PrismaPromise<T> {
+  export class Prisma__CompetitionSubscriptionClient<T, Null = never> implements PrismaPromise<T> {
     [prisma]: true;
     private readonly _dmmf;
     private readonly _fetcher;
@@ -4591,30 +4647,30 @@ export namespace Prisma {
   // Custom InputTypes
 
   /**
-   * Token base type for findUnique actions
+   * CompetitionSubscription base type for findUnique actions
    */
-  export type TokenFindUniqueArgsBase = {
+  export type CompetitionSubscriptionFindUniqueArgsBase = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * Filter, which Token to fetch.
+     * Filter, which CompetitionSubscription to fetch.
      * 
     **/
-    where: TokenWhereUniqueInput
+    where: CompetitionSubscriptionWhereUniqueInput
   }
 
   /**
-   * Token findUnique
+   * CompetitionSubscription findUnique
    */
-  export interface TokenFindUniqueArgs extends TokenFindUniqueArgsBase {
+  export interface CompetitionSubscriptionFindUniqueArgs extends CompetitionSubscriptionFindUniqueArgsBase {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -4624,87 +4680,87 @@ export namespace Prisma {
       
 
   /**
-   * Token findUniqueOrThrow
+   * CompetitionSubscription findUniqueOrThrow
    */
-  export type TokenFindUniqueOrThrowArgs = {
+  export type CompetitionSubscriptionFindUniqueOrThrowArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * Filter, which Token to fetch.
+     * Filter, which CompetitionSubscription to fetch.
      * 
     **/
-    where: TokenWhereUniqueInput
+    where: CompetitionSubscriptionWhereUniqueInput
   }
 
 
   /**
-   * Token base type for findFirst actions
+   * CompetitionSubscription base type for findFirst actions
    */
-  export type TokenFindFirstArgsBase = {
+  export type CompetitionSubscriptionFindFirstArgsBase = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * Filter, which Token to fetch.
+     * Filter, which CompetitionSubscription to fetch.
      * 
     **/
-    where?: TokenWhereInput
+    where?: CompetitionSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Tokens to fetch.
+     * Determine the order of CompetitionSubscriptions to fetch.
      * 
     **/
-    orderBy?: Enumerable<TokenOrderByWithRelationInput>
+    orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for Tokens.
+     * Sets the position for searching for CompetitionSubscriptions.
      * 
     **/
-    cursor?: TokenWhereUniqueInput
+    cursor?: CompetitionSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Tokens from the position of the cursor.
+     * Take `±n` CompetitionSubscriptions from the position of the cursor.
      * 
     **/
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Tokens.
+     * Skip the first `n` CompetitionSubscriptions.
      * 
     **/
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Tokens.
+     * Filter by unique combinations of CompetitionSubscriptions.
      * 
     **/
-    distinct?: Enumerable<TokenScalarFieldEnum>
+    distinct?: Enumerable<CompetitionSubscriptionScalarFieldEnum>
   }
 
   /**
-   * Token findFirst
+   * CompetitionSubscription findFirst
    */
-  export interface TokenFindFirstArgs extends TokenFindFirstArgsBase {
+  export interface CompetitionSubscriptionFindFirstArgs extends CompetitionSubscriptionFindFirstArgsBase {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -4714,272 +4770,1318 @@ export namespace Prisma {
       
 
   /**
-   * Token findFirstOrThrow
+   * CompetitionSubscription findFirstOrThrow
    */
-  export type TokenFindFirstOrThrowArgs = {
+  export type CompetitionSubscriptionFindFirstOrThrowArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * Filter, which Token to fetch.
+     * Filter, which CompetitionSubscription to fetch.
      * 
     **/
-    where?: TokenWhereInput
+    where?: CompetitionSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Tokens to fetch.
+     * Determine the order of CompetitionSubscriptions to fetch.
      * 
     **/
-    orderBy?: Enumerable<TokenOrderByWithRelationInput>
+    orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for searching for Tokens.
+     * Sets the position for searching for CompetitionSubscriptions.
      * 
     **/
-    cursor?: TokenWhereUniqueInput
+    cursor?: CompetitionSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Tokens from the position of the cursor.
+     * Take `±n` CompetitionSubscriptions from the position of the cursor.
      * 
     **/
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Tokens.
+     * Skip the first `n` CompetitionSubscriptions.
      * 
     **/
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
-     * Filter by unique combinations of Tokens.
+     * Filter by unique combinations of CompetitionSubscriptions.
      * 
     **/
-    distinct?: Enumerable<TokenScalarFieldEnum>
+    distinct?: Enumerable<CompetitionSubscriptionScalarFieldEnum>
   }
 
 
   /**
-   * Token findMany
+   * CompetitionSubscription findMany
    */
-  export type TokenFindManyArgs = {
+  export type CompetitionSubscriptionFindManyArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * Filter, which Tokens to fetch.
+     * Filter, which CompetitionSubscriptions to fetch.
      * 
     **/
-    where?: TokenWhereInput
+    where?: CompetitionSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
-     * Determine the order of Tokens to fetch.
+     * Determine the order of CompetitionSubscriptions to fetch.
      * 
     **/
-    orderBy?: Enumerable<TokenOrderByWithRelationInput>
+    orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
-     * Sets the position for listing Tokens.
+     * Sets the position for listing CompetitionSubscriptions.
      * 
     **/
-    cursor?: TokenWhereUniqueInput
+    cursor?: CompetitionSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Take `±n` Tokens from the position of the cursor.
+     * Take `±n` CompetitionSubscriptions from the position of the cursor.
      * 
     **/
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
-     * Skip the first `n` Tokens.
+     * Skip the first `n` CompetitionSubscriptions.
      * 
     **/
     skip?: number
-    distinct?: Enumerable<TokenScalarFieldEnum>
+    distinct?: Enumerable<CompetitionSubscriptionScalarFieldEnum>
   }
 
 
   /**
-   * Token create
+   * CompetitionSubscription create
    */
-  export type TokenCreateArgs = {
+  export type CompetitionSubscriptionCreateArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * The data needed to create a Token.
+     * The data needed to create a CompetitionSubscription.
      * 
     **/
-    data: XOR<TokenCreateInput, TokenUncheckedCreateInput>
+    data: XOR<CompetitionSubscriptionCreateInput, CompetitionSubscriptionUncheckedCreateInput>
   }
 
 
   /**
-   * Token createMany
+   * CompetitionSubscription createMany
    */
-  export type TokenCreateManyArgs = {
+  export type CompetitionSubscriptionCreateManyArgs = {
     /**
-     * The data used to create many Tokens.
+     * The data used to create many CompetitionSubscriptions.
      * 
     **/
-    data: Enumerable<TokenCreateManyInput>
+    data: Enumerable<CompetitionSubscriptionCreateManyInput>
     skipDuplicates?: boolean
   }
 
 
   /**
-   * Token update
+   * CompetitionSubscription update
    */
-  export type TokenUpdateArgs = {
+  export type CompetitionSubscriptionUpdateArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * The data needed to update a Token.
+     * The data needed to update a CompetitionSubscription.
      * 
     **/
-    data: XOR<TokenUpdateInput, TokenUncheckedUpdateInput>
+    data: XOR<CompetitionSubscriptionUpdateInput, CompetitionSubscriptionUncheckedUpdateInput>
     /**
-     * Choose, which Token to update.
+     * Choose, which CompetitionSubscription to update.
      * 
     **/
-    where: TokenWhereUniqueInput
+    where: CompetitionSubscriptionWhereUniqueInput
   }
 
 
   /**
-   * Token updateMany
+   * CompetitionSubscription updateMany
    */
-  export type TokenUpdateManyArgs = {
+  export type CompetitionSubscriptionUpdateManyArgs = {
     /**
-     * The data used to update Tokens.
+     * The data used to update CompetitionSubscriptions.
      * 
     **/
-    data: XOR<TokenUpdateManyMutationInput, TokenUncheckedUpdateManyInput>
+    data: XOR<CompetitionSubscriptionUpdateManyMutationInput, CompetitionSubscriptionUncheckedUpdateManyInput>
     /**
-     * Filter which Tokens to update
+     * Filter which CompetitionSubscriptions to update
      * 
     **/
-    where?: TokenWhereInput
+    where?: CompetitionSubscriptionWhereInput
   }
 
 
   /**
-   * Token upsert
+   * CompetitionSubscription upsert
    */
-  export type TokenUpsertArgs = {
+  export type CompetitionSubscriptionUpsertArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * The filter to search for the Token to update in case it exists.
+     * The filter to search for the CompetitionSubscription to update in case it exists.
      * 
     **/
-    where: TokenWhereUniqueInput
+    where: CompetitionSubscriptionWhereUniqueInput
     /**
-     * In case the Token found by the `where` argument doesn't exist, create a new Token with this data.
+     * In case the CompetitionSubscription found by the `where` argument doesn't exist, create a new CompetitionSubscription with this data.
      * 
     **/
-    create: XOR<TokenCreateInput, TokenUncheckedCreateInput>
+    create: XOR<CompetitionSubscriptionCreateInput, CompetitionSubscriptionUncheckedCreateInput>
     /**
-     * In case the Token was found with the provided `where` argument, update it with this data.
+     * In case the CompetitionSubscription was found with the provided `where` argument, update it with this data.
      * 
     **/
-    update: XOR<TokenUpdateInput, TokenUncheckedUpdateInput>
+    update: XOR<CompetitionSubscriptionUpdateInput, CompetitionSubscriptionUncheckedUpdateInput>
   }
 
 
   /**
-   * Token delete
+   * CompetitionSubscription delete
    */
-  export type TokenDeleteArgs = {
+  export type CompetitionSubscriptionDeleteArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
     /**
-     * Filter which Token to delete.
+     * Filter which CompetitionSubscription to delete.
      * 
     **/
-    where: TokenWhereUniqueInput
+    where: CompetitionSubscriptionWhereUniqueInput
   }
 
 
   /**
-   * Token deleteMany
+   * CompetitionSubscription deleteMany
    */
-  export type TokenDeleteManyArgs = {
+  export type CompetitionSubscriptionDeleteManyArgs = {
     /**
-     * Filter which Tokens to delete
+     * Filter which CompetitionSubscriptions to delete
      * 
     **/
-    where?: TokenWhereInput
+    where?: CompetitionSubscriptionWhereInput
   }
 
 
   /**
-   * Token without action
+   * CompetitionSubscription without action
    */
-  export type TokenArgs = {
+  export type CompetitionSubscriptionArgs = {
     /**
-     * Select specific fields to fetch from the Token
+     * Select specific fields to fetch from the CompetitionSubscription
      * 
     **/
-    select?: TokenSelect | null
+    select?: CompetitionSubscriptionSelect | null
     /**
      * Choose, which related nodes to fetch as well.
      * 
     **/
-    include?: TokenInclude | null
+    include?: CompetitionSubscriptionInclude | null
+  }
+
+
+
+  /**
+   * Model CompetitorSubscription
+   */
+
+
+  export type AggregateCompetitorSubscription = {
+    _count: CompetitorSubscriptionCountAggregateOutputType | null
+    _avg: CompetitorSubscriptionAvgAggregateOutputType | null
+    _sum: CompetitorSubscriptionSumAggregateOutputType | null
+    _min: CompetitorSubscriptionMinAggregateOutputType | null
+    _max: CompetitorSubscriptionMaxAggregateOutputType | null
+  }
+
+  export type CompetitorSubscriptionAvgAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    wcaUserId: number | null
+  }
+
+  export type CompetitorSubscriptionSumAggregateOutputType = {
+    id: number | null
+    userId: number | null
+    wcaUserId: number | null
+  }
+
+  export type CompetitorSubscriptionMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    userId: number | null
+    wcaUserId: number | null
+    verified: boolean | null
+    code: string | null
+  }
+
+  export type CompetitorSubscriptionMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    userId: number | null
+    wcaUserId: number | null
+    verified: boolean | null
+    code: string | null
+  }
+
+  export type CompetitorSubscriptionCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    userId: number
+    wcaUserId: number
+    verified: number
+    code: number
+    _all: number
+  }
+
+
+  export type CompetitorSubscriptionAvgAggregateInputType = {
+    id?: true
+    userId?: true
+    wcaUserId?: true
+  }
+
+  export type CompetitorSubscriptionSumAggregateInputType = {
+    id?: true
+    userId?: true
+    wcaUserId?: true
+  }
+
+  export type CompetitorSubscriptionMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    userId?: true
+    wcaUserId?: true
+    verified?: true
+    code?: true
+  }
+
+  export type CompetitorSubscriptionMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    userId?: true
+    wcaUserId?: true
+    verified?: true
+    code?: true
+  }
+
+  export type CompetitorSubscriptionCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    userId?: true
+    wcaUserId?: true
+    verified?: true
+    code?: true
+    _all?: true
+  }
+
+  export type CompetitorSubscriptionAggregateArgs = {
+    /**
+     * Filter which CompetitorSubscription to aggregate.
+     * 
+    **/
+    where?: CompetitorSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompetitorSubscriptions to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     * 
+    **/
+    cursor?: CompetitorSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompetitorSubscriptions from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompetitorSubscriptions.
+     * 
+    **/
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CompetitorSubscriptions
+    **/
+    _count?: true | CompetitorSubscriptionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CompetitorSubscriptionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CompetitorSubscriptionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CompetitorSubscriptionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CompetitorSubscriptionMaxAggregateInputType
+  }
+
+  export type GetCompetitorSubscriptionAggregateType<T extends CompetitorSubscriptionAggregateArgs> = {
+        [P in keyof T & keyof AggregateCompetitorSubscription]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCompetitorSubscription[P]>
+      : GetScalarType<T[P], AggregateCompetitorSubscription[P]>
+  }
+
+
+
+
+  export type CompetitorSubscriptionGroupByArgs = {
+    where?: CompetitorSubscriptionWhereInput
+    orderBy?: Enumerable<CompetitorSubscriptionOrderByWithAggregationInput>
+    by: Array<CompetitorSubscriptionScalarFieldEnum>
+    having?: CompetitorSubscriptionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CompetitorSubscriptionCountAggregateInputType | true
+    _avg?: CompetitorSubscriptionAvgAggregateInputType
+    _sum?: CompetitorSubscriptionSumAggregateInputType
+    _min?: CompetitorSubscriptionMinAggregateInputType
+    _max?: CompetitorSubscriptionMaxAggregateInputType
+  }
+
+
+  export type CompetitorSubscriptionGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    userId: number
+    wcaUserId: number
+    verified: boolean
+    code: string
+    _count: CompetitorSubscriptionCountAggregateOutputType | null
+    _avg: CompetitorSubscriptionAvgAggregateOutputType | null
+    _sum: CompetitorSubscriptionSumAggregateOutputType | null
+    _min: CompetitorSubscriptionMinAggregateOutputType | null
+    _max: CompetitorSubscriptionMaxAggregateOutputType | null
+  }
+
+  type GetCompetitorSubscriptionGroupByPayload<T extends CompetitorSubscriptionGroupByArgs> = PrismaPromise<
+    Array<
+      PickArray<CompetitorSubscriptionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CompetitorSubscriptionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CompetitorSubscriptionGroupByOutputType[P]>
+            : GetScalarType<T[P], CompetitorSubscriptionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CompetitorSubscriptionSelect = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    userId?: boolean
+    wcaUserId?: boolean
+    verified?: boolean
+    code?: boolean
+    user?: boolean | UserArgs
+  }
+
+
+  export type CompetitorSubscriptionInclude = {
+    user?: boolean | UserArgs
+  } 
+
+  export type CompetitorSubscriptionGetPayload<S extends boolean | null | undefined | CompetitorSubscriptionArgs> =
+    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
+    S extends true ? CompetitorSubscription :
+    S extends undefined ? never :
+    S extends { include: any } & (CompetitorSubscriptionArgs | CompetitorSubscriptionFindManyArgs)
+    ? CompetitorSubscription  & {
+    [P in TruthyKeys<S['include']>]:
+        P extends 'user' ? UserGetPayload<S['include'][P]> :  never
+  } 
+    : S extends { select: any } & (CompetitorSubscriptionArgs | CompetitorSubscriptionFindManyArgs)
+      ? {
+    [P in TruthyKeys<S['select']>]:
+        P extends 'user' ? UserGetPayload<S['select'][P]> :  P extends keyof CompetitorSubscription ? CompetitorSubscription[P] : never
+  } 
+      : CompetitorSubscription
+
+
+  type CompetitorSubscriptionCountArgs = Merge<
+    Omit<CompetitorSubscriptionFindManyArgs, 'select' | 'include'> & {
+      select?: CompetitorSubscriptionCountAggregateInputType | true
+    }
+  >
+
+  export interface CompetitorSubscriptionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+    /**
+     * Find zero or one CompetitorSubscription that matches the filter.
+     * @param {CompetitorSubscriptionFindUniqueArgs} args - Arguments to find a CompetitorSubscription
+     * @example
+     * // Get one CompetitorSubscription
+     * const competitorSubscription = await prisma.competitorSubscription.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends CompetitorSubscriptionFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, CompetitorSubscriptionFindUniqueArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitorSubscription'> extends True ? Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>> : Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T> | null, null>
+
+    /**
+     * Find one CompetitorSubscription that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {CompetitorSubscriptionFindUniqueOrThrowArgs} args - Arguments to find a CompetitorSubscription
+     * @example
+     * // Get one CompetitorSubscription
+     * const competitorSubscription = await prisma.competitorSubscription.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends CompetitorSubscriptionFindUniqueOrThrowArgs>(
+      args?: SelectSubset<T, CompetitorSubscriptionFindUniqueOrThrowArgs>
+    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+
+    /**
+     * Find the first CompetitorSubscription that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitorSubscriptionFindFirstArgs} args - Arguments to find a CompetitorSubscription
+     * @example
+     * // Get one CompetitorSubscription
+     * const competitorSubscription = await prisma.competitorSubscription.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends CompetitorSubscriptionFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, CompetitorSubscriptionFindFirstArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitorSubscription'> extends True ? Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>> : Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T> | null, null>
+
+    /**
+     * Find the first CompetitorSubscription that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitorSubscriptionFindFirstOrThrowArgs} args - Arguments to find a CompetitorSubscription
+     * @example
+     * // Get one CompetitorSubscription
+     * const competitorSubscription = await prisma.competitorSubscription.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends CompetitorSubscriptionFindFirstOrThrowArgs>(
+      args?: SelectSubset<T, CompetitorSubscriptionFindFirstOrThrowArgs>
+    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+
+    /**
+     * Find zero or more CompetitorSubscriptions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitorSubscriptionFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CompetitorSubscriptions
+     * const competitorSubscriptions = await prisma.competitorSubscription.findMany()
+     * 
+     * // Get first 10 CompetitorSubscriptions
+     * const competitorSubscriptions = await prisma.competitorSubscription.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const competitorSubscriptionWithIdOnly = await prisma.competitorSubscription.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends CompetitorSubscriptionFindManyArgs>(
+      args?: SelectSubset<T, CompetitorSubscriptionFindManyArgs>
+    ): PrismaPromise<Array<CompetitorSubscriptionGetPayload<T>>>
+
+    /**
+     * Create a CompetitorSubscription.
+     * @param {CompetitorSubscriptionCreateArgs} args - Arguments to create a CompetitorSubscription.
+     * @example
+     * // Create one CompetitorSubscription
+     * const CompetitorSubscription = await prisma.competitorSubscription.create({
+     *   data: {
+     *     // ... data to create a CompetitorSubscription
+     *   }
+     * })
+     * 
+    **/
+    create<T extends CompetitorSubscriptionCreateArgs>(
+      args: SelectSubset<T, CompetitorSubscriptionCreateArgs>
+    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+
+    /**
+     * Create many CompetitorSubscriptions.
+     *     @param {CompetitorSubscriptionCreateManyArgs} args - Arguments to create many CompetitorSubscriptions.
+     *     @example
+     *     // Create many CompetitorSubscriptions
+     *     const competitorSubscription = await prisma.competitorSubscription.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends CompetitorSubscriptionCreateManyArgs>(
+      args?: SelectSubset<T, CompetitorSubscriptionCreateManyArgs>
+    ): PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a CompetitorSubscription.
+     * @param {CompetitorSubscriptionDeleteArgs} args - Arguments to delete one CompetitorSubscription.
+     * @example
+     * // Delete one CompetitorSubscription
+     * const CompetitorSubscription = await prisma.competitorSubscription.delete({
+     *   where: {
+     *     // ... filter to delete one CompetitorSubscription
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends CompetitorSubscriptionDeleteArgs>(
+      args: SelectSubset<T, CompetitorSubscriptionDeleteArgs>
+    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+
+    /**
+     * Update one CompetitorSubscription.
+     * @param {CompetitorSubscriptionUpdateArgs} args - Arguments to update one CompetitorSubscription.
+     * @example
+     * // Update one CompetitorSubscription
+     * const competitorSubscription = await prisma.competitorSubscription.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends CompetitorSubscriptionUpdateArgs>(
+      args: SelectSubset<T, CompetitorSubscriptionUpdateArgs>
+    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+
+    /**
+     * Delete zero or more CompetitorSubscriptions.
+     * @param {CompetitorSubscriptionDeleteManyArgs} args - Arguments to filter CompetitorSubscriptions to delete.
+     * @example
+     * // Delete a few CompetitorSubscriptions
+     * const { count } = await prisma.competitorSubscription.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends CompetitorSubscriptionDeleteManyArgs>(
+      args?: SelectSubset<T, CompetitorSubscriptionDeleteManyArgs>
+    ): PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompetitorSubscriptions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitorSubscriptionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CompetitorSubscriptions
+     * const competitorSubscription = await prisma.competitorSubscription.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends CompetitorSubscriptionUpdateManyArgs>(
+      args: SelectSubset<T, CompetitorSubscriptionUpdateManyArgs>
+    ): PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one CompetitorSubscription.
+     * @param {CompetitorSubscriptionUpsertArgs} args - Arguments to update or create a CompetitorSubscription.
+     * @example
+     * // Update or create a CompetitorSubscription
+     * const competitorSubscription = await prisma.competitorSubscription.upsert({
+     *   create: {
+     *     // ... data to create a CompetitorSubscription
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CompetitorSubscription we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends CompetitorSubscriptionUpsertArgs>(
+      args: SelectSubset<T, CompetitorSubscriptionUpsertArgs>
+    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+
+    /**
+     * Count the number of CompetitorSubscriptions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitorSubscriptionCountArgs} args - Arguments to filter CompetitorSubscriptions to count.
+     * @example
+     * // Count the number of CompetitorSubscriptions
+     * const count = await prisma.competitorSubscription.count({
+     *   where: {
+     *     // ... the filter for the CompetitorSubscriptions we want to count
+     *   }
+     * })
+    **/
+    count<T extends CompetitorSubscriptionCountArgs>(
+      args?: Subset<T, CompetitorSubscriptionCountArgs>,
+    ): PrismaPromise<
+      T extends _Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CompetitorSubscriptionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CompetitorSubscription.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitorSubscriptionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CompetitorSubscriptionAggregateArgs>(args: Subset<T, CompetitorSubscriptionAggregateArgs>): PrismaPromise<GetCompetitorSubscriptionAggregateType<T>>
+
+    /**
+     * Group by CompetitorSubscription.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitorSubscriptionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CompetitorSubscriptionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CompetitorSubscriptionGroupByArgs['orderBy'] }
+        : { orderBy?: CompetitorSubscriptionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CompetitorSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitorSubscriptionGroupByPayload<T> : PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CompetitorSubscription.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__CompetitorSubscriptionClient<T, Null = never> implements PrismaPromise<T> {
+    [prisma]: true;
+    private readonly _dmmf;
+    private readonly _fetcher;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+
+    user<T extends UserArgs= {}>(args?: Subset<T, UserArgs>): Prisma__UserClient<UserGetPayload<T> | Null>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * CompetitorSubscription base type for findUnique actions
+   */
+  export type CompetitorSubscriptionFindUniqueArgsBase = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * Filter, which CompetitorSubscription to fetch.
+     * 
+    **/
+    where: CompetitorSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * CompetitorSubscription findUnique
+   */
+  export interface CompetitorSubscriptionFindUniqueArgs extends CompetitorSubscriptionFindUniqueArgsBase {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * CompetitorSubscription findUniqueOrThrow
+   */
+  export type CompetitorSubscriptionFindUniqueOrThrowArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * Filter, which CompetitorSubscription to fetch.
+     * 
+    **/
+    where: CompetitorSubscriptionWhereUniqueInput
+  }
+
+
+  /**
+   * CompetitorSubscription base type for findFirst actions
+   */
+  export type CompetitorSubscriptionFindFirstArgsBase = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * Filter, which CompetitorSubscription to fetch.
+     * 
+    **/
+    where?: CompetitorSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompetitorSubscriptions to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompetitorSubscriptions.
+     * 
+    **/
+    cursor?: CompetitorSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompetitorSubscriptions from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompetitorSubscriptions.
+     * 
+    **/
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompetitorSubscriptions.
+     * 
+    **/
+    distinct?: Enumerable<CompetitorSubscriptionScalarFieldEnum>
+  }
+
+  /**
+   * CompetitorSubscription findFirst
+   */
+  export interface CompetitorSubscriptionFindFirstArgs extends CompetitorSubscriptionFindFirstArgsBase {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * CompetitorSubscription findFirstOrThrow
+   */
+  export type CompetitorSubscriptionFindFirstOrThrowArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * Filter, which CompetitorSubscription to fetch.
+     * 
+    **/
+    where?: CompetitorSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompetitorSubscriptions to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompetitorSubscriptions.
+     * 
+    **/
+    cursor?: CompetitorSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompetitorSubscriptions from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompetitorSubscriptions.
+     * 
+    **/
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompetitorSubscriptions.
+     * 
+    **/
+    distinct?: Enumerable<CompetitorSubscriptionScalarFieldEnum>
+  }
+
+
+  /**
+   * CompetitorSubscription findMany
+   */
+  export type CompetitorSubscriptionFindManyArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * Filter, which CompetitorSubscriptions to fetch.
+     * 
+    **/
+    where?: CompetitorSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompetitorSubscriptions to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CompetitorSubscriptions.
+     * 
+    **/
+    cursor?: CompetitorSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompetitorSubscriptions from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompetitorSubscriptions.
+     * 
+    **/
+    skip?: number
+    distinct?: Enumerable<CompetitorSubscriptionScalarFieldEnum>
+  }
+
+
+  /**
+   * CompetitorSubscription create
+   */
+  export type CompetitorSubscriptionCreateArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * The data needed to create a CompetitorSubscription.
+     * 
+    **/
+    data: XOR<CompetitorSubscriptionCreateInput, CompetitorSubscriptionUncheckedCreateInput>
+  }
+
+
+  /**
+   * CompetitorSubscription createMany
+   */
+  export type CompetitorSubscriptionCreateManyArgs = {
+    /**
+     * The data used to create many CompetitorSubscriptions.
+     * 
+    **/
+    data: Enumerable<CompetitorSubscriptionCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * CompetitorSubscription update
+   */
+  export type CompetitorSubscriptionUpdateArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * The data needed to update a CompetitorSubscription.
+     * 
+    **/
+    data: XOR<CompetitorSubscriptionUpdateInput, CompetitorSubscriptionUncheckedUpdateInput>
+    /**
+     * Choose, which CompetitorSubscription to update.
+     * 
+    **/
+    where: CompetitorSubscriptionWhereUniqueInput
+  }
+
+
+  /**
+   * CompetitorSubscription updateMany
+   */
+  export type CompetitorSubscriptionUpdateManyArgs = {
+    /**
+     * The data used to update CompetitorSubscriptions.
+     * 
+    **/
+    data: XOR<CompetitorSubscriptionUpdateManyMutationInput, CompetitorSubscriptionUncheckedUpdateManyInput>
+    /**
+     * Filter which CompetitorSubscriptions to update
+     * 
+    **/
+    where?: CompetitorSubscriptionWhereInput
+  }
+
+
+  /**
+   * CompetitorSubscription upsert
+   */
+  export type CompetitorSubscriptionUpsertArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * The filter to search for the CompetitorSubscription to update in case it exists.
+     * 
+    **/
+    where: CompetitorSubscriptionWhereUniqueInput
+    /**
+     * In case the CompetitorSubscription found by the `where` argument doesn't exist, create a new CompetitorSubscription with this data.
+     * 
+    **/
+    create: XOR<CompetitorSubscriptionCreateInput, CompetitorSubscriptionUncheckedCreateInput>
+    /**
+     * In case the CompetitorSubscription was found with the provided `where` argument, update it with this data.
+     * 
+    **/
+    update: XOR<CompetitorSubscriptionUpdateInput, CompetitorSubscriptionUncheckedUpdateInput>
+  }
+
+
+  /**
+   * CompetitorSubscription delete
+   */
+  export type CompetitorSubscriptionDeleteArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
+    /**
+     * Filter which CompetitorSubscription to delete.
+     * 
+    **/
+    where: CompetitorSubscriptionWhereUniqueInput
+  }
+
+
+  /**
+   * CompetitorSubscription deleteMany
+   */
+  export type CompetitorSubscriptionDeleteManyArgs = {
+    /**
+     * Filter which CompetitorSubscriptions to delete
+     * 
+    **/
+    where?: CompetitorSubscriptionWhereInput
+  }
+
+
+  /**
+   * CompetitorSubscription without action
+   */
+  export type CompetitorSubscriptionArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitorSubscription
+     * 
+    **/
+    select?: CompetitorSubscriptionSelect | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     * 
+    **/
+    include?: CompetitorSubscriptionInclude | null
   }
 
 
@@ -4996,10 +6098,37 @@ export namespace Prisma {
     action: 'action',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
-    userId: 'userId'
+    userId: 'userId',
+    competitionId: 'competitionId'
   };
 
   export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+  export const CompetitionSubscriptionScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    userId: 'userId',
+    competitionId: 'competitionId',
+    type: 'type',
+    value: 'value'
+  };
+
+  export type CompetitionSubscriptionScalarFieldEnum = (typeof CompetitionSubscriptionScalarFieldEnum)[keyof typeof CompetitionSubscriptionScalarFieldEnum]
+
+
+  export const CompetitorSubscriptionScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    userId: 'userId',
+    wcaUserId: 'wcaUserId',
+    verified: 'verified',
+    code: 'code'
+  };
+
+  export type CompetitorSubscriptionScalarFieldEnum = (typeof CompetitorSubscriptionScalarFieldEnum)[keyof typeof CompetitorSubscriptionScalarFieldEnum]
 
 
   export const QueryMode: {
@@ -5026,20 +6155,6 @@ export namespace Prisma {
   };
 
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
-
-
-  export const TokenScalarFieldEnum: {
-    id: 'id',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
-    type: 'type',
-    emailToken: 'emailToken',
-    valid: 'valid',
-    expiration: 'expiration',
-    userId: 'userId'
-  };
-
-  export type TokenScalarFieldEnum = (typeof TokenScalarFieldEnum)[keyof typeof TokenScalarFieldEnum]
 
 
   export const TransactionIsolationLevel: {
@@ -5074,6 +6189,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
     userId?: IntFilter | number
+    competitionId?: StringFilter | string
     user?: XOR<UserRelationFilter, UserWhereInput>
   }
 
@@ -5083,6 +6199,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
+    competitionId?: SortOrder
     user?: UserOrderByWithRelationInput
   }
 
@@ -5096,6 +6213,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
+    competitionId?: SortOrder
     _count?: AuditLogCountOrderByAggregateInput
     _avg?: AuditLogAvgOrderByAggregateInput
     _max?: AuditLogMaxOrderByAggregateInput
@@ -5112,6 +6230,7 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter | Date | string
     updatedAt?: DateTimeWithAggregatesFilter | Date | string
     userId?: IntWithAggregatesFilter | number
+    competitionId?: StringWithAggregatesFilter | string
   }
 
   export type UserWhereInput = {
@@ -5121,14 +6240,16 @@ export namespace Prisma {
     id?: IntFilter | number
     phoneNumber?: StringFilter | string
     AuditLog?: AuditLogListRelationFilter
-    Token?: TokenListRelationFilter
+    CompetitionSubscription?: CompetitionSubscriptionListRelationFilter
+    CompetitorSubscription?: CompetitorSubscriptionListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
     id?: SortOrder
     phoneNumber?: SortOrder
     AuditLog?: AuditLogOrderByRelationAggregateInput
-    Token?: TokenOrderByRelationAggregateInput
+    CompetitionSubscription?: CompetitionSubscriptionOrderByRelationAggregateInput
+    CompetitorSubscription?: CompetitorSubscriptionOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = {
@@ -5196,72 +6317,127 @@ export namespace Prisma {
     expiresAt?: DateTimeWithAggregatesFilter | Date | string
   }
 
-  export type TokenWhereInput = {
-    AND?: Enumerable<TokenWhereInput>
-    OR?: Enumerable<TokenWhereInput>
-    NOT?: Enumerable<TokenWhereInput>
+  export type CompetitionSubscriptionWhereInput = {
+    AND?: Enumerable<CompetitionSubscriptionWhereInput>
+    OR?: Enumerable<CompetitionSubscriptionWhereInput>
+    NOT?: Enumerable<CompetitionSubscriptionWhereInput>
     id?: IntFilter | number
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
-    type?: EnumTokenTypeFilter | TokenType
-    emailToken?: StringNullableFilter | string | null
-    valid?: BoolFilter | boolean
-    expiration?: DateTimeFilter | Date | string
-    user?: XOR<UserRelationFilter, UserWhereInput>
     userId?: IntFilter | number
+    competitionId?: StringFilter | string
+    type?: EnumCompetitionSubscriptionTypeFilter | CompetitionSubscriptionType
+    value?: StringFilter | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
   }
 
-  export type TokenOrderByWithRelationInput = {
+  export type CompetitionSubscriptionOrderByWithRelationInput = {
     id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    userId?: SortOrder
+    competitionId?: SortOrder
     type?: SortOrder
-    emailToken?: SortOrder
-    valid?: SortOrder
-    expiration?: SortOrder
+    value?: SortOrder
     user?: UserOrderByWithRelationInput
-    userId?: SortOrder
   }
 
-  export type TokenWhereUniqueInput = {
+  export type CompetitionSubscriptionWhereUniqueInput = {
     id?: number
-    emailToken?: string
+    userId_competitionId_type_value?: CompetitionSubscriptionUserIdCompetitionIdTypeValueCompoundUniqueInput
   }
 
-  export type TokenOrderByWithAggregationInput = {
+  export type CompetitionSubscriptionOrderByWithAggregationInput = {
     id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    type?: SortOrder
-    emailToken?: SortOrder
-    valid?: SortOrder
-    expiration?: SortOrder
     userId?: SortOrder
-    _count?: TokenCountOrderByAggregateInput
-    _avg?: TokenAvgOrderByAggregateInput
-    _max?: TokenMaxOrderByAggregateInput
-    _min?: TokenMinOrderByAggregateInput
-    _sum?: TokenSumOrderByAggregateInput
+    competitionId?: SortOrder
+    type?: SortOrder
+    value?: SortOrder
+    _count?: CompetitionSubscriptionCountOrderByAggregateInput
+    _avg?: CompetitionSubscriptionAvgOrderByAggregateInput
+    _max?: CompetitionSubscriptionMaxOrderByAggregateInput
+    _min?: CompetitionSubscriptionMinOrderByAggregateInput
+    _sum?: CompetitionSubscriptionSumOrderByAggregateInput
   }
 
-  export type TokenScalarWhereWithAggregatesInput = {
-    AND?: Enumerable<TokenScalarWhereWithAggregatesInput>
-    OR?: Enumerable<TokenScalarWhereWithAggregatesInput>
-    NOT?: Enumerable<TokenScalarWhereWithAggregatesInput>
+  export type CompetitionSubscriptionScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<CompetitionSubscriptionScalarWhereWithAggregatesInput>
+    OR?: Enumerable<CompetitionSubscriptionScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<CompetitionSubscriptionScalarWhereWithAggregatesInput>
     id?: IntWithAggregatesFilter | number
     createdAt?: DateTimeWithAggregatesFilter | Date | string
     updatedAt?: DateTimeWithAggregatesFilter | Date | string
-    type?: EnumTokenTypeWithAggregatesFilter | TokenType
-    emailToken?: StringNullableWithAggregatesFilter | string | null
-    valid?: BoolWithAggregatesFilter | boolean
-    expiration?: DateTimeWithAggregatesFilter | Date | string
     userId?: IntWithAggregatesFilter | number
+    competitionId?: StringWithAggregatesFilter | string
+    type?: EnumCompetitionSubscriptionTypeWithAggregatesFilter | CompetitionSubscriptionType
+    value?: StringWithAggregatesFilter | string
+  }
+
+  export type CompetitorSubscriptionWhereInput = {
+    AND?: Enumerable<CompetitorSubscriptionWhereInput>
+    OR?: Enumerable<CompetitorSubscriptionWhereInput>
+    NOT?: Enumerable<CompetitorSubscriptionWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    userId?: IntFilter | number
+    wcaUserId?: IntFilter | number
+    verified?: BoolFilter | boolean
+    code?: StringFilter | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type CompetitorSubscriptionOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    userId?: SortOrder
+    wcaUserId?: SortOrder
+    verified?: SortOrder
+    code?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type CompetitorSubscriptionWhereUniqueInput = {
+    id?: number
+    userId_wcaUserId?: CompetitorSubscriptionUserIdWcaUserIdCompoundUniqueInput
+  }
+
+  export type CompetitorSubscriptionOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    userId?: SortOrder
+    wcaUserId?: SortOrder
+    verified?: SortOrder
+    code?: SortOrder
+    _count?: CompetitorSubscriptionCountOrderByAggregateInput
+    _avg?: CompetitorSubscriptionAvgOrderByAggregateInput
+    _max?: CompetitorSubscriptionMaxOrderByAggregateInput
+    _min?: CompetitorSubscriptionMinOrderByAggregateInput
+    _sum?: CompetitorSubscriptionSumOrderByAggregateInput
+  }
+
+  export type CompetitorSubscriptionScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<CompetitorSubscriptionScalarWhereWithAggregatesInput>
+    OR?: Enumerable<CompetitorSubscriptionScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<CompetitorSubscriptionScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    userId?: IntWithAggregatesFilter | number
+    wcaUserId?: IntWithAggregatesFilter | number
+    verified?: BoolWithAggregatesFilter | boolean
+    code?: StringWithAggregatesFilter | string
   }
 
   export type AuditLogCreateInput = {
     action: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    competitionId: string
     user: UserCreateNestedOneWithoutAuditLogInput
   }
 
@@ -5271,12 +6447,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     userId: number
+    competitionId: string
   }
 
   export type AuditLogUpdateInput = {
     action?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
     user?: UserUpdateOneRequiredWithoutAuditLogNestedInput
   }
 
@@ -5286,6 +6464,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
+    competitionId?: StringFieldUpdateOperationsInput | string
   }
 
   export type AuditLogCreateManyInput = {
@@ -5294,12 +6473,14 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     userId: number
+    competitionId: string
   }
 
   export type AuditLogUpdateManyMutationInput = {
     action?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
   }
 
   export type AuditLogUncheckedUpdateManyInput = {
@@ -5308,32 +6489,37 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
+    competitionId?: StringFieldUpdateOperationsInput | string
   }
 
   export type UserCreateInput = {
     phoneNumber: string
     AuditLog?: AuditLogCreateNestedManyWithoutUserInput
-    Token?: TokenCreateNestedManyWithoutUserInput
+    CompetitionSubscription?: CompetitionSubscriptionCreateNestedManyWithoutUserInput
+    CompetitorSubscription?: CompetitorSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
     id?: number
     phoneNumber: string
     AuditLog?: AuditLogUncheckedCreateNestedManyWithoutUserInput
-    Token?: TokenUncheckedCreateNestedManyWithoutUserInput
+    CompetitionSubscription?: CompetitionSubscriptionUncheckedCreateNestedManyWithoutUserInput
+    CompetitorSubscription?: CompetitorSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
     phoneNumber?: StringFieldUpdateOperationsInput | string
     AuditLog?: AuditLogUpdateManyWithoutUserNestedInput
-    Token?: TokenUpdateManyWithoutUserNestedInput
+    CompetitionSubscription?: CompetitionSubscriptionUpdateManyWithoutUserNestedInput
+    CompetitorSubscription?: CompetitorSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     phoneNumber?: StringFieldUpdateOperationsInput | string
     AuditLog?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
-    Token?: TokenUncheckedUpdateManyWithoutUserNestedInput
+    CompetitionSubscription?: CompetitionSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+    CompetitorSubscription?: CompetitorSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -5399,77 +6585,136 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type TokenCreateInput = {
+  export type CompetitionSubscriptionCreateInput = {
     createdAt?: Date | string
     updatedAt?: Date | string
-    type: TokenType
-    emailToken?: string | null
-    valid?: boolean
-    expiration: Date | string
-    user: UserCreateNestedOneWithoutTokenInput
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
+    user: UserCreateNestedOneWithoutCompetitionSubscriptionInput
   }
 
-  export type TokenUncheckedCreateInput = {
+  export type CompetitionSubscriptionUncheckedCreateInput = {
     id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    type: TokenType
-    emailToken?: string | null
-    valid?: boolean
-    expiration: Date | string
     userId: number
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
   }
 
-  export type TokenUpdateInput = {
+  export type CompetitionSubscriptionUpdateInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    type?: EnumTokenTypeFieldUpdateOperationsInput | TokenType
-    emailToken?: NullableStringFieldUpdateOperationsInput | string | null
-    valid?: BoolFieldUpdateOperationsInput | boolean
-    expiration?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutTokenNestedInput
+    competitionId?: StringFieldUpdateOperationsInput | string
+    type?: EnumCompetitionSubscriptionTypeFieldUpdateOperationsInput | CompetitionSubscriptionType
+    value?: StringFieldUpdateOperationsInput | string
+    user?: UserUpdateOneRequiredWithoutCompetitionSubscriptionNestedInput
   }
 
-  export type TokenUncheckedUpdateInput = {
+  export type CompetitionSubscriptionUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    type?: EnumTokenTypeFieldUpdateOperationsInput | TokenType
-    emailToken?: NullableStringFieldUpdateOperationsInput | string | null
-    valid?: BoolFieldUpdateOperationsInput | boolean
-    expiration?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
+    competitionId?: StringFieldUpdateOperationsInput | string
+    type?: EnumCompetitionSubscriptionTypeFieldUpdateOperationsInput | CompetitionSubscriptionType
+    value?: StringFieldUpdateOperationsInput | string
   }
 
-  export type TokenCreateManyInput = {
+  export type CompetitionSubscriptionCreateManyInput = {
     id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    type: TokenType
-    emailToken?: string | null
-    valid?: boolean
-    expiration: Date | string
     userId: number
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
   }
 
-  export type TokenUpdateManyMutationInput = {
+  export type CompetitionSubscriptionUpdateManyMutationInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    type?: EnumTokenTypeFieldUpdateOperationsInput | TokenType
-    emailToken?: NullableStringFieldUpdateOperationsInput | string | null
-    valid?: BoolFieldUpdateOperationsInput | boolean
-    expiration?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    type?: EnumCompetitionSubscriptionTypeFieldUpdateOperationsInput | CompetitionSubscriptionType
+    value?: StringFieldUpdateOperationsInput | string
   }
 
-  export type TokenUncheckedUpdateManyInput = {
+  export type CompetitionSubscriptionUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    type?: EnumTokenTypeFieldUpdateOperationsInput | TokenType
-    emailToken?: NullableStringFieldUpdateOperationsInput | string | null
-    valid?: BoolFieldUpdateOperationsInput | boolean
-    expiration?: DateTimeFieldUpdateOperationsInput | Date | string
     userId?: IntFieldUpdateOperationsInput | number
+    competitionId?: StringFieldUpdateOperationsInput | string
+    type?: EnumCompetitionSubscriptionTypeFieldUpdateOperationsInput | CompetitionSubscriptionType
+    value?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitorSubscriptionCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wcaUserId: number
+    verified?: boolean
+    code: string
+    user: UserCreateNestedOneWithoutCompetitorSubscriptionInput
+  }
+
+  export type CompetitorSubscriptionUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    userId: number
+    wcaUserId: number
+    verified?: boolean
+    code: string
+  }
+
+  export type CompetitorSubscriptionUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    code?: StringFieldUpdateOperationsInput | string
+    user?: UserUpdateOneRequiredWithoutCompetitorSubscriptionNestedInput
+  }
+
+  export type CompetitorSubscriptionUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: IntFieldUpdateOperationsInput | number
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    code?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitorSubscriptionCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    userId: number
+    wcaUserId: number
+    verified?: boolean
+    code: string
+  }
+
+  export type CompetitorSubscriptionUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    code?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitorSubscriptionUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userId?: IntFieldUpdateOperationsInput | number
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    code?: StringFieldUpdateOperationsInput | string
   }
 
   export type IntFilter = {
@@ -5520,6 +6765,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
+    competitionId?: SortOrder
   }
 
   export type AuditLogAvgOrderByAggregateInput = {
@@ -5533,6 +6779,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
+    competitionId?: SortOrder
   }
 
   export type AuditLogMinOrderByAggregateInput = {
@@ -5541,6 +6788,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     userId?: SortOrder
+    competitionId?: SortOrder
   }
 
   export type AuditLogSumOrderByAggregateInput = {
@@ -5602,17 +6850,27 @@ export namespace Prisma {
     none?: AuditLogWhereInput
   }
 
-  export type TokenListRelationFilter = {
-    every?: TokenWhereInput
-    some?: TokenWhereInput
-    none?: TokenWhereInput
+  export type CompetitionSubscriptionListRelationFilter = {
+    every?: CompetitionSubscriptionWhereInput
+    some?: CompetitionSubscriptionWhereInput
+    none?: CompetitionSubscriptionWhereInput
+  }
+
+  export type CompetitorSubscriptionListRelationFilter = {
+    every?: CompetitorSubscriptionWhereInput
+    some?: CompetitorSubscriptionWhereInput
+    none?: CompetitorSubscriptionWhereInput
   }
 
   export type AuditLogOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
-  export type TokenOrderByRelationAggregateInput = {
+  export type CompetitionSubscriptionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CompetitorSubscriptionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -5660,26 +6918,68 @@ export namespace Prisma {
     expiresAt?: SortOrder
   }
 
-  export type EnumTokenTypeFilter = {
-    equals?: TokenType
-    in?: Enumerable<TokenType>
-    notIn?: Enumerable<TokenType>
-    not?: NestedEnumTokenTypeFilter | TokenType
+  export type EnumCompetitionSubscriptionTypeFilter = {
+    equals?: CompetitionSubscriptionType
+    in?: Enumerable<CompetitionSubscriptionType>
+    notIn?: Enumerable<CompetitionSubscriptionType>
+    not?: NestedEnumCompetitionSubscriptionTypeFilter | CompetitionSubscriptionType
   }
 
-  export type StringNullableFilter = {
-    equals?: string | null
-    in?: Enumerable<string> | null
-    notIn?: Enumerable<string> | null
-    lt?: string
-    lte?: string
-    gt?: string
-    gte?: string
-    contains?: string
-    startsWith?: string
-    endsWith?: string
-    mode?: QueryMode
-    not?: NestedStringNullableFilter | string | null
+  export type CompetitionSubscriptionUserIdCompetitionIdTypeValueCompoundUniqueInput = {
+    userId: number
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
+  }
+
+  export type CompetitionSubscriptionCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    userId?: SortOrder
+    competitionId?: SortOrder
+    type?: SortOrder
+    value?: SortOrder
+  }
+
+  export type CompetitionSubscriptionAvgOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+  }
+
+  export type CompetitionSubscriptionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    userId?: SortOrder
+    competitionId?: SortOrder
+    type?: SortOrder
+    value?: SortOrder
+  }
+
+  export type CompetitionSubscriptionMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    userId?: SortOrder
+    competitionId?: SortOrder
+    type?: SortOrder
+    value?: SortOrder
+  }
+
+  export type CompetitionSubscriptionSumOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+  }
+
+  export type EnumCompetitionSubscriptionTypeWithAggregatesFilter = {
+    equals?: CompetitionSubscriptionType
+    in?: Enumerable<CompetitionSubscriptionType>
+    notIn?: Enumerable<CompetitionSubscriptionType>
+    not?: NestedEnumCompetitionSubscriptionTypeWithAggregatesFilter | CompetitionSubscriptionType
+    _count?: NestedIntFilter
+    _min?: NestedEnumCompetitionSubscriptionTypeFilter
+    _max?: NestedEnumCompetitionSubscriptionTypeFilter
   }
 
   export type BoolFilter = {
@@ -5687,75 +6987,51 @@ export namespace Prisma {
     not?: NestedBoolFilter | boolean
   }
 
-  export type TokenCountOrderByAggregateInput = {
+  export type CompetitorSubscriptionUserIdWcaUserIdCompoundUniqueInput = {
+    userId: number
+    wcaUserId: number
+  }
+
+  export type CompetitorSubscriptionCountOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    type?: SortOrder
-    emailToken?: SortOrder
-    valid?: SortOrder
-    expiration?: SortOrder
     userId?: SortOrder
+    wcaUserId?: SortOrder
+    verified?: SortOrder
+    code?: SortOrder
   }
 
-  export type TokenAvgOrderByAggregateInput = {
+  export type CompetitorSubscriptionAvgOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
+    wcaUserId?: SortOrder
   }
 
-  export type TokenMaxOrderByAggregateInput = {
-    id?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    type?: SortOrder
-    emailToken?: SortOrder
-    valid?: SortOrder
-    expiration?: SortOrder
-    userId?: SortOrder
-  }
-
-  export type TokenMinOrderByAggregateInput = {
+  export type CompetitorSubscriptionMaxOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    type?: SortOrder
-    emailToken?: SortOrder
-    valid?: SortOrder
-    expiration?: SortOrder
     userId?: SortOrder
+    wcaUserId?: SortOrder
+    verified?: SortOrder
+    code?: SortOrder
   }
 
-  export type TokenSumOrderByAggregateInput = {
+  export type CompetitorSubscriptionMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    userId?: SortOrder
+    wcaUserId?: SortOrder
+    verified?: SortOrder
+    code?: SortOrder
+  }
+
+  export type CompetitorSubscriptionSumOrderByAggregateInput = {
     id?: SortOrder
     userId?: SortOrder
-  }
-
-  export type EnumTokenTypeWithAggregatesFilter = {
-    equals?: TokenType
-    in?: Enumerable<TokenType>
-    notIn?: Enumerable<TokenType>
-    not?: NestedEnumTokenTypeWithAggregatesFilter | TokenType
-    _count?: NestedIntFilter
-    _min?: NestedEnumTokenTypeFilter
-    _max?: NestedEnumTokenTypeFilter
-  }
-
-  export type StringNullableWithAggregatesFilter = {
-    equals?: string | null
-    in?: Enumerable<string> | null
-    notIn?: Enumerable<string> | null
-    lt?: string
-    lte?: string
-    gt?: string
-    gte?: string
-    contains?: string
-    startsWith?: string
-    endsWith?: string
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter | string | null
-    _count?: NestedIntNullableFilter
-    _min?: NestedStringNullableFilter
-    _max?: NestedStringNullableFilter
+    wcaUserId?: SortOrder
   }
 
   export type BoolWithAggregatesFilter = {
@@ -5803,11 +7079,18 @@ export namespace Prisma {
     connect?: Enumerable<AuditLogWhereUniqueInput>
   }
 
-  export type TokenCreateNestedManyWithoutUserInput = {
-    create?: XOR<Enumerable<TokenCreateWithoutUserInput>, Enumerable<TokenUncheckedCreateWithoutUserInput>>
-    connectOrCreate?: Enumerable<TokenCreateOrConnectWithoutUserInput>
-    createMany?: TokenCreateManyUserInputEnvelope
-    connect?: Enumerable<TokenWhereUniqueInput>
+  export type CompetitionSubscriptionCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<CompetitionSubscriptionCreateWithoutUserInput>, Enumerable<CompetitionSubscriptionUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<CompetitionSubscriptionCreateOrConnectWithoutUserInput>
+    createMany?: CompetitionSubscriptionCreateManyUserInputEnvelope
+    connect?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+  }
+
+  export type CompetitorSubscriptionCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<CompetitorSubscriptionCreateWithoutUserInput>, Enumerable<CompetitorSubscriptionUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<CompetitorSubscriptionCreateOrConnectWithoutUserInput>
+    createMany?: CompetitorSubscriptionCreateManyUserInputEnvelope
+    connect?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
   }
 
   export type AuditLogUncheckedCreateNestedManyWithoutUserInput = {
@@ -5817,11 +7100,18 @@ export namespace Prisma {
     connect?: Enumerable<AuditLogWhereUniqueInput>
   }
 
-  export type TokenUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<Enumerable<TokenCreateWithoutUserInput>, Enumerable<TokenUncheckedCreateWithoutUserInput>>
-    connectOrCreate?: Enumerable<TokenCreateOrConnectWithoutUserInput>
-    createMany?: TokenCreateManyUserInputEnvelope
-    connect?: Enumerable<TokenWhereUniqueInput>
+  export type CompetitionSubscriptionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<CompetitionSubscriptionCreateWithoutUserInput>, Enumerable<CompetitionSubscriptionUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<CompetitionSubscriptionCreateOrConnectWithoutUserInput>
+    createMany?: CompetitionSubscriptionCreateManyUserInputEnvelope
+    connect?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+  }
+
+  export type CompetitorSubscriptionUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<Enumerable<CompetitorSubscriptionCreateWithoutUserInput>, Enumerable<CompetitorSubscriptionUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<CompetitorSubscriptionCreateOrConnectWithoutUserInput>
+    createMany?: CompetitorSubscriptionCreateManyUserInputEnvelope
+    connect?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
   }
 
   export type AuditLogUpdateManyWithoutUserNestedInput = {
@@ -5838,18 +7128,32 @@ export namespace Prisma {
     deleteMany?: Enumerable<AuditLogScalarWhereInput>
   }
 
-  export type TokenUpdateManyWithoutUserNestedInput = {
-    create?: XOR<Enumerable<TokenCreateWithoutUserInput>, Enumerable<TokenUncheckedCreateWithoutUserInput>>
-    connectOrCreate?: Enumerable<TokenCreateOrConnectWithoutUserInput>
-    upsert?: Enumerable<TokenUpsertWithWhereUniqueWithoutUserInput>
-    createMany?: TokenCreateManyUserInputEnvelope
-    set?: Enumerable<TokenWhereUniqueInput>
-    disconnect?: Enumerable<TokenWhereUniqueInput>
-    delete?: Enumerable<TokenWhereUniqueInput>
-    connect?: Enumerable<TokenWhereUniqueInput>
-    update?: Enumerable<TokenUpdateWithWhereUniqueWithoutUserInput>
-    updateMany?: Enumerable<TokenUpdateManyWithWhereWithoutUserInput>
-    deleteMany?: Enumerable<TokenScalarWhereInput>
+  export type CompetitionSubscriptionUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<CompetitionSubscriptionCreateWithoutUserInput>, Enumerable<CompetitionSubscriptionUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<CompetitionSubscriptionCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<CompetitionSubscriptionUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: CompetitionSubscriptionCreateManyUserInputEnvelope
+    set?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+    disconnect?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+    delete?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+    connect?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+    update?: Enumerable<CompetitionSubscriptionUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<CompetitionSubscriptionUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<CompetitionSubscriptionScalarWhereInput>
+  }
+
+  export type CompetitorSubscriptionUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<CompetitorSubscriptionCreateWithoutUserInput>, Enumerable<CompetitorSubscriptionUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<CompetitorSubscriptionCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<CompetitorSubscriptionUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: CompetitorSubscriptionCreateManyUserInputEnvelope
+    set?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
+    disconnect?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
+    delete?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
+    connect?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
+    update?: Enumerable<CompetitorSubscriptionUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<CompetitorSubscriptionUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<CompetitorSubscriptionScalarWhereInput>
   }
 
   export type AuditLogUncheckedUpdateManyWithoutUserNestedInput = {
@@ -5866,44 +7170,68 @@ export namespace Prisma {
     deleteMany?: Enumerable<AuditLogScalarWhereInput>
   }
 
-  export type TokenUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<Enumerable<TokenCreateWithoutUserInput>, Enumerable<TokenUncheckedCreateWithoutUserInput>>
-    connectOrCreate?: Enumerable<TokenCreateOrConnectWithoutUserInput>
-    upsert?: Enumerable<TokenUpsertWithWhereUniqueWithoutUserInput>
-    createMany?: TokenCreateManyUserInputEnvelope
-    set?: Enumerable<TokenWhereUniqueInput>
-    disconnect?: Enumerable<TokenWhereUniqueInput>
-    delete?: Enumerable<TokenWhereUniqueInput>
-    connect?: Enumerable<TokenWhereUniqueInput>
-    update?: Enumerable<TokenUpdateWithWhereUniqueWithoutUserInput>
-    updateMany?: Enumerable<TokenUpdateManyWithWhereWithoutUserInput>
-    deleteMany?: Enumerable<TokenScalarWhereInput>
+  export type CompetitionSubscriptionUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<CompetitionSubscriptionCreateWithoutUserInput>, Enumerable<CompetitionSubscriptionUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<CompetitionSubscriptionCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<CompetitionSubscriptionUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: CompetitionSubscriptionCreateManyUserInputEnvelope
+    set?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+    disconnect?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+    delete?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+    connect?: Enumerable<CompetitionSubscriptionWhereUniqueInput>
+    update?: Enumerable<CompetitionSubscriptionUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<CompetitionSubscriptionUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<CompetitionSubscriptionScalarWhereInput>
   }
 
-  export type UserCreateNestedOneWithoutTokenInput = {
-    create?: XOR<UserCreateWithoutTokenInput, UserUncheckedCreateWithoutTokenInput>
-    connectOrCreate?: UserCreateOrConnectWithoutTokenInput
+  export type CompetitorSubscriptionUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<Enumerable<CompetitorSubscriptionCreateWithoutUserInput>, Enumerable<CompetitorSubscriptionUncheckedCreateWithoutUserInput>>
+    connectOrCreate?: Enumerable<CompetitorSubscriptionCreateOrConnectWithoutUserInput>
+    upsert?: Enumerable<CompetitorSubscriptionUpsertWithWhereUniqueWithoutUserInput>
+    createMany?: CompetitorSubscriptionCreateManyUserInputEnvelope
+    set?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
+    disconnect?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
+    delete?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
+    connect?: Enumerable<CompetitorSubscriptionWhereUniqueInput>
+    update?: Enumerable<CompetitorSubscriptionUpdateWithWhereUniqueWithoutUserInput>
+    updateMany?: Enumerable<CompetitorSubscriptionUpdateManyWithWhereWithoutUserInput>
+    deleteMany?: Enumerable<CompetitorSubscriptionScalarWhereInput>
+  }
+
+  export type UserCreateNestedOneWithoutCompetitionSubscriptionInput = {
+    create?: XOR<UserCreateWithoutCompetitionSubscriptionInput, UserUncheckedCreateWithoutCompetitionSubscriptionInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCompetitionSubscriptionInput
     connect?: UserWhereUniqueInput
   }
 
-  export type EnumTokenTypeFieldUpdateOperationsInput = {
-    set?: TokenType
+  export type EnumCompetitionSubscriptionTypeFieldUpdateOperationsInput = {
+    set?: CompetitionSubscriptionType
   }
 
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
+  export type UserUpdateOneRequiredWithoutCompetitionSubscriptionNestedInput = {
+    create?: XOR<UserCreateWithoutCompetitionSubscriptionInput, UserUncheckedCreateWithoutCompetitionSubscriptionInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCompetitionSubscriptionInput
+    upsert?: UserUpsertWithoutCompetitionSubscriptionInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<UserUpdateWithoutCompetitionSubscriptionInput, UserUncheckedUpdateWithoutCompetitionSubscriptionInput>
+  }
+
+  export type UserCreateNestedOneWithoutCompetitorSubscriptionInput = {
+    create?: XOR<UserCreateWithoutCompetitorSubscriptionInput, UserUncheckedCreateWithoutCompetitorSubscriptionInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCompetitorSubscriptionInput
+    connect?: UserWhereUniqueInput
   }
 
   export type BoolFieldUpdateOperationsInput = {
     set?: boolean
   }
 
-  export type UserUpdateOneRequiredWithoutTokenNestedInput = {
-    create?: XOR<UserCreateWithoutTokenInput, UserUncheckedCreateWithoutTokenInput>
-    connectOrCreate?: UserCreateOrConnectWithoutTokenInput
-    upsert?: UserUpsertWithoutTokenInput
+  export type UserUpdateOneRequiredWithoutCompetitorSubscriptionNestedInput = {
+    create?: XOR<UserCreateWithoutCompetitorSubscriptionInput, UserUncheckedCreateWithoutCompetitorSubscriptionInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCompetitorSubscriptionInput
+    upsert?: UserUpsertWithoutCompetitorSubscriptionInput
     connect?: UserWhereUniqueInput
-    update?: XOR<UserUpdateWithoutTokenInput, UserUncheckedUpdateWithoutTokenInput>
+    update?: XOR<UserUpdateWithoutCompetitorSubscriptionInput, UserUncheckedUpdateWithoutCompetitorSubscriptionInput>
   }
 
   export type NestedIntFilter = {
@@ -6000,68 +7328,26 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter
   }
 
-  export type NestedEnumTokenTypeFilter = {
-    equals?: TokenType
-    in?: Enumerable<TokenType>
-    notIn?: Enumerable<TokenType>
-    not?: NestedEnumTokenTypeFilter | TokenType
+  export type NestedEnumCompetitionSubscriptionTypeFilter = {
+    equals?: CompetitionSubscriptionType
+    in?: Enumerable<CompetitionSubscriptionType>
+    notIn?: Enumerable<CompetitionSubscriptionType>
+    not?: NestedEnumCompetitionSubscriptionTypeFilter | CompetitionSubscriptionType
   }
 
-  export type NestedStringNullableFilter = {
-    equals?: string | null
-    in?: Enumerable<string> | null
-    notIn?: Enumerable<string> | null
-    lt?: string
-    lte?: string
-    gt?: string
-    gte?: string
-    contains?: string
-    startsWith?: string
-    endsWith?: string
-    not?: NestedStringNullableFilter | string | null
+  export type NestedEnumCompetitionSubscriptionTypeWithAggregatesFilter = {
+    equals?: CompetitionSubscriptionType
+    in?: Enumerable<CompetitionSubscriptionType>
+    notIn?: Enumerable<CompetitionSubscriptionType>
+    not?: NestedEnumCompetitionSubscriptionTypeWithAggregatesFilter | CompetitionSubscriptionType
+    _count?: NestedIntFilter
+    _min?: NestedEnumCompetitionSubscriptionTypeFilter
+    _max?: NestedEnumCompetitionSubscriptionTypeFilter
   }
 
   export type NestedBoolFilter = {
     equals?: boolean
     not?: NestedBoolFilter | boolean
-  }
-
-  export type NestedEnumTokenTypeWithAggregatesFilter = {
-    equals?: TokenType
-    in?: Enumerable<TokenType>
-    notIn?: Enumerable<TokenType>
-    not?: NestedEnumTokenTypeWithAggregatesFilter | TokenType
-    _count?: NestedIntFilter
-    _min?: NestedEnumTokenTypeFilter
-    _max?: NestedEnumTokenTypeFilter
-  }
-
-  export type NestedStringNullableWithAggregatesFilter = {
-    equals?: string | null
-    in?: Enumerable<string> | null
-    notIn?: Enumerable<string> | null
-    lt?: string
-    lte?: string
-    gt?: string
-    gte?: string
-    contains?: string
-    startsWith?: string
-    endsWith?: string
-    not?: NestedStringNullableWithAggregatesFilter | string | null
-    _count?: NestedIntNullableFilter
-    _min?: NestedStringNullableFilter
-    _max?: NestedStringNullableFilter
-  }
-
-  export type NestedIntNullableFilter = {
-    equals?: number | null
-    in?: Enumerable<number> | null
-    notIn?: Enumerable<number> | null
-    lt?: number
-    lte?: number
-    gt?: number
-    gte?: number
-    not?: NestedIntNullableFilter | number | null
   }
 
   export type NestedBoolWithAggregatesFilter = {
@@ -6074,13 +7360,15 @@ export namespace Prisma {
 
   export type UserCreateWithoutAuditLogInput = {
     phoneNumber: string
-    Token?: TokenCreateNestedManyWithoutUserInput
+    CompetitionSubscription?: CompetitionSubscriptionCreateNestedManyWithoutUserInput
+    CompetitorSubscription?: CompetitorSubscriptionCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogInput = {
     id?: number
     phoneNumber: string
-    Token?: TokenUncheckedCreateNestedManyWithoutUserInput
+    CompetitionSubscription?: CompetitionSubscriptionUncheckedCreateNestedManyWithoutUserInput
+    CompetitorSubscription?: CompetitorSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogInput = {
@@ -6095,19 +7383,22 @@ export namespace Prisma {
 
   export type UserUpdateWithoutAuditLogInput = {
     phoneNumber?: StringFieldUpdateOperationsInput | string
-    Token?: TokenUpdateManyWithoutUserNestedInput
+    CompetitionSubscription?: CompetitionSubscriptionUpdateManyWithoutUserNestedInput
+    CompetitorSubscription?: CompetitorSubscriptionUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogInput = {
     id?: IntFieldUpdateOperationsInput | number
     phoneNumber?: StringFieldUpdateOperationsInput | string
-    Token?: TokenUncheckedUpdateManyWithoutUserNestedInput
+    CompetitionSubscription?: CompetitionSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+    CompetitorSubscription?: CompetitorSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AuditLogCreateWithoutUserInput = {
     action: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    competitionId: string
   }
 
   export type AuditLogUncheckedCreateWithoutUserInput = {
@@ -6115,6 +7406,7 @@ export namespace Prisma {
     action: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    competitionId: string
   }
 
   export type AuditLogCreateOrConnectWithoutUserInput = {
@@ -6127,32 +7419,57 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type TokenCreateWithoutUserInput = {
+  export type CompetitionSubscriptionCreateWithoutUserInput = {
     createdAt?: Date | string
     updatedAt?: Date | string
-    type: TokenType
-    emailToken?: string | null
-    valid?: boolean
-    expiration: Date | string
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
   }
 
-  export type TokenUncheckedCreateWithoutUserInput = {
+  export type CompetitionSubscriptionUncheckedCreateWithoutUserInput = {
     id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    type: TokenType
-    emailToken?: string | null
-    valid?: boolean
-    expiration: Date | string
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
   }
 
-  export type TokenCreateOrConnectWithoutUserInput = {
-    where: TokenWhereUniqueInput
-    create: XOR<TokenCreateWithoutUserInput, TokenUncheckedCreateWithoutUserInput>
+  export type CompetitionSubscriptionCreateOrConnectWithoutUserInput = {
+    where: CompetitionSubscriptionWhereUniqueInput
+    create: XOR<CompetitionSubscriptionCreateWithoutUserInput, CompetitionSubscriptionUncheckedCreateWithoutUserInput>
   }
 
-  export type TokenCreateManyUserInputEnvelope = {
-    data: Enumerable<TokenCreateManyUserInput>
+  export type CompetitionSubscriptionCreateManyUserInputEnvelope = {
+    data: Enumerable<CompetitionSubscriptionCreateManyUserInput>
+    skipDuplicates?: boolean
+  }
+
+  export type CompetitorSubscriptionCreateWithoutUserInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wcaUserId: number
+    verified?: boolean
+    code: string
+  }
+
+  export type CompetitorSubscriptionUncheckedCreateWithoutUserInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wcaUserId: number
+    verified?: boolean
+    code: string
+  }
+
+  export type CompetitorSubscriptionCreateOrConnectWithoutUserInput = {
+    where: CompetitorSubscriptionWhereUniqueInput
+    create: XOR<CompetitorSubscriptionCreateWithoutUserInput, CompetitorSubscriptionUncheckedCreateWithoutUserInput>
+  }
+
+  export type CompetitorSubscriptionCreateManyUserInputEnvelope = {
+    data: Enumerable<CompetitorSubscriptionCreateManyUserInput>
     skipDuplicates?: boolean
   }
 
@@ -6181,68 +7498,137 @@ export namespace Prisma {
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
     userId?: IntFilter | number
+    competitionId?: StringFilter | string
   }
 
-  export type TokenUpsertWithWhereUniqueWithoutUserInput = {
-    where: TokenWhereUniqueInput
-    update: XOR<TokenUpdateWithoutUserInput, TokenUncheckedUpdateWithoutUserInput>
-    create: XOR<TokenCreateWithoutUserInput, TokenUncheckedCreateWithoutUserInput>
+  export type CompetitionSubscriptionUpsertWithWhereUniqueWithoutUserInput = {
+    where: CompetitionSubscriptionWhereUniqueInput
+    update: XOR<CompetitionSubscriptionUpdateWithoutUserInput, CompetitionSubscriptionUncheckedUpdateWithoutUserInput>
+    create: XOR<CompetitionSubscriptionCreateWithoutUserInput, CompetitionSubscriptionUncheckedCreateWithoutUserInput>
   }
 
-  export type TokenUpdateWithWhereUniqueWithoutUserInput = {
-    where: TokenWhereUniqueInput
-    data: XOR<TokenUpdateWithoutUserInput, TokenUncheckedUpdateWithoutUserInput>
+  export type CompetitionSubscriptionUpdateWithWhereUniqueWithoutUserInput = {
+    where: CompetitionSubscriptionWhereUniqueInput
+    data: XOR<CompetitionSubscriptionUpdateWithoutUserInput, CompetitionSubscriptionUncheckedUpdateWithoutUserInput>
   }
 
-  export type TokenUpdateManyWithWhereWithoutUserInput = {
-    where: TokenScalarWhereInput
-    data: XOR<TokenUpdateManyMutationInput, TokenUncheckedUpdateManyWithoutTokenInput>
+  export type CompetitionSubscriptionUpdateManyWithWhereWithoutUserInput = {
+    where: CompetitionSubscriptionScalarWhereInput
+    data: XOR<CompetitionSubscriptionUpdateManyMutationInput, CompetitionSubscriptionUncheckedUpdateManyWithoutCompetitionSubscriptionInput>
   }
 
-  export type TokenScalarWhereInput = {
-    AND?: Enumerable<TokenScalarWhereInput>
-    OR?: Enumerable<TokenScalarWhereInput>
-    NOT?: Enumerable<TokenScalarWhereInput>
+  export type CompetitionSubscriptionScalarWhereInput = {
+    AND?: Enumerable<CompetitionSubscriptionScalarWhereInput>
+    OR?: Enumerable<CompetitionSubscriptionScalarWhereInput>
+    NOT?: Enumerable<CompetitionSubscriptionScalarWhereInput>
     id?: IntFilter | number
     createdAt?: DateTimeFilter | Date | string
     updatedAt?: DateTimeFilter | Date | string
-    type?: EnumTokenTypeFilter | TokenType
-    emailToken?: StringNullableFilter | string | null
-    valid?: BoolFilter | boolean
-    expiration?: DateTimeFilter | Date | string
     userId?: IntFilter | number
+    competitionId?: StringFilter | string
+    type?: EnumCompetitionSubscriptionTypeFilter | CompetitionSubscriptionType
+    value?: StringFilter | string
   }
 
-  export type UserCreateWithoutTokenInput = {
+  export type CompetitorSubscriptionUpsertWithWhereUniqueWithoutUserInput = {
+    where: CompetitorSubscriptionWhereUniqueInput
+    update: XOR<CompetitorSubscriptionUpdateWithoutUserInput, CompetitorSubscriptionUncheckedUpdateWithoutUserInput>
+    create: XOR<CompetitorSubscriptionCreateWithoutUserInput, CompetitorSubscriptionUncheckedCreateWithoutUserInput>
+  }
+
+  export type CompetitorSubscriptionUpdateWithWhereUniqueWithoutUserInput = {
+    where: CompetitorSubscriptionWhereUniqueInput
+    data: XOR<CompetitorSubscriptionUpdateWithoutUserInput, CompetitorSubscriptionUncheckedUpdateWithoutUserInput>
+  }
+
+  export type CompetitorSubscriptionUpdateManyWithWhereWithoutUserInput = {
+    where: CompetitorSubscriptionScalarWhereInput
+    data: XOR<CompetitorSubscriptionUpdateManyMutationInput, CompetitorSubscriptionUncheckedUpdateManyWithoutCompetitorSubscriptionInput>
+  }
+
+  export type CompetitorSubscriptionScalarWhereInput = {
+    AND?: Enumerable<CompetitorSubscriptionScalarWhereInput>
+    OR?: Enumerable<CompetitorSubscriptionScalarWhereInput>
+    NOT?: Enumerable<CompetitorSubscriptionScalarWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    userId?: IntFilter | number
+    wcaUserId?: IntFilter | number
+    verified?: BoolFilter | boolean
+    code?: StringFilter | string
+  }
+
+  export type UserCreateWithoutCompetitionSubscriptionInput = {
     phoneNumber: string
     AuditLog?: AuditLogCreateNestedManyWithoutUserInput
+    CompetitorSubscription?: CompetitorSubscriptionCreateNestedManyWithoutUserInput
   }
 
-  export type UserUncheckedCreateWithoutTokenInput = {
+  export type UserUncheckedCreateWithoutCompetitionSubscriptionInput = {
     id?: number
     phoneNumber: string
     AuditLog?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    CompetitorSubscription?: CompetitorSubscriptionUncheckedCreateNestedManyWithoutUserInput
   }
 
-  export type UserCreateOrConnectWithoutTokenInput = {
+  export type UserCreateOrConnectWithoutCompetitionSubscriptionInput = {
     where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutTokenInput, UserUncheckedCreateWithoutTokenInput>
+    create: XOR<UserCreateWithoutCompetitionSubscriptionInput, UserUncheckedCreateWithoutCompetitionSubscriptionInput>
   }
 
-  export type UserUpsertWithoutTokenInput = {
-    update: XOR<UserUpdateWithoutTokenInput, UserUncheckedUpdateWithoutTokenInput>
-    create: XOR<UserCreateWithoutTokenInput, UserUncheckedCreateWithoutTokenInput>
+  export type UserUpsertWithoutCompetitionSubscriptionInput = {
+    update: XOR<UserUpdateWithoutCompetitionSubscriptionInput, UserUncheckedUpdateWithoutCompetitionSubscriptionInput>
+    create: XOR<UserCreateWithoutCompetitionSubscriptionInput, UserUncheckedCreateWithoutCompetitionSubscriptionInput>
   }
 
-  export type UserUpdateWithoutTokenInput = {
+  export type UserUpdateWithoutCompetitionSubscriptionInput = {
     phoneNumber?: StringFieldUpdateOperationsInput | string
     AuditLog?: AuditLogUpdateManyWithoutUserNestedInput
+    CompetitorSubscription?: CompetitorSubscriptionUpdateManyWithoutUserNestedInput
   }
 
-  export type UserUncheckedUpdateWithoutTokenInput = {
+  export type UserUncheckedUpdateWithoutCompetitionSubscriptionInput = {
     id?: IntFieldUpdateOperationsInput | number
     phoneNumber?: StringFieldUpdateOperationsInput | string
     AuditLog?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    CompetitorSubscription?: CompetitorSubscriptionUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateWithoutCompetitorSubscriptionInput = {
+    phoneNumber: string
+    AuditLog?: AuditLogCreateNestedManyWithoutUserInput
+    CompetitionSubscription?: CompetitionSubscriptionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutCompetitorSubscriptionInput = {
+    id?: number
+    phoneNumber: string
+    AuditLog?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    CompetitionSubscription?: CompetitionSubscriptionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutCompetitorSubscriptionInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCompetitorSubscriptionInput, UserUncheckedCreateWithoutCompetitorSubscriptionInput>
+  }
+
+  export type UserUpsertWithoutCompetitorSubscriptionInput = {
+    update: XOR<UserUpdateWithoutCompetitorSubscriptionInput, UserUncheckedUpdateWithoutCompetitorSubscriptionInput>
+    create: XOR<UserCreateWithoutCompetitorSubscriptionInput, UserUncheckedCreateWithoutCompetitorSubscriptionInput>
+  }
+
+  export type UserUpdateWithoutCompetitorSubscriptionInput = {
+    phoneNumber?: StringFieldUpdateOperationsInput | string
+    AuditLog?: AuditLogUpdateManyWithoutUserNestedInput
+    CompetitionSubscription?: CompetitionSubscriptionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCompetitorSubscriptionInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    phoneNumber?: StringFieldUpdateOperationsInput | string
+    AuditLog?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    CompetitionSubscription?: CompetitionSubscriptionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AuditLogCreateManyUserInput = {
@@ -6250,22 +7636,32 @@ export namespace Prisma {
     action: string
     createdAt?: Date | string
     updatedAt?: Date | string
+    competitionId: string
   }
 
-  export type TokenCreateManyUserInput = {
+  export type CompetitionSubscriptionCreateManyUserInput = {
     id?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    type: TokenType
-    emailToken?: string | null
-    valid?: boolean
-    expiration: Date | string
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
+  }
+
+  export type CompetitorSubscriptionCreateManyUserInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wcaUserId: number
+    verified?: boolean
+    code: string
   }
 
   export type AuditLogUpdateWithoutUserInput = {
     action?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
   }
 
   export type AuditLogUncheckedUpdateWithoutUserInput = {
@@ -6273,6 +7669,7 @@ export namespace Prisma {
     action?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
   }
 
   export type AuditLogUncheckedUpdateManyWithoutAuditLogInput = {
@@ -6280,35 +7677,59 @@ export namespace Prisma {
     action?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
   }
 
-  export type TokenUpdateWithoutUserInput = {
+  export type CompetitionSubscriptionUpdateWithoutUserInput = {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    type?: EnumTokenTypeFieldUpdateOperationsInput | TokenType
-    emailToken?: NullableStringFieldUpdateOperationsInput | string | null
-    valid?: BoolFieldUpdateOperationsInput | boolean
-    expiration?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    type?: EnumCompetitionSubscriptionTypeFieldUpdateOperationsInput | CompetitionSubscriptionType
+    value?: StringFieldUpdateOperationsInput | string
   }
 
-  export type TokenUncheckedUpdateWithoutUserInput = {
+  export type CompetitionSubscriptionUncheckedUpdateWithoutUserInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    type?: EnumTokenTypeFieldUpdateOperationsInput | TokenType
-    emailToken?: NullableStringFieldUpdateOperationsInput | string | null
-    valid?: BoolFieldUpdateOperationsInput | boolean
-    expiration?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    type?: EnumCompetitionSubscriptionTypeFieldUpdateOperationsInput | CompetitionSubscriptionType
+    value?: StringFieldUpdateOperationsInput | string
   }
 
-  export type TokenUncheckedUpdateManyWithoutTokenInput = {
+  export type CompetitionSubscriptionUncheckedUpdateManyWithoutCompetitionSubscriptionInput = {
     id?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    type?: EnumTokenTypeFieldUpdateOperationsInput | TokenType
-    emailToken?: NullableStringFieldUpdateOperationsInput | string | null
-    valid?: BoolFieldUpdateOperationsInput | boolean
-    expiration?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    type?: EnumCompetitionSubscriptionTypeFieldUpdateOperationsInput | CompetitionSubscriptionType
+    value?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitorSubscriptionUpdateWithoutUserInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    code?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitorSubscriptionUncheckedUpdateWithoutUserInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    code?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitorSubscriptionUncheckedUpdateManyWithoutCompetitorSubscriptionInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    code?: StringFieldUpdateOperationsInput | string
   }
 
 

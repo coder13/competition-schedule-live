@@ -1,16 +1,10 @@
-import { useQuery } from '@apollo/client';
 import { Block, Button, Menu, Panel, Section } from 'react-bulma-components';
 import { formatPhoneNumber } from 'react-phone-number-input';
 import { Link } from 'react-router-dom';
-import { Competition } from '../generated/graphql';
-import { GetCompetitionsQuery } from '../graphql';
 import { useAuth } from '../Providers/UserProvider';
 
 function Home() {
   const { user } = useAuth();
-  const { data } = useQuery<{ competitions: Competition[] }>(
-    GetCompetitionsQuery
-  );
 
   return (
     <Section>
@@ -23,7 +17,7 @@ function Home() {
       <hr />
       <Menu>
         <Menu.List title="My Notifications">
-          <Menu.List.Item renderAs={Link} to="/login">
+          <Menu.List.Item renderAs={Link} to="/profile/notifications">
             Manage Current
           </Menu.List.Item>
         </Menu.List>
@@ -36,7 +30,10 @@ function Home() {
           </Menu.List.Item>
         </Menu.List>
         <Menu.List title={<hr />}>
-          <Menu.List.Item renderAs={Link} to="/logout">
+          <Menu.List.Item
+            onClick={() => {
+              console.log('Logging out...');
+            }}>
             Logout
           </Menu.List.Item>
         </Menu.List>
