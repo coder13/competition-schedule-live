@@ -5,7 +5,7 @@ type Competition {
   startDate: String!
   endDate: String!
   competitionAccess: [CompetitionAccess]
-  activities: [Activity!]
+  activities(ongoing: Boolean): [Activity!]
 }
 
 type CompetitionAccess {

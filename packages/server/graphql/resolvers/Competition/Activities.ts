@@ -2,10 +2,11 @@ import { AppContext } from '../../..';
 import { CompetitionResolvers } from '../../../generated/graphql';
 
 export const activities: CompetitionResolvers<AppContext>['activities'] =
-  async (parent, __, { db }) => {
+  async (parent, { ongoing }, { db }) => {
     return db.activityHistory.findMany({
       where: {
         competitionId: parent.id,
+        ...(ongoing && { endTime: null }),
       },
     });
   };

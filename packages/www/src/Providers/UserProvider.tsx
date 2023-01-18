@@ -1,11 +1,6 @@
 // Basic react provider for user data. Stores user in localstorage and fetches on startup
 import { createContext, ReactNode, useContext, useState } from 'react';
 
-export interface User {
-  id: number;
-  phoneNumber?: string;
-}
-
 const UserContext = createContext<{
   user?: User;
   setUser: (user: User) => void;

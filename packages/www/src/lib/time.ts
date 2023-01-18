@@ -1,9 +1,9 @@
-const FormatTimeSettings: Intl.DateTimeFormatOptions = {
+export const FormatTimeSettings: Intl.DateTimeFormatOptions = {
   hour: '2-digit',
   minute: '2-digit',
 };
 
-const FormatDateSettings: Intl.DateTimeFormatOptions = {
+export const FormatDateSettings: Intl.DateTimeFormatOptions = {
   weekday: 'short',
   year: 'numeric',
   month: 'numeric',
@@ -12,10 +12,10 @@ const FormatDateSettings: Intl.DateTimeFormatOptions = {
   minute: '2-digit',
 };
 
-const stringToDatePreserveTimezone = (isoString: string) => {
+export const stringToDatePreserveTimezone = (isoString: string) => {
   const date = new Date(isoString);
-  const offset = date.getTimezoneOffset() * 60 * 1000;
-  return new Date(date.getTime() + offset);
+  // const offset = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime());
 };
 
 export const formatTime = (isoString: string) =>

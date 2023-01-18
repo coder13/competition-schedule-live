@@ -3,12 +3,15 @@ import { QueryResolvers } from '../../../generated/graphql';
 
 export const competitions: QueryResolvers<AppContext>['competitions'] = async (
   _,
-  __,
+  { competitionIds },
   { db }
 ) => {
   return db.competition.findMany({
     include: {
       activityHistory: true,
+    },
+    where: {
+      ...(competitionIds && { id: { in: competitionIds } }),
     },
   });
 };

@@ -2,7 +2,7 @@ scalar DateTime
 
 type Query {
   currentUser: User
-  competitions(after: String): [Competition]!
+  competitions(after: String, competitionIds: [String!]): [Competition]!
   competition(competitionId: String!): Competition
   activities(competitionId: String!, roomId: Int): [Activity]!
 }

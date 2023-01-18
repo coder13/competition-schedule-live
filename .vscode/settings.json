@@ -7,5 +7,6 @@
     "packages/www",
     "packages/notifapi"
   ],
-  "typescript.tsdk": "./node_modules/typescript/lib"
+  "typescript.tsdk": "./node_modules/typescript/lib",
+  "jestrunner.jestCommand": "cd packages/www && yarn test "
 }

@@ -1,4 +1,0 @@
-type Competition {
-  id: String!
-  name: String!
-}

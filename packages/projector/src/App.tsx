@@ -26,7 +26,7 @@ function CompetitionPage({ competitionId }: { competitionId: string }) {
 
     const unsub = subscribeToMore<{ activity: Activity }>({
       document: ActivitiesSubscription,
-      variables: { competitionId: wcif?.id },
+      variables: { competitionIds: [wcif?.id] },
       updateQuery: (prev, { subscriptionData }) => {
         console.log(prev, subscriptionData);
         if (!subscriptionData?.data?.activity) {

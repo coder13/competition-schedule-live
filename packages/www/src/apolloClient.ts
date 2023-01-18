@@ -7,6 +7,9 @@ import {
 import { setContext } from '@apollo/client/link/context';
 import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
+import { withScalars } from 'apollo-link-scalars';
+import { buildClientSchema, IntrospectionQuery } from 'graphql';
+import { DateTimeResolver } from 'graphql-scalars';
 import { createClient } from 'graphql-ws';
 
 const httpLink = createHttpLink({
@@ -15,7 +18,7 @@ const httpLink = createHttpLink({
 
 const wsLink = new GraphQLWsLink(
   createClient({
-    url: `${import.meta.env.VITE_WS_ORIGIN}/graphql`,
+    url: `${import.meta.env.VITE_API_WS_ORIGIN}/graphql`,
   })
 );
 

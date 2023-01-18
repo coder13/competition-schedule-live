@@ -35,6 +35,11 @@ export type Competition = {
   startDate: Scalars['String'];
 };
 
+
+export type CompetitionActivitiesArgs = {
+  ongoing?: InputMaybe<Scalars['Boolean']>;
+};
+
 export type CompetitionAccess = {
   __typename?: 'CompetitionAccess';
   competitionId: Scalars['String'];
@@ -96,6 +101,7 @@ export type QueryCompetitionArgs = {
 
 export type QueryCompetitionsArgs = {
   after?: InputMaybe<Scalars['String']>;
+  competitionIds?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type Subscription = {
@@ -108,7 +114,7 @@ export type Subscription = {
 
 
 export type SubscriptionActivitiesArgs = {
-  competitionId: Scalars['String'];
+  competitionIds: Array<Scalars['String']>;
   roomId?: InputMaybe<Scalars['Int']>;
 };
 
@@ -126,7 +132,7 @@ export type SubscriptionActivityStoppedArgs = {
 
 
 export type SubscriptionActivityUpdatedArgs = {
-  competitionId: Scalars['String'];
+  competitionIds?: InputMaybe<Array<Scalars['String']>>;
   roomId?: InputMaybe<Scalars['Int']>;
 };
 
@@ -258,7 +264,7 @@ export type ActivityResolvers<ContextType = any, ParentType extends ResolversPar
 };
 
 export type CompetitionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Competition'] = ResolversParentTypes['Competition']> = {
-  activities?: Resolver<Maybe<Array<ResolversTypes['Activity']>>, ParentType, ContextType>;
+  activities?: Resolver<Maybe<Array<ResolversTypes['Activity']>>, ParentType, ContextType, Partial<CompetitionActivitiesArgs>>;
   competitionAccess?: Resolver<Maybe<Array<Maybe<ResolversTypes['CompetitionAccess']>>>, ParentType, ContextType>;
   country?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   endDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -297,10 +303,10 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
 };
 
 export type SubscriptionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = {
-  activities?: SubscriptionResolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, "activities", ParentType, ContextType, RequireFields<SubscriptionActivitiesArgs, 'competitionId'>>;
+  activities?: SubscriptionResolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, "activities", ParentType, ContextType, RequireFields<SubscriptionActivitiesArgs, 'competitionIds'>>;
   activityStarted?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityStarted", ParentType, ContextType, RequireFields<SubscriptionActivityStartedArgs, 'competitionId'>>;
   activityStopped?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityStopped", ParentType, ContextType, RequireFields<SubscriptionActivityStoppedArgs, 'competitionId'>>;
-  activityUpdated?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityUpdated", ParentType, ContextType, RequireFields<SubscriptionActivityUpdatedArgs, 'competitionId'>>;
+  activityUpdated?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityUpdated", ParentType, ContextType, Partial<SubscriptionActivityUpdatedArgs>>;
 };
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {

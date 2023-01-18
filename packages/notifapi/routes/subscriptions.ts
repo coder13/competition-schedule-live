@@ -78,18 +78,26 @@ router.put(
       throw new Error('User not found');
     }
 
-    const subscriptions = (
-      await replaceCompetitionSubscriptions(
-        req.user.id,
-        req.params.competitionId,
-        req.body
-      )
-    )[2];
+    try {
+      const subscriptions = (
+        await replaceCompetitionSubscriptions(
+          req.user.id,
+          req.params.competitionId,
+          req.body
+        )
+      )[2];
 
-    res.json({
-      success: true,
-      subscriptions,
-    });
+      res.json({
+        success: true,
+        subscriptions,
+      });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json({
+        success: false,
+        message: 'Error occured while updating competition subscriptions',
+      });
+    }
   }
 );
 

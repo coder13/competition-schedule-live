@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { SnackbarProvider } from 'notistack';
 import 'bulma/css/bulma.min.css';
+import 'bulma-list/css/bulma-list.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import './index.css';

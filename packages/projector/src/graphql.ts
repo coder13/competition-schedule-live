@@ -77,8 +77,8 @@ export const StopStartActivityMutation = gql`
 `;
 
 export const ActivitiesSubscription = gql`
-  subscription Activities($competitionId: String!) {
-    activity: activityUpdated(competitionId: $competitionId) {
+  subscription Activities($competitionIds: [String!]!) {
+    activity: activityUpdated(competitionIds: [$competitionId]) {
       activityId
       startTime
       endTime

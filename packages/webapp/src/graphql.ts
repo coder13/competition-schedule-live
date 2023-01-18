@@ -61,7 +61,7 @@ export const StopStartActivityMutation = gql`
     $startActivityId: Int!
   ) {
     stop: stopActivity(
-      competitionId: $competitionId
+      competitionIds: [$competitionId]
       activityId: $stopActivityId
     ) {
       activityId
@@ -69,7 +69,7 @@ export const StopStartActivityMutation = gql`
       endTime
     }
     start: startActivity(
-      competitionId: $competitionId
+      competitionIds: [$competitionId]
       activityId: $startActivityId
     ) {
       activityId
@@ -81,7 +81,7 @@ export const StopStartActivityMutation = gql`
 
 export const ActivitiesSubscription = gql`
   subscription Activities($competitionId: String!) {
-    activity: activityUpdated(competitionId: $competitionId) {
+    activity: activityUpdated(competitionIds: [$competitionId]) {
       activityId
       startTime
       endTime
