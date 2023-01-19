@@ -73,6 +73,17 @@ export type CompetitorSubscription = {
   code: string
 }
 
+/**
+ * Model CompetitionSid
+ * 
+ */
+export type CompetitionSid = {
+  createdAt: Date
+  updatedAt: Date
+  competitionId: string
+  sid: string
+}
+
 
 /**
  * Enums
@@ -255,6 +266,16 @@ export class PrismaClient<
     * ```
     */
   get competitorSubscription(): Prisma.CompetitorSubscriptionDelegate<GlobalReject>;
+
+  /**
+   * `prisma.competitionSid`: Exposes CRUD operations for the **CompetitionSid** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CompetitionSids
+    * const competitionSids = await prisma.competitionSid.findMany()
+    * ```
+    */
+  get competitionSid(): Prisma.CompetitionSidDelegate<GlobalReject>;
 }
 
 export namespace Prisma {
@@ -743,7 +764,8 @@ export namespace Prisma {
     User: 'User',
     Session: 'Session',
     CompetitionSubscription: 'CompetitionSubscription',
-    CompetitorSubscription: 'CompetitorSubscription'
+    CompetitorSubscription: 'CompetitorSubscription',
+    CompetitionSid: 'CompetitionSid'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -6087,6 +6109,927 @@ export namespace Prisma {
 
 
   /**
+   * Model CompetitionSid
+   */
+
+
+  export type AggregateCompetitionSid = {
+    _count: CompetitionSidCountAggregateOutputType | null
+    _min: CompetitionSidMinAggregateOutputType | null
+    _max: CompetitionSidMaxAggregateOutputType | null
+  }
+
+  export type CompetitionSidMinAggregateOutputType = {
+    createdAt: Date | null
+    updatedAt: Date | null
+    competitionId: string | null
+    sid: string | null
+  }
+
+  export type CompetitionSidMaxAggregateOutputType = {
+    createdAt: Date | null
+    updatedAt: Date | null
+    competitionId: string | null
+    sid: string | null
+  }
+
+  export type CompetitionSidCountAggregateOutputType = {
+    createdAt: number
+    updatedAt: number
+    competitionId: number
+    sid: number
+    _all: number
+  }
+
+
+  export type CompetitionSidMinAggregateInputType = {
+    createdAt?: true
+    updatedAt?: true
+    competitionId?: true
+    sid?: true
+  }
+
+  export type CompetitionSidMaxAggregateInputType = {
+    createdAt?: true
+    updatedAt?: true
+    competitionId?: true
+    sid?: true
+  }
+
+  export type CompetitionSidCountAggregateInputType = {
+    createdAt?: true
+    updatedAt?: true
+    competitionId?: true
+    sid?: true
+    _all?: true
+  }
+
+  export type CompetitionSidAggregateArgs = {
+    /**
+     * Filter which CompetitionSid to aggregate.
+     * 
+    **/
+    where?: CompetitionSidWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompetitionSids to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<CompetitionSidOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     * 
+    **/
+    cursor?: CompetitionSidWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompetitionSids from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompetitionSids.
+     * 
+    **/
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CompetitionSids
+    **/
+    _count?: true | CompetitionSidCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CompetitionSidMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CompetitionSidMaxAggregateInputType
+  }
+
+  export type GetCompetitionSidAggregateType<T extends CompetitionSidAggregateArgs> = {
+        [P in keyof T & keyof AggregateCompetitionSid]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCompetitionSid[P]>
+      : GetScalarType<T[P], AggregateCompetitionSid[P]>
+  }
+
+
+
+
+  export type CompetitionSidGroupByArgs = {
+    where?: CompetitionSidWhereInput
+    orderBy?: Enumerable<CompetitionSidOrderByWithAggregationInput>
+    by: Array<CompetitionSidScalarFieldEnum>
+    having?: CompetitionSidScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CompetitionSidCountAggregateInputType | true
+    _min?: CompetitionSidMinAggregateInputType
+    _max?: CompetitionSidMaxAggregateInputType
+  }
+
+
+  export type CompetitionSidGroupByOutputType = {
+    createdAt: Date
+    updatedAt: Date
+    competitionId: string
+    sid: string
+    _count: CompetitionSidCountAggregateOutputType | null
+    _min: CompetitionSidMinAggregateOutputType | null
+    _max: CompetitionSidMaxAggregateOutputType | null
+  }
+
+  type GetCompetitionSidGroupByPayload<T extends CompetitionSidGroupByArgs> = PrismaPromise<
+    Array<
+      PickArray<CompetitionSidGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CompetitionSidGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CompetitionSidGroupByOutputType[P]>
+            : GetScalarType<T[P], CompetitionSidGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CompetitionSidSelect = {
+    createdAt?: boolean
+    updatedAt?: boolean
+    competitionId?: boolean
+    sid?: boolean
+  }
+
+
+  export type CompetitionSidGetPayload<S extends boolean | null | undefined | CompetitionSidArgs> =
+    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
+    S extends true ? CompetitionSid :
+    S extends undefined ? never :
+    S extends { include: any } & (CompetitionSidArgs | CompetitionSidFindManyArgs)
+    ? CompetitionSid 
+    : S extends { select: any } & (CompetitionSidArgs | CompetitionSidFindManyArgs)
+      ? {
+    [P in TruthyKeys<S['select']>]:
+    P extends keyof CompetitionSid ? CompetitionSid[P] : never
+  } 
+      : CompetitionSid
+
+
+  type CompetitionSidCountArgs = Merge<
+    Omit<CompetitionSidFindManyArgs, 'select' | 'include'> & {
+      select?: CompetitionSidCountAggregateInputType | true
+    }
+  >
+
+  export interface CompetitionSidDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+    /**
+     * Find zero or one CompetitionSid that matches the filter.
+     * @param {CompetitionSidFindUniqueArgs} args - Arguments to find a CompetitionSid
+     * @example
+     * // Get one CompetitionSid
+     * const competitionSid = await prisma.competitionSid.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends CompetitionSidFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, CompetitionSidFindUniqueArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitionSid'> extends True ? Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>> : Prisma__CompetitionSidClient<CompetitionSidGetPayload<T> | null, null>
+
+    /**
+     * Find one CompetitionSid that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {CompetitionSidFindUniqueOrThrowArgs} args - Arguments to find a CompetitionSid
+     * @example
+     * // Get one CompetitionSid
+     * const competitionSid = await prisma.competitionSid.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends CompetitionSidFindUniqueOrThrowArgs>(
+      args?: SelectSubset<T, CompetitionSidFindUniqueOrThrowArgs>
+    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+
+    /**
+     * Find the first CompetitionSid that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitionSidFindFirstArgs} args - Arguments to find a CompetitionSid
+     * @example
+     * // Get one CompetitionSid
+     * const competitionSid = await prisma.competitionSid.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends CompetitionSidFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, CompetitionSidFindFirstArgs>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitionSid'> extends True ? Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>> : Prisma__CompetitionSidClient<CompetitionSidGetPayload<T> | null, null>
+
+    /**
+     * Find the first CompetitionSid that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitionSidFindFirstOrThrowArgs} args - Arguments to find a CompetitionSid
+     * @example
+     * // Get one CompetitionSid
+     * const competitionSid = await prisma.competitionSid.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends CompetitionSidFindFirstOrThrowArgs>(
+      args?: SelectSubset<T, CompetitionSidFindFirstOrThrowArgs>
+    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+
+    /**
+     * Find zero or more CompetitionSids that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitionSidFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CompetitionSids
+     * const competitionSids = await prisma.competitionSid.findMany()
+     * 
+     * // Get first 10 CompetitionSids
+     * const competitionSids = await prisma.competitionSid.findMany({ take: 10 })
+     * 
+     * // Only select the `createdAt`
+     * const competitionSidWithCreatedAtOnly = await prisma.competitionSid.findMany({ select: { createdAt: true } })
+     * 
+    **/
+    findMany<T extends CompetitionSidFindManyArgs>(
+      args?: SelectSubset<T, CompetitionSidFindManyArgs>
+    ): PrismaPromise<Array<CompetitionSidGetPayload<T>>>
+
+    /**
+     * Create a CompetitionSid.
+     * @param {CompetitionSidCreateArgs} args - Arguments to create a CompetitionSid.
+     * @example
+     * // Create one CompetitionSid
+     * const CompetitionSid = await prisma.competitionSid.create({
+     *   data: {
+     *     // ... data to create a CompetitionSid
+     *   }
+     * })
+     * 
+    **/
+    create<T extends CompetitionSidCreateArgs>(
+      args: SelectSubset<T, CompetitionSidCreateArgs>
+    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+
+    /**
+     * Create many CompetitionSids.
+     *     @param {CompetitionSidCreateManyArgs} args - Arguments to create many CompetitionSids.
+     *     @example
+     *     // Create many CompetitionSids
+     *     const competitionSid = await prisma.competitionSid.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends CompetitionSidCreateManyArgs>(
+      args?: SelectSubset<T, CompetitionSidCreateManyArgs>
+    ): PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a CompetitionSid.
+     * @param {CompetitionSidDeleteArgs} args - Arguments to delete one CompetitionSid.
+     * @example
+     * // Delete one CompetitionSid
+     * const CompetitionSid = await prisma.competitionSid.delete({
+     *   where: {
+     *     // ... filter to delete one CompetitionSid
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends CompetitionSidDeleteArgs>(
+      args: SelectSubset<T, CompetitionSidDeleteArgs>
+    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+
+    /**
+     * Update one CompetitionSid.
+     * @param {CompetitionSidUpdateArgs} args - Arguments to update one CompetitionSid.
+     * @example
+     * // Update one CompetitionSid
+     * const competitionSid = await prisma.competitionSid.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends CompetitionSidUpdateArgs>(
+      args: SelectSubset<T, CompetitionSidUpdateArgs>
+    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+
+    /**
+     * Delete zero or more CompetitionSids.
+     * @param {CompetitionSidDeleteManyArgs} args - Arguments to filter CompetitionSids to delete.
+     * @example
+     * // Delete a few CompetitionSids
+     * const { count } = await prisma.competitionSid.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends CompetitionSidDeleteManyArgs>(
+      args?: SelectSubset<T, CompetitionSidDeleteManyArgs>
+    ): PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompetitionSids.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitionSidUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CompetitionSids
+     * const competitionSid = await prisma.competitionSid.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends CompetitionSidUpdateManyArgs>(
+      args: SelectSubset<T, CompetitionSidUpdateManyArgs>
+    ): PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one CompetitionSid.
+     * @param {CompetitionSidUpsertArgs} args - Arguments to update or create a CompetitionSid.
+     * @example
+     * // Update or create a CompetitionSid
+     * const competitionSid = await prisma.competitionSid.upsert({
+     *   create: {
+     *     // ... data to create a CompetitionSid
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CompetitionSid we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends CompetitionSidUpsertArgs>(
+      args: SelectSubset<T, CompetitionSidUpsertArgs>
+    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+
+    /**
+     * Count the number of CompetitionSids.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitionSidCountArgs} args - Arguments to filter CompetitionSids to count.
+     * @example
+     * // Count the number of CompetitionSids
+     * const count = await prisma.competitionSid.count({
+     *   where: {
+     *     // ... the filter for the CompetitionSids we want to count
+     *   }
+     * })
+    **/
+    count<T extends CompetitionSidCountArgs>(
+      args?: Subset<T, CompetitionSidCountArgs>,
+    ): PrismaPromise<
+      T extends _Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CompetitionSidCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CompetitionSid.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitionSidAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CompetitionSidAggregateArgs>(args: Subset<T, CompetitionSidAggregateArgs>): PrismaPromise<GetCompetitionSidAggregateType<T>>
+
+    /**
+     * Group by CompetitionSid.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompetitionSidGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CompetitionSidGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CompetitionSidGroupByArgs['orderBy'] }
+        : { orderBy?: CompetitionSidGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CompetitionSidGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitionSidGroupByPayload<T> : PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CompetitionSid.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__CompetitionSidClient<T, Null = never> implements PrismaPromise<T> {
+    [prisma]: true;
+    private readonly _dmmf;
+    private readonly _fetcher;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * CompetitionSid base type for findUnique actions
+   */
+  export type CompetitionSidFindUniqueArgsBase = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * Filter, which CompetitionSid to fetch.
+     * 
+    **/
+    where: CompetitionSidWhereUniqueInput
+  }
+
+  /**
+   * CompetitionSid findUnique
+   */
+  export interface CompetitionSidFindUniqueArgs extends CompetitionSidFindUniqueArgsBase {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * CompetitionSid findUniqueOrThrow
+   */
+  export type CompetitionSidFindUniqueOrThrowArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * Filter, which CompetitionSid to fetch.
+     * 
+    **/
+    where: CompetitionSidWhereUniqueInput
+  }
+
+
+  /**
+   * CompetitionSid base type for findFirst actions
+   */
+  export type CompetitionSidFindFirstArgsBase = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * Filter, which CompetitionSid to fetch.
+     * 
+    **/
+    where?: CompetitionSidWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompetitionSids to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<CompetitionSidOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompetitionSids.
+     * 
+    **/
+    cursor?: CompetitionSidWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompetitionSids from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompetitionSids.
+     * 
+    **/
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompetitionSids.
+     * 
+    **/
+    distinct?: Enumerable<CompetitionSidScalarFieldEnum>
+  }
+
+  /**
+   * CompetitionSid findFirst
+   */
+  export interface CompetitionSidFindFirstArgs extends CompetitionSidFindFirstArgsBase {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * CompetitionSid findFirstOrThrow
+   */
+  export type CompetitionSidFindFirstOrThrowArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * Filter, which CompetitionSid to fetch.
+     * 
+    **/
+    where?: CompetitionSidWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompetitionSids to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<CompetitionSidOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompetitionSids.
+     * 
+    **/
+    cursor?: CompetitionSidWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompetitionSids from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompetitionSids.
+     * 
+    **/
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompetitionSids.
+     * 
+    **/
+    distinct?: Enumerable<CompetitionSidScalarFieldEnum>
+  }
+
+
+  /**
+   * CompetitionSid findMany
+   */
+  export type CompetitionSidFindManyArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * Filter, which CompetitionSids to fetch.
+     * 
+    **/
+    where?: CompetitionSidWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompetitionSids to fetch.
+     * 
+    **/
+    orderBy?: Enumerable<CompetitionSidOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CompetitionSids.
+     * 
+    **/
+    cursor?: CompetitionSidWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompetitionSids from the position of the cursor.
+     * 
+    **/
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompetitionSids.
+     * 
+    **/
+    skip?: number
+    distinct?: Enumerable<CompetitionSidScalarFieldEnum>
+  }
+
+
+  /**
+   * CompetitionSid create
+   */
+  export type CompetitionSidCreateArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * The data needed to create a CompetitionSid.
+     * 
+    **/
+    data: XOR<CompetitionSidCreateInput, CompetitionSidUncheckedCreateInput>
+  }
+
+
+  /**
+   * CompetitionSid createMany
+   */
+  export type CompetitionSidCreateManyArgs = {
+    /**
+     * The data used to create many CompetitionSids.
+     * 
+    **/
+    data: Enumerable<CompetitionSidCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * CompetitionSid update
+   */
+  export type CompetitionSidUpdateArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * The data needed to update a CompetitionSid.
+     * 
+    **/
+    data: XOR<CompetitionSidUpdateInput, CompetitionSidUncheckedUpdateInput>
+    /**
+     * Choose, which CompetitionSid to update.
+     * 
+    **/
+    where: CompetitionSidWhereUniqueInput
+  }
+
+
+  /**
+   * CompetitionSid updateMany
+   */
+  export type CompetitionSidUpdateManyArgs = {
+    /**
+     * The data used to update CompetitionSids.
+     * 
+    **/
+    data: XOR<CompetitionSidUpdateManyMutationInput, CompetitionSidUncheckedUpdateManyInput>
+    /**
+     * Filter which CompetitionSids to update
+     * 
+    **/
+    where?: CompetitionSidWhereInput
+  }
+
+
+  /**
+   * CompetitionSid upsert
+   */
+  export type CompetitionSidUpsertArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * The filter to search for the CompetitionSid to update in case it exists.
+     * 
+    **/
+    where: CompetitionSidWhereUniqueInput
+    /**
+     * In case the CompetitionSid found by the `where` argument doesn't exist, create a new CompetitionSid with this data.
+     * 
+    **/
+    create: XOR<CompetitionSidCreateInput, CompetitionSidUncheckedCreateInput>
+    /**
+     * In case the CompetitionSid was found with the provided `where` argument, update it with this data.
+     * 
+    **/
+    update: XOR<CompetitionSidUpdateInput, CompetitionSidUncheckedUpdateInput>
+  }
+
+
+  /**
+   * CompetitionSid delete
+   */
+  export type CompetitionSidDeleteArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+    /**
+     * Filter which CompetitionSid to delete.
+     * 
+    **/
+    where: CompetitionSidWhereUniqueInput
+  }
+
+
+  /**
+   * CompetitionSid deleteMany
+   */
+  export type CompetitionSidDeleteManyArgs = {
+    /**
+     * Filter which CompetitionSids to delete
+     * 
+    **/
+    where?: CompetitionSidWhereInput
+  }
+
+
+  /**
+   * CompetitionSid without action
+   */
+  export type CompetitionSidArgs = {
+    /**
+     * Select specific fields to fetch from the CompetitionSid
+     * 
+    **/
+    select?: CompetitionSidSelect | null
+  }
+
+
+
+  /**
    * Enums
    */
 
@@ -6103,6 +7046,16 @@ export namespace Prisma {
   };
 
   export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+  export const CompetitionSidScalarFieldEnum: {
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    competitionId: 'competitionId',
+    sid: 'sid'
+  };
+
+  export type CompetitionSidScalarFieldEnum = (typeof CompetitionSidScalarFieldEnum)[keyof typeof CompetitionSidScalarFieldEnum]
 
 
   export const CompetitionSubscriptionScalarFieldEnum: {
@@ -6433,6 +7386,47 @@ export namespace Prisma {
     code?: StringWithAggregatesFilter | string
   }
 
+  export type CompetitionSidWhereInput = {
+    AND?: Enumerable<CompetitionSidWhereInput>
+    OR?: Enumerable<CompetitionSidWhereInput>
+    NOT?: Enumerable<CompetitionSidWhereInput>
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    competitionId?: StringFilter | string
+    sid?: StringFilter | string
+  }
+
+  export type CompetitionSidOrderByWithRelationInput = {
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    sid?: SortOrder
+  }
+
+  export type CompetitionSidWhereUniqueInput = {
+    competitionId?: string
+  }
+
+  export type CompetitionSidOrderByWithAggregationInput = {
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    sid?: SortOrder
+    _count?: CompetitionSidCountOrderByAggregateInput
+    _max?: CompetitionSidMaxOrderByAggregateInput
+    _min?: CompetitionSidMinOrderByAggregateInput
+  }
+
+  export type CompetitionSidScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<CompetitionSidScalarWhereWithAggregatesInput>
+    OR?: Enumerable<CompetitionSidScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<CompetitionSidScalarWhereWithAggregatesInput>
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    competitionId?: StringWithAggregatesFilter | string
+    sid?: StringWithAggregatesFilter | string
+  }
+
   export type AuditLogCreateInput = {
     action: string
     createdAt?: Date | string
@@ -6715,6 +7709,55 @@ export namespace Prisma {
     wcaUserId?: IntFieldUpdateOperationsInput | number
     verified?: BoolFieldUpdateOperationsInput | boolean
     code?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitionSidCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    sid: string
+  }
+
+  export type CompetitionSidUncheckedCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    sid: string
+  }
+
+  export type CompetitionSidUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    sid?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitionSidUncheckedUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    sid?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitionSidCreateManyInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    sid: string
+  }
+
+  export type CompetitionSidUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    sid?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompetitionSidUncheckedUpdateManyInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    sid?: StringFieldUpdateOperationsInput | string
   }
 
   export type IntFilter = {
@@ -7040,6 +8083,27 @@ export namespace Prisma {
     _count?: NestedIntFilter
     _min?: NestedBoolFilter
     _max?: NestedBoolFilter
+  }
+
+  export type CompetitionSidCountOrderByAggregateInput = {
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    sid?: SortOrder
+  }
+
+  export type CompetitionSidMaxOrderByAggregateInput = {
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    sid?: SortOrder
+  }
+
+  export type CompetitionSidMinOrderByAggregateInput = {
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    sid?: SortOrder
   }
 
   export type UserCreateNestedOneWithoutAuditLogInput = {

@@ -12,6 +12,28 @@ export const getCompetitionSubscriptions = (
     },
   });
 
+export const getAllUserCompetitionSubscriptions = (
+  competitionId: string,
+  activityCodes: string[]
+) =>
+  prisma.competitionSubscription.findMany({
+    select: {
+      user: {
+        select: {
+          id: true,
+          phoneNumber: true,
+        },
+      },
+    },
+    where: {
+      competitionId: competitionId.toLowerCase(),
+      type: CompetitionSubscriptionType.activity,
+      value: {
+        in: activityCodes,
+      },
+    },
+  });
+
 export const getCompetitorSubscriptions = (
   userId: number,
   verified?: boolean
@@ -36,7 +58,7 @@ export const addCompetitionSubscriptions = (
   prisma.competitionSubscription.createMany({
     data: subscriptions.map((subscription) => ({
       userId,
-      competitionId,
+      competitionId: competitionId.toLowerCase(),
       type: subscription.type,
       value: subscription.value,
     })),
@@ -65,13 +87,13 @@ export const replaceCompetitionSubscriptions = async (
     prisma.competitionSubscription.deleteMany({
       where: {
         userId,
-        competitionId,
+        competitionId: competitionId.toLowerCase(),
       },
     }),
     prisma.competitionSubscription.createMany({
       data: newSubscriptions.map((subscription) => ({
         userId,
-        competitionId,
+        competitionId: competitionId.toLowerCase(),
         type: subscription.type,
         value: subscription.value,
       })),
@@ -79,7 +101,7 @@ export const replaceCompetitionSubscriptions = async (
     prisma.competitionSubscription.findMany({
       where: {
         userId,
-        competitionId,
+        competitionId: competitionId.toLowerCase(),
       },
     }),
   ]);

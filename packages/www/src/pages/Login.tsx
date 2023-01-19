@@ -3,7 +3,7 @@ import { Block, Button, Container, Form, Panel } from 'react-bulma-components';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
 import { useSnackbar } from 'notistack';
-import { useAuth, User } from '../Providers/UserProvider';
+import { useAuth } from '../Providers/UserProvider';
 import { notifApiFetch } from '../notifapi';
 
 function Login() {
@@ -25,7 +25,7 @@ function Login() {
       localStorage.setItem('compNotify.phoneNumber', phoneNumber);
 
       try {
-        await notifApiFetch('/auth/number', {
+        await notifApiFetch('/v0/internal/auth/number', {
           method: 'POST',
           body: JSON.stringify({
             number: phoneNumber,
@@ -51,7 +51,7 @@ function Login() {
       }
 
       try {
-        const { user } = await notifApiFetch('/auth/number/code', {
+        const { user } = await notifApiFetch('/v0/internal/auth/number/code', {
           method: 'POST',
           body: JSON.stringify({
             code,

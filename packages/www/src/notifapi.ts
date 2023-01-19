@@ -25,7 +25,7 @@ export const notifApiFetch = async (
 };
 
 export const getCompetitionSubscriptions = (competitionId: string) =>
-  notifApiFetch(`/subscriptions/competitions/${competitionId}`);
+  notifApiFetch(`/v0/internal/subscriptions/competitions/${competitionId}`);
 
 export const addCompetitionSubscriptions = (
   competitionId: string,
@@ -36,7 +36,7 @@ export const addCompetitionSubscriptions = (
     }
   ]
 ) =>
-  notifApiFetch(`/subscriptions/competitions/${competitionId}`, {
+  notifApiFetch(`/v0/internal/subscriptions/competitions/${competitionId}`, {
     method: 'POST',
     body: JSON.stringify(subscriptions),
   });
@@ -45,7 +45,7 @@ export const updateCompetitionSubscriptions = (
   competitionId: string,
   subscriptions: Subscription[]
 ) =>
-  notifApiFetch(`/subscriptions/competitions/${competitionId}`, {
+  notifApiFetch(`/v0/internal/subscriptions/competitions/${competitionId}`, {
     method: 'PUT',
     body: JSON.stringify(subscriptions),
   });

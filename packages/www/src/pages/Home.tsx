@@ -30,7 +30,7 @@ function Home() {
     };
   }>({
     queryKey: ['me'],
-    queryFn: () => notifApiFetch('/me'),
+    queryFn: () => notifApiFetch('/v0/internal/me'),
   });
 
   const competitionIds = Object.keys(data?.user.competitionSubscriptions || []);

@@ -1,13 +1,10 @@
 import { Request, Router } from 'express';
-import twilio from 'twilio';
-import prisma from '../db';
-import { genCode } from '../lib/utils';
-import { getUser } from '../middlewares/user';
+import { SessionData } from 'express-session';
+import { sendMessage } from '../../../services/twilio';
+import prisma from '../../../db';
+import { genCode } from '../../../lib/utils';
+import { getUser } from '../../../middlewares/user';
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_ACCOUNT_AUTH_TOKEN;
-console.log('twilio', { accountSid, authToken });
-const twilioClient = twilio(accountSid, authToken);
 const authRouter = Router();
 
 authRouter.get('/test', getUser, (req: Request, res) => {
@@ -26,21 +23,22 @@ authRouter.get('/test', getUser, (req: Request, res) => {
 authRouter.post('/number', async (req, res) => {
   const { number } = req.body;
 
+  const session = req.session as SessionData;
+
   try {
     const code = genCode();
-    req.session.auth = {
+    session.auth = {
       number: {
         number,
         code,
         expires: Date.now() + 1000 * 60 * 15, // 15 minutes
       },
     };
-    req.session.save();
+    // session.save();
 
-    await twilioClient.messages.create({
-      body: `Your CompNotify code is ${code}. This code expires in 15 minutes. Don't share this code with anyone.`,
-      from: process.env.TWILIO_FROM_NUMBER,
+    await sendMessage({
       to: number,
+      body: `Your CompNotify code is ${code}. This code expires in 15 minutes. Don't share this code with anyone.`,
     });
 
     res.json({ success: true });

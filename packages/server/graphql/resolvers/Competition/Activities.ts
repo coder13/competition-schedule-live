@@ -1,4 +1,4 @@
-import { AppContext } from '../../..';
+import { AppContext } from '../../../server';
 import { CompetitionResolvers } from '../../../generated/graphql';
 
 export const activities: CompetitionResolvers<AppContext>['activities'] =

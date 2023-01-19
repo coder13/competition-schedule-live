@@ -1,7 +1,7 @@
 import { Request, Router } from 'express';
-import { getUserCompetitionSubscriptions } from '../controllers/userSubscriptions';
-import { getUser } from '../middlewares/user';
-import { CompetitionSubscription } from '../prisma/generated/client';
+import { getUserCompetitionSubscriptions } from '../../../controllers/userSubscriptions';
+import { getUser } from '../../../middlewares/user';
+import { CompetitionSubscription } from '../../../prisma/generated/client';
 import auth from './auth';
 import subscriptions from './subscriptions';
 

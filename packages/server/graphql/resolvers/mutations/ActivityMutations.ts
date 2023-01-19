@@ -1,4 +1,4 @@
-import { AppContext } from '../../..';
+import { AppContext } from '../../../server';
 import { MutationResolvers } from '../../../generated/graphql';
 
 export const startActivity: MutationResolvers<AppContext>['startActivity'] =

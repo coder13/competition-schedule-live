@@ -1,4 +1,4 @@
-import { AppContext } from '../../..';
+import { AppContext } from '../../../server';
 import { UserResolvers } from '../../../generated/graphql';
 
 export const competitions: UserResolvers<AppContext>['competitions'] = async (

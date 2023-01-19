@@ -4,8 +4,8 @@ import {
   getCompetitionSubscriptions,
   removeCompetitionSubscriptions,
   replaceCompetitionSubscriptions,
-} from '../controllers/competitionSubscription';
-import { getUser } from '../middlewares/user';
+} from '../../../controllers/competitionSubscription';
+import { getUser } from '../../../middlewares/user';
 
 const router = Router();
 

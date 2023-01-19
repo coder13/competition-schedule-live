@@ -98,6 +98,13 @@ exports.Prisma.AuditLogScalarFieldEnum = makeEnum({
   competitionId: 'competitionId'
 });
 
+exports.Prisma.CompetitionSidScalarFieldEnum = makeEnum({
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  competitionId: 'competitionId',
+  sid: 'sid'
+});
+
 exports.Prisma.CompetitionSubscriptionScalarFieldEnum = makeEnum({
   id: 'id',
   createdAt: 'createdAt',
@@ -156,7 +163,8 @@ exports.Prisma.ModelName = makeEnum({
   User: 'User',
   Session: 'Session',
   CompetitionSubscription: 'CompetitionSubscription',
-  CompetitorSubscription: 'CompetitorSubscription'
+  CompetitorSubscription: 'CompetitorSubscription',
+  CompetitionSid: 'CompetitionSid'
 });
 
 /**

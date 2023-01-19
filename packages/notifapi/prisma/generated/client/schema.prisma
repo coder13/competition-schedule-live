@@ -73,3 +73,11 @@ model CompetitorSubscription {
 
   @@unique([userId, wcaUserId])
 }
+
+// For twilio creds
+model CompetitionSid {
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  competitionId String   @id @unique
+  sid           String
+}

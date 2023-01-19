@@ -5,7 +5,9 @@
     "packages/webapp",
     "packages/projector",
     "packages/www",
-    "packages/notifapi"
+    "packages/notifapi",
+    "packages/frontend-common",
+    "packages/admin"
   ],
   "typescript.tsdk": "./node_modules/typescript/lib",
   "jestrunner.jestCommand": "cd packages/www && yarn test "
