@@ -11,7 +11,6 @@ class WcaApi extends RESTDataSource {
     super();
     this.baseURL = origin + '/api/v0/';
     this.accessToken = accessToken;
-    this.memoizeGetRequests = false;
   }
 
   override willSendRequest(request: WillSendRequestOptions) {

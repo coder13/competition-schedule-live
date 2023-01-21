@@ -11,12 +11,15 @@
   "dependencies": {
     "@apollo/client": "^3.7.4",
     "@tanstack/react-query": "^4.22.0",
+    "@types/react-modal": "^3.13.1",
     "@wca/helpers": "^1.1.2",
     "graphql": "^16.6.0",
     "graphql-ws": "^5.11.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.7.0"
+    "react-modal": "^3.16.1",
+    "react-router-dom": "^6.7.0",
+    "tailwind-styled-components": "^2.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.0.26",

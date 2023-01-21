@@ -4,8 +4,9 @@ type Competition {
   country: String!
   startDate: String!
   endDate: String!
-  competitionAccess: [CompetitionAccess]
+  competitionAccess: [CompetitionAccess!]
   activities(ongoing: Boolean): [Activity!]
+  webhooks: [Webhook!]
 }
 
 type CompetitionAccess {
@@ -32,9 +33,13 @@ enum HTTPMethod {
 scalar JSON
 
 type Webhook {
-  id: ID!
-  competitionId: String!
+  id: Int!
   url: String!
   method: HTTPMethod!
-  headers: JSON
+  headers: [Header]
+}
+
+type Header {
+  key: String!
+  value: String!
 }

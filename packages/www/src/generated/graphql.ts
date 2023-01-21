@@ -12,8 +12,9 @@ export type Scalars = {
   Boolean: boolean;
   Int: number;
   Float: number;
-  DateTime: string;
+  DateTime: Date;
   JSON: any;
+  Void: any;
 };
 
 export type Activity = {
@@ -27,12 +28,13 @@ export type Activity = {
 export type Competition = {
   __typename?: 'Competition';
   activities?: Maybe<Array<Activity>>;
-  competitionAccess?: Maybe<Array<Maybe<CompetitionAccess>>>;
+  competitionAccess?: Maybe<Array<CompetitionAccess>>;
   country: Scalars['String'];
   endDate: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
   startDate: Scalars['String'];
+  webhooks?: Maybe<Array<Webhook>>;
 };
 
 
@@ -55,15 +57,47 @@ export enum HttpMethod {
   Put = 'PUT'
 }
 
+export type Header = {
+  __typename?: 'Header';
+  key: Scalars['String'];
+  value: Scalars['String'];
+};
+
+export type HeaderInput = {
+  key: Scalars['String'];
+  value: Scalars['String'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
+  createWebhook: Webhook;
+  deleteWebhook?: Maybe<Scalars['Void']>;
   importCompetition?: Maybe<Competition>;
+  startActivities?: Maybe<Array<Maybe<Activity>>>;
   startActivity?: Maybe<Activity>;
   stopActivity?: Maybe<Activity>;
+  updateWebhook: Webhook;
+};
+
+
+export type MutationCreateWebhookArgs = {
+  competitionId: Scalars['String'];
+  webhook: WebhookInput;
+};
+
+
+export type MutationDeleteWebhookArgs = {
+  id: Scalars['Int'];
 };
 
 
 export type MutationImportCompetitionArgs = {
+  competitionId: Scalars['String'];
+};
+
+
+export type MutationStartActivitiesArgs = {
+  activityIds: Array<Scalars['Int']>;
   competitionId: Scalars['String'];
 };
 
@@ -77,6 +111,12 @@ export type MutationStartActivityArgs = {
 export type MutationStopActivityArgs = {
   activityId: Scalars['Int'];
   competitionId: Scalars['String'];
+};
+
+
+export type MutationUpdateWebhookArgs = {
+  id: Scalars['Int'];
+  webhook: WebhookInput;
 };
 
 export type Query = {
@@ -144,9 +184,14 @@ export type User = {
 
 export type Webhook = {
   __typename?: 'Webhook';
-  competitionId: Scalars['String'];
-  headers?: Maybe<Scalars['JSON']>;
-  id: Scalars['ID'];
+  headers?: Maybe<Array<Maybe<Header>>>;
+  id: Scalars['Int'];
+  method: HttpMethod;
+  url: Scalars['String'];
+};
+
+export type WebhookInput = {
+  headers?: InputMaybe<Array<HeaderInput>>;
   method: HttpMethod;
   url: Scalars['String'];
 };
@@ -226,7 +271,8 @@ export type ResolversTypes = {
   CompetitionAccess: ResolverTypeWrapper<CompetitionAccess>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
   HTTPMethod: HttpMethod;
-  ID: ResolverTypeWrapper<Scalars['ID']>;
+  Header: ResolverTypeWrapper<Header>;
+  HeaderInput: HeaderInput;
   Int: ResolverTypeWrapper<Scalars['Int']>;
   JSON: ResolverTypeWrapper<Scalars['JSON']>;
   Mutation: ResolverTypeWrapper<{}>;
@@ -234,7 +280,9 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
   User: ResolverTypeWrapper<User>;
+  Void: ResolverTypeWrapper<Scalars['Void']>;
   Webhook: ResolverTypeWrapper<Webhook>;
+  WebhookInput: WebhookInput;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -244,7 +292,8 @@ export type ResolversParentTypes = {
   Competition: Competition;
   CompetitionAccess: CompetitionAccess;
   DateTime: Scalars['DateTime'];
-  ID: Scalars['ID'];
+  Header: Header;
+  HeaderInput: HeaderInput;
   Int: Scalars['Int'];
   JSON: Scalars['JSON'];
   Mutation: {};
@@ -252,7 +301,9 @@ export type ResolversParentTypes = {
   String: Scalars['String'];
   Subscription: {};
   User: User;
+  Void: Scalars['Void'];
   Webhook: Webhook;
+  WebhookInput: WebhookInput;
 };
 
 export type ActivityResolvers<ContextType = any, ParentType extends ResolversParentTypes['Activity'] = ResolversParentTypes['Activity']> = {
@@ -265,12 +316,13 @@ export type ActivityResolvers<ContextType = any, ParentType extends ResolversPar
 
 export type CompetitionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Competition'] = ResolversParentTypes['Competition']> = {
   activities?: Resolver<Maybe<Array<ResolversTypes['Activity']>>, ParentType, ContextType, Partial<CompetitionActivitiesArgs>>;
-  competitionAccess?: Resolver<Maybe<Array<Maybe<ResolversTypes['CompetitionAccess']>>>, ParentType, ContextType>;
+  competitionAccess?: Resolver<Maybe<Array<ResolversTypes['CompetitionAccess']>>, ParentType, ContextType>;
   country?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   endDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   startDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  webhooks?: Resolver<Maybe<Array<ResolversTypes['Webhook']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -285,14 +337,24 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
   name: 'DateTime';
 }
 
+export type HeaderResolvers<ContextType = any, ParentType extends ResolversParentTypes['Header'] = ResolversParentTypes['Header']> = {
+  key?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  value?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['JSON'], any> {
   name: 'JSON';
 }
 
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
+  createWebhook?: Resolver<ResolversTypes['Webhook'], ParentType, ContextType, RequireFields<MutationCreateWebhookArgs, 'competitionId' | 'webhook'>>;
+  deleteWebhook?: Resolver<Maybe<ResolversTypes['Void']>, ParentType, ContextType, RequireFields<MutationDeleteWebhookArgs, 'id'>>;
   importCompetition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<MutationImportCompetitionArgs, 'competitionId'>>;
+  startActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationStartActivitiesArgs, 'activityIds' | 'competitionId'>>;
   startActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStartActivityArgs, 'activityId' | 'competitionId'>>;
   stopActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStopActivityArgs, 'activityId' | 'competitionId'>>;
+  updateWebhook?: Resolver<ResolversTypes['Webhook'], ParentType, ContextType, RequireFields<MutationUpdateWebhookArgs, 'id' | 'webhook'>>;
 };
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
@@ -315,10 +377,13 @@ export type UserResolvers<ContextType = any, ParentType extends ResolversParentT
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export interface VoidScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['Void'], any> {
+  name: 'Void';
+}
+
 export type WebhookResolvers<ContextType = any, ParentType extends ResolversParentTypes['Webhook'] = ResolversParentTypes['Webhook']> = {
-  competitionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  headers?: Resolver<Maybe<ResolversTypes['JSON']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  headers?: Resolver<Maybe<Array<Maybe<ResolversTypes['Header']>>>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   method?: Resolver<ResolversTypes['HTTPMethod'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -329,11 +394,13 @@ export type Resolvers<ContextType = any> = {
   Competition?: CompetitionResolvers<ContextType>;
   CompetitionAccess?: CompetitionAccessResolvers<ContextType>;
   DateTime?: GraphQLScalarType;
+  Header?: HeaderResolvers<ContextType>;
   JSON?: GraphQLScalarType;
   Mutation?: MutationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
+  Void?: GraphQLScalarType;
   Webhook?: WebhookResolvers<ContextType>;
 };
 

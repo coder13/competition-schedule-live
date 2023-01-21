@@ -11,11 +11,11 @@ router.use(
   })
 );
 
-router.use((req, _, next) => {
-  console.log(req.headers);
+// router.use((req, _, next) => {
+//   console.log(req.headers);
 
-  next();
-});
+//   next();
+// });
 
 router.use('/admin', admin);
 router.use(notifyRouter);

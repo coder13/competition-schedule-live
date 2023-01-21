@@ -15,13 +15,27 @@ export const getCompetitionSubscriptions = (
 export const getAllUserCompetitionSubscriptions = (
   competitionId: string,
   activityCodes: string[]
-) =>
-  prisma.competitionSubscription.findMany({
+) => {
+  const values = ['*', ...activityCodes];
+  return prisma.competitionSubscription.findMany({
     select: {
       user: {
         select: {
           id: true,
           phoneNumber: true,
+          CompetitionSubscription: {
+            select: {
+              type: true,
+              value: true,
+            },
+            where: {
+              competitionId: competitionId.toLowerCase(),
+              type: CompetitionSubscriptionType.activity,
+              value: {
+                in: values,
+              },
+            },
+          },
         },
       },
     },
@@ -29,10 +43,11 @@ export const getAllUserCompetitionSubscriptions = (
       competitionId: competitionId.toLowerCase(),
       type: CompetitionSubscriptionType.activity,
       value: {
-        in: activityCodes,
+        in: values,
       },
     },
   });
+};
 
 export const getCompetitorSubscriptions = (
   userId: number,

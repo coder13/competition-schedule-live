@@ -5,7 +5,7 @@ import Competition from './pages/Competition';
 import Home from './pages/Home';
 import Login from './pages/Login';
 
-const key = 'compnotify-admin.jwt';
+const key = 'jwt';
 function App() {
   const [jwt, setJwt] = useState(localStorage.getItem(key));
 

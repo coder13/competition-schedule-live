@@ -17,5 +17,6 @@ declare module 'express-session' {
 declare module 'express' {
   interface Request {
     user?: User;
+    sid?: string;
   }
 }

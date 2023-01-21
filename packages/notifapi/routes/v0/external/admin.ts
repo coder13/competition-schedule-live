@@ -36,8 +36,6 @@ router.put(
       return;
     }
 
-    console.log(39, req.body);
-
     try {
       res.json({
         success: true,

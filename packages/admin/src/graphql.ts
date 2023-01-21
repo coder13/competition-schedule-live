@@ -12,6 +12,57 @@ export const GetCompetitionsQuery = gql`
   }
 `;
 
+export const GetCompetitionQuery = gql`
+  query GetCompetition($competitionId: String!) {
+    competition(competitionId: $competitionId) {
+      id
+      name
+      startDate
+      endDate
+      country
+      webhooks {
+        id
+        url
+        method
+      }
+    }
+  }
+`;
+
+export const CreateWebhookMutation = gql`
+  mutation CreateWebhook($competitionId: String!, $webhook: WebhookInput!) {
+    createWebhook(competitionId: $competitionId, webhook: $webhook) {
+      id
+      url
+      method
+      headers {
+        key
+        value
+      }
+    }
+  }
+`;
+
+export const UpdateWebhookMutation = gql`
+  mutation UpdateWebhook($id: Int!, $webhook: WebhookInput!) {
+    updateWebhook(id: $id, webhook: $webhook) {
+      id
+      url
+      method
+      headers {
+        key
+        value
+      }
+    }
+  }
+`;
+
+export const DeleteWebhookMutation = gql`
+  mutation DeleteWebhook($id: Int!) {
+    deleteWebhook(id: $id)
+  }
+`;
+
 export const ImportCompetitionMutation = gql`
   mutation ImportCompetition($competitionId: String!) {
     importCompetition(competitionId: $competitionId) {

@@ -1,24 +1,8 @@
 import { useEffect, useState } from 'react';
 
-type User = {
-  id: number;
-  name: string;
-};
-
-type Competition = {
-  id: string;
-  name: string;
-  city: string;
-  competitor_limit: number;
-  country_iso2: string;
-  delegates: User[];
-  organizers: User[];
-  start_date: string;
-};
-
 function CompetitionList({ onSelect }: { onSelect(id: string): void }) {
   const [search, setSearch] = useState('');
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [competitions, setCompetitions] = useState<ApiCompetition[]>([]);
 
   useEffect(() => {
     if (!search || search.length < 5) {
@@ -39,7 +23,7 @@ function CompetitionList({ onSelect }: { onSelect(id: string): void }) {
       })
       .then((data) => {
         console.log(data?.result);
-        setCompetitions(data?.result as Competition[]);
+        setCompetitions(data?.result as ApiCompetition[]);
       });
   }, [search]);
 

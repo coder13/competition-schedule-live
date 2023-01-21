@@ -58,17 +58,18 @@ function APISection({ name, url }: { name: string; url: string }) {
   }, []);
 
   return (
-    <div>
+    <div className="p-2">
       <b>{name}</b>
-      <br />
       <span>
-        url: <b>{url}</b>
+        {' '}
+        (<b>{url}</b>)
       </span>
       <br />
       <span>
         status: <b>{apiStatus.message}</b> as of{' '}
-        <b>{apiStatus.lastPinged?.toLocaleString()}</b> pinging again in{' '}
-        <b>{interval.current / 1000}</b> seconds
+        <b>{apiStatus.lastPinged?.toLocaleString()}</b>
+        <br />
+        pinging again in <b>{interval.current / 1000}</b> seconds
       </span>
     </div>
   );
@@ -80,7 +81,7 @@ function Footer() {
     notifApiOrigin: import.meta.env.VITE_NOTIFAPI_ORIGIN,
   });
   return (
-    <footer className="flex p-4">
+    <footer className="flex p-2 justify-evenly">
       <APISection url={import.meta.env.VITE_API_ORIGIN} name="core-api" />
       <br />
       <APISection url={import.meta.env.VITE_NOTIFAPI_ORIGIN} name="notifapi" />

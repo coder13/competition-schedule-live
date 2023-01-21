@@ -7,14 +7,14 @@ interface LoginPageProps {
 function Login({ setJwt }: LoginPageProps) {
   const [input, setInput] = useState('');
 
-  const handleSubmit = (e: FormEventHandler<HTMLFormElement>) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     setJwt(input);
   };
 
   return (
     <>
-      <p>Welcome Cailyn. Enter your jwt to continue:</p>
+      <p>Enter your jwt to continue:</p>
       <p>
         Click <a target="_blank">here</a> to get your jwt
       </p>

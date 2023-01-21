@@ -1,16 +1,35 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { FormEventHandler, useState } from 'react';
+import { useQuery as useApolloQuery } from '@apollo/client';
+import React, { FormEventHandler, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { GetCompetitionQuery } from '../graphql';
+import { Competition, Webhook } from '../generated/graphql';
+import { Button, Input, UserLink } from '../components/Tailwind';
+import WebhookList from '../components/WebhookList';
 
-function Competition() {
+const UserList = ({ users }: { users: User[] }) => (
+  <>
+    {users.map((user, i) => (
+      <React.Fragment key={user.id}>
+        {i > 0 && ', '}
+        <UserLink href="/">{user.name}</UserLink>
+      </React.Fragment>
+    ))}
+  </>
+);
+
+function CompetitionPage() {
   const { competitionId } = useParams();
   const [sid, setSid] = useState('');
 
-  const { data: competitionMessagingSid } = useQuery({
+  useQuery({
     queryKey: ['CompetitionMessagingSid', competitionId],
     queryFn: async () => {
       const { sid } = await fetch(
-        `http://localhost:8090/v0/external/admin/messagingService/${competitionId}`
+        new URL(
+          `/v0/external/admin/messagingService/${competitionId}`,
+          import.meta.env.VITE_NOTIFAPI_ORIGIN
+        )
       ).then((res) => res.json());
       setSid(sid?.sid ?? '');
       return sid.sid;
@@ -20,7 +39,10 @@ function Competition() {
   const updateCompSid = useMutation({
     mutationFn: (newSid: string) => {
       return fetch(
-        `http://localhost:8090/v0/external/admin/messagingService/${competitionId}`,
+        new URL(
+          `/v0/external/admin/messagingService/${competitionId}`,
+          import.meta.env.VITE_NOTIFAPI_ORIGIN
+        ),
         {
           method: 'PUT',
           headers: {
@@ -34,7 +56,7 @@ function Competition() {
     },
   });
 
-  const { data: compData } = useQuery({
+  const { data: apiComp } = useQuery<ApiCompetition>({
     queryKey: ['Competition', competitionId],
     queryFn: async () => {
       const res = await fetch(
@@ -44,33 +66,57 @@ function Competition() {
     },
   });
 
-  const handleUpdateSid = async (e: FormEventHandler<HTMLFormElement>) => {
+  const { data: compData } = useApolloQuery<{ competition: Competition }>(
+    GetCompetitionQuery,
+    {
+      variables: {
+        competitionId,
+      },
+    }
+  );
+
+  const handleUpdateSid: FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
-    await updateCompSid.mutate(sid);
+    updateCompSid.mutate(sid);
   };
 
   return (
-    <div className="flex flex-col w-full h-full">
-      <h1 className="p-1">{compData?.name}</h1>
-      <hr />
-      <form onSubmit={handleUpdateSid}>
-        <label
-          htmlFor="competitionSid"
-          className="block text-gray-700 text-sm font-bold mb-2">
-          Sid
-        </label>
-        <div className="flex">
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="competitionSid"
-            value={sid}
-            onChange={(e) => setSid(e.target.value)}
-          />
-          <button className="p-2">Change</button>
+    <>
+      <div className="flex flex-col w-full h-full space-y-2">
+        <div className="p-2 shadow-md flex flex-col">
+          <span className="p-1 text-xl">
+            {apiComp?.name} ({apiComp?.start_date}) |{' '}
+            {apiComp?.competitor_limit} Competitors
+          </span>
+          <span>Events: {apiComp?.event_ids.join(', ')}</span>
+          <span>
+            Delegates: <UserList users={apiComp?.delegates || []} />
+          </span>
+          <span>
+            Organizers: <UserList users={apiComp?.organizers || []} />
+          </span>
         </div>
-      </form>
-    </div>
+        <form className="border border-gray-200 p-2" onSubmit={handleUpdateSid}>
+          <label
+            htmlFor="competitionSid"
+            className="block text-gray-700 text-sm font-bold mb-2">
+            Sid
+          </label>
+          <div className="flex space-x-2">
+            <Input
+              id="competitionSid"
+              value={sid}
+              onChange={(e) => setSid(e.target.value)}
+            />
+            <Button className="p-2">Change</Button>
+          </div>
+        </form>
+        {compData?.competition?.webhooks && (
+          <WebhookList webhooks={compData?.competition?.webhooks} />
+        )}
+      </div>
+    </>
   );
 }
 
-export default Competition;
+export default CompetitionPage;
