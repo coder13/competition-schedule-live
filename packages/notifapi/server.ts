@@ -70,6 +70,11 @@ export async function init() {
 
   app.use('/v0/external', external);
 
+  console.log(
+    `Allowing the following origins: ${
+      process.env.CORS_ORIGINS?.split(',')?.join(', ') ?? 'none'
+    }`
+  );
   app.use(
     cors<cors.CorsRequest>({
       origin: process.env.CORS_ORIGINS?.split(','),
@@ -79,9 +84,6 @@ export async function init() {
   );
 
   app.set('trust proxy', 1); // trust first proxy
-  if (app.get('env') === 'production') {
-    sessionOptions.cookie.secure = true; // serve secure cookies
-  }
 
   app.use(cookieParser(SECRET));
   app.use(session(sessionOptions));
