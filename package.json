@@ -4,9 +4,11 @@
   "workspaces": [
     "packages/*"
   ],
+  "dependencies": {
+    "lerna": "^6.0.1"
+  },
   "devDependencies": {
     "husky": "^8.0.1",
-    "lerna": "^6.0.1",
     "prettier": "^2.7.1"
   },
   "scripts": {
