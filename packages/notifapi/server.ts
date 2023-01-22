@@ -77,6 +77,7 @@ export async function init() {
   );
   app.use(
     cors<cors.CorsRequest>({
+      allowedHeaders: 'Content-Type',
       origin: process.env.CORS_ORIGINS?.split(','),
       preflightContinue: true,
       credentials: true,
