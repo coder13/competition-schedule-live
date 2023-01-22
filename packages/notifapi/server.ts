@@ -54,6 +54,10 @@ export async function init() {
   app.use(json());
   app.use(morgan('tiny'));
 
+  app.get('/', (_, res) => {
+    res.end('Hello World!');
+  });
+
   app.get(
     '/ping',
     cors<cors.CorsRequest>({
