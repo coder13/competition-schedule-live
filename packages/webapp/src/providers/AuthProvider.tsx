@@ -11,6 +11,7 @@ import formatDuration from 'date-fns/formatDuration';
 import { User } from '../types';
 
 const API_URL = import.meta.env.VITE_API_ORIGIN;
+const WCA_URL = import.meta.env.VITE_WCA_API_ORIGIN;
 
 interface AuthContext {
   login: () => void;
@@ -60,15 +61,12 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     const query = new URLSearchParams({
       redirect_uri: redirectUri,
     });
-    window.location.href = new URL(
-      `/auth/wca?${query.toString()}`,
-      API_URL
-    ).href;
+    window.location.href = `${API_URL}/auth/wca?${query.toString()}`;
   }, [location]);
 
   const myApiFetch = useCallback(
     (url: RequestInfo, { headers = {}, ...options } = {} as RequestInit) =>
-      fetch(new URL(url.toString(), API_URL).href, {
+      fetch(`${API_URL}/${url}`, {
         ...(jwt && {
           headers: {
             'Content-Type': 'application/json',
@@ -86,19 +84,16 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       url: RequestInfo,
       { headers = {}, ...options } = {} as RequestInit
     ) => {
-      const res = await fetch(
-        new URL(url.toString(), import.meta.env.VITE_WCA_API_ORIGIN).href,
-        {
-          ...(user?.wca.accessToken && {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${user?.wca.accessToken}`,
-              ...headers,
-            },
-          }),
-          ...options,
-        }
-      );
+      const res = await fetch(`${WCA_URL}/${url}`, {
+        ...(user?.wca.accessToken && {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user?.wca.accessToken}`,
+            ...headers,
+          },
+        }),
+        ...options,
+      });
 
       if (!res.ok) {
         console.error(await res.json());

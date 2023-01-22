@@ -16,7 +16,9 @@ function useActivities(competitionId?: string) {
     queryKey: ['Schedule', competitionId],
     queryFn: async () => {
       const res = await fetch(
-        `https://www.worldcubeassociation.org/api/v0/competitions/${competitionId}/schedule`
+        `${
+          import.meta.env.VITE_WCA_API_ORIGIN
+        }/api/v0/competitions/${competitionId}/schedule`
       ).then((res) => res.json());
       return res;
     },

@@ -5,7 +5,7 @@ export const notifApiFetch = async (
   options = {} as RequestInit
 ) => {
   console.log(options.method || 'GET', url, options);
-  const res = await fetch(new URL(url, NOTIFAPI_ORIGIN), {
+  const res = await fetch(`${NOTIFAPI_ORIGIN}${url}`, {
     mode: 'cors',
     credentials: 'include',
     headers: {

@@ -54,10 +54,9 @@ function CompetitionPage({ competitionId }: { competitionId: string }) {
 
   useEffect(() => {
     fetch(
-      (import.meta.env.VITE_WCA_API_ORIGIN || '') +
-        '/api/v0/competitions/' +
-        competitionId +
-        '/wcif/public'
+      `${
+        import.meta.env.VITE_WCA_API_ORIGIN ?? ''
+      }/api/v0/competitions/${competitionId}/wcif/public`
     )
       .then(async (res) => {
         if (!res.ok) {

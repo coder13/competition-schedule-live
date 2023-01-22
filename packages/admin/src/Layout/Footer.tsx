@@ -11,7 +11,7 @@ function APISection({ name, url }: { name: string; url: string }) {
   const [apiStatus, setApiStatus] = useState<APIStatus>({});
 
   const pingApi = useCallback(async () => {
-    const res = await fetch(new URL('/ping', url));
+    const res = await fetch(`${url}/ping`);
 
     setApiStatus({
       statusCode: res.status,

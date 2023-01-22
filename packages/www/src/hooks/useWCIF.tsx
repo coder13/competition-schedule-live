@@ -6,10 +6,9 @@ function useWCIF(competitionId: string) {
     queryKey: ['wcif'],
     queryFn: async () => {
       const res = await fetch(
-        new URL(
-          `/api/v0/competitions/${competitionId}/wcif/public`,
+        `${
           import.meta.env.VITE_WCA_API_ORIGIN
-        )
+        }/api/v0/competitions/${competitionId}/wcif/public`
       );
 
       return res.json() as Promise<Competition>;

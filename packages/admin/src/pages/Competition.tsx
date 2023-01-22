@@ -27,10 +27,9 @@ function CompetitionPage() {
     queryKey: ['CompetitionMessagingSid', competitionId],
     queryFn: async () => {
       const { sid } = await fetch(
-        new URL(
-          `/v0/external/admin/messagingService/${competitionId}`,
+        `${
           import.meta.env.VITE_NOTIFAPI_ORIGIN
-        )
+        }/v0/external/admin/messagingService/${competitionId}`
       ).then((res) => res.json());
       setSid(sid?.sid ?? '');
       return sid.sid;
@@ -40,10 +39,9 @@ function CompetitionPage() {
   const updateCompSid = useMutation({
     mutationFn: (newSid: string) => {
       return fetch(
-        new URL(
-          `/v0/external/admin/messagingService/${competitionId}`,
+        `${
           import.meta.env.VITE_NOTIFAPI_ORIGIN
-        ),
+        }/v0/external/admin/messagingService/${competitionId}`,
         {
           method: 'PUT',
           headers: {
@@ -61,7 +59,9 @@ function CompetitionPage() {
     queryKey: ['Competition', competitionId],
     queryFn: async () => {
       const res = await fetch(
-        `https://www.worldcubeassociation.org/api/v0/competitions/${competitionId}`
+        `${
+          import.meta.env.VITE_WCA_API_ORIGIN
+        }/api/v0/competitions/${competitionId}`
       ).then((res) => res.json());
       return res;
     },

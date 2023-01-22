@@ -72,7 +72,7 @@ export async function init() {
 
   app.use(
     cors<cors.CorsRequest>({
-      origin: ['http://localhost:5173', 'http://localhost:5174'],
+      origin: process.env.CORS_ORIGINS?.split(','),
       preflightContinue: true,
       credentials: true,
     })

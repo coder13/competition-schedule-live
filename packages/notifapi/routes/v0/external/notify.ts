@@ -176,10 +176,9 @@ router.post(
 
       const scheduleData = (await (
         await fetch(
-          new URL(
-            `/api/v0/competitions/${competitionId}/schedule`,
-            process.env.WCA_ORIGIN
-          )
+          `${
+            process.env.WCA_ORIGIN ?? ''
+          }/api/v0/competitions/${competitionId}/schedule`
         )
       ).json()) as Schedule;
 
