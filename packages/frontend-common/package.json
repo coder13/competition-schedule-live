@@ -1,11 +1,11 @@
 {
   "name": "@notifycomp/frontend-common",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "> TODO: description",
   "author": "Choover <choover11@gmail.com>",
   "homepage": "https://github.com/coder13/competition-schedule-live#readme",
   "license": "ISC",
-  "main": "lib/frontend-common.js",
+  "main": "lib/",
   "directories": {
     "lib": "lib",
     "test": "__tests__"

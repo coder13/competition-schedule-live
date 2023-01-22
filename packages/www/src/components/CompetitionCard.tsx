@@ -1,11 +1,10 @@
+import { formatTime } from '@notifycomp/frontend-common';
 import { useEffect, useState } from 'react';
-import { Block, Card, Content, Progress, Tag } from 'react-bulma-components';
+import { Card, Progress } from 'react-bulma-components';
 import { Link } from 'react-router-dom';
 import { BarLoader } from 'react-spinners';
-import styled from 'styled-components';
 import { Competition } from '../generated/graphql';
 import useWCIF from '../hooks/useWCIF';
-import { FormatTimeSettings, formatDateTime, formatTime } from '../lib/time';
 import Flag from './Flag';
 
 interface CompetitionCardProps extends Competition {}

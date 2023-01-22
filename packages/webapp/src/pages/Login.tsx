@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { Button } from '@mui/material';
 import { useAuth } from '../providers/AuthProvider';
 

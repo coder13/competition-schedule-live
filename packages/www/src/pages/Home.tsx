@@ -1,22 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useQuery as useApolloQuery } from '@apollo/client';
-import {
-  Block,
-  Button,
-  Card,
-  Content,
-  Icon,
-  Menu,
-  Panel,
-  Section,
-} from 'react-bulma-components';
+import { Block, Icon, Section } from 'react-bulma-components';
 import { formatPhoneNumber } from 'react-phone-number-input';
 import { Link } from 'react-router-dom';
 import { notifApiFetch } from '../notifapi';
 import { useAuth } from '../Providers/UserProvider';
 import { ActivitiesSubscription, GetSomeCompetitionsQuery } from '../graphql';
 import { Activity, Competition } from '../generated/graphql';
-import Flag from '../components/Flag';
 import { BarLoader } from 'react-spinners';
 import CompetitionCard from '../components/CompetitionCard';
 import { useEffect } from 'react';

@@ -81,7 +81,7 @@ function Footer() {
     notifApiOrigin: import.meta.env.VITE_NOTIFAPI_ORIGIN,
   });
   return (
-    <footer className="flex p-2 justify-evenly">
+    <footer className="flex p-2 justify-evenly shadow-inner ">
       <APISection url={import.meta.env.VITE_API_ORIGIN} name="core-api" />
       <br />
       <APISection url={import.meta.env.VITE_NOTIFAPI_ORIGIN} name="notifapi" />

@@ -1,10 +1,9 @@
+import { formatDateRange } from '@notifycomp/frontend-common/lib';
 import React from 'react';
 import { Panel } from 'react-bulma-components';
 import FlagIconFactory from 'react-flag-icon-css';
 import { Link } from 'react-router-dom';
-import styled from 'styled-components';
 import { Competition } from '../generated/graphql';
-import { formatDateRange } from '../lib/time';
 import PanelBlockWithHover from './PanelBlockWithHover';
 
 const FlagIcon = FlagIconFactory(React, { useCssModules: false });

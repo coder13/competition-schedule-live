@@ -1,5 +1,4 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { activityCodeToName } from '@wca/helpers';
 import { MouseEventHandler, useMemo, useState } from 'react';
 import { Block, Button, Icon, Panel, Section } from 'react-bulma-components';
 import { useParams } from 'react-router-dom';

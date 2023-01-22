@@ -25,6 +25,11 @@ export const GetCompetitionQuery = gql`
         url
         method
       }
+      activities {
+        activityId
+        startTime
+        endTime
+      }
     }
   }
 `;
@@ -129,7 +134,7 @@ export const StopStartActivityMutation = gql`
 
 export const ActivitiesSubscription = gql`
   subscription Activities($competitionIds: [String!]!) {
-    activity: activityUpdated(competitionIds: [$competitionId]) {
+    activity: activityUpdated(competitionIds: $competitionIds) {
       activityId
       startTime
       endTime

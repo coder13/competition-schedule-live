@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "notifycomp",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -10,6 +10,20 @@
     "prettier": "^2.7.1"
   },
   "scripts": {
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "bootstrap": "lerna bootstrap",
+    "postinstall": "lerna bootstrap",
+    "build": "lerna run build",
+    "build:www": "lerna run build --scope www",
+    "build:webapp": "lerna run build --scope webapp",
+    "build:projector": "lerna run build --scope projector",
+    "build:admin": "lerna run build --scope admin",
+    "dev": "lerna run dev",
+    "dev:www": "lerna run dev --scope www",
+    "dev:webapp": "lerna run dev --scope webapp",
+    "dev:projector": "lerna run dev --scope projector",
+    "dev:admin": "lerna run dev --scope admin",
+    "start:api": "lerna run start --scope api",
+    "start:notifapi": "notifapi--scope api"
   }
 }

@@ -1,6 +1,6 @@
 import { Activity, Room, Schedule } from '@wca/helpers';
 import { NextFunction, Request, Response, Router } from 'express';
-import { check, validationResult } from 'express-validator';
+import { check } from 'express-validator';
 import fetch from 'node-fetch';
 import { getAllUserCompetitionSubscriptions } from '../../../controllers/competitionSubscription';
 import prisma from '../../../db';

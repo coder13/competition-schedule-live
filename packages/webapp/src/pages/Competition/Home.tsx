@@ -1,15 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   Avatar,
-  Button,
   Container,
-  Divider,
   List,
   ListItemAvatar,
   ListItemButton,
   ListItemText,
   ListSubheader,
-  Stack,
 } from '@mui/material';
 import { useWCIFContext } from './Layout';
 import { Link } from '../../components/Link';

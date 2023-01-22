@@ -6,6 +6,7 @@ import { GetCompetitionQuery } from '../graphql';
 import { Competition, Webhook } from '../generated/graphql';
 import { Button, Input, UserLink } from '../components/Tailwind';
 import WebhookList from '../components/WebhookList';
+import CompetitionSchedule from '../components/Schedule';
 
 const UserList = ({ users }: { users: User[] }) => (
   <>
@@ -111,9 +112,10 @@ function CompetitionPage() {
             <Button className="p-2">Change</Button>
           </div>
         </form>
-        {compData?.competition?.webhooks && (
-          <WebhookList webhooks={compData?.competition?.webhooks} />
+        {compData?.competition && (
+          <WebhookList webhooks={compData?.competition?.webhooks || []} />
         )}
+        <CompetitionSchedule />
       </div>
     </>
   );

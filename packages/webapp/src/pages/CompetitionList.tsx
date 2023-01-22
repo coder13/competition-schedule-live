@@ -1,3 +1,4 @@
+import { formatDateRange } from '@notifycomp/frontend-common/lib';
 import { useState, useMemo } from 'react';
 import { useQuery } from '@apollo/client';
 import {
@@ -13,7 +14,6 @@ import { User } from '../generated/graphql';
 import ImportCompetitionDialog from '../components/ImportCompetitionDialog';
 import { GetCompetitionsQuery } from '../graphql';
 import { Link } from '../components/Link';
-import { formatDateRange } from '../lib/time';
 
 function CompetitionList() {
   const { data, loading } = useQuery<{ currentUser: User }>(

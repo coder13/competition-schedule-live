@@ -1,6 +1,6 @@
 import type { CodegenConfig } from '@graphql-codegen/cli';
 
-const conf = {
+const backendConf = {
   plugins: ['typescript', 'typescript-resolvers'],
   config: {
     scalars: {
@@ -9,15 +9,24 @@ const conf = {
   },
 };
 
+const frontendConf = {
+  plugins: ['typescript', 'typescript-resolvers'],
+  config: {
+    scalars: {
+      DateTime: 'string',
+    },
+  },
+};
+
 const config: CodegenConfig = {
   overwrite: true,
   schema: './graphql/schema/',
   generates: {
-    'generated/graphql.ts': conf,
-    '../webapp/src/generated/graphql.ts': conf,
-    '../projector/src/generated/graphql.ts': conf,
-    '../www/src/generated/graphql.ts': conf,
-    '../admin/src/generated/graphql.ts': conf,
+    'generated/graphql.ts': backendConf,
+    '../webapp/src/generated/graphql.ts': frontendConf,
+    '../projector/src/generated/graphql.ts': frontendConf,
+    '../www/src/generated/graphql.ts': frontendConf,
+    '../admin/src/generated/graphql.ts': frontendConf,
   },
 };
 
