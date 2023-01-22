@@ -10,7 +10,6 @@ export const notifApiFetch = async (
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': window.location.origin,
       ...options.headers,
     },
     ...options,

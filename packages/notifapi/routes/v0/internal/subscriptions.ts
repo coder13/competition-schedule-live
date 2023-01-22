@@ -1,10 +1,12 @@
-import { Request, Router } from 'express';
+import { Request, Response, Router } from 'express';
+import { body } from 'express-validator';
 import {
   addCompetitionSubscriptions,
   getCompetitionSubscriptions,
   removeCompetitionSubscriptions,
   replaceCompetitionSubscriptions,
 } from '../../../controllers/competitionSubscription';
+import { handleErrors } from '../../../middlewares/errors';
 import { getUser } from '../../../middlewares/user';
 
 const router = Router();
@@ -30,6 +32,7 @@ router.get(
 );
 
 /**
+ * UNUSED
  * Takes a competition ID and subscribes the user to the specified activityCodes
  * POST /subscribe/competitions/:competitionId
  * Body: [{
@@ -40,10 +43,11 @@ router.get(
 router.post(
   '/competitions/:competitionId',
   getUser,
-  // body()
-  //   .isArray()
-  //   .notEmpty()
-  //   .withMessage('Must provide at least one subscription'),
+  body()
+    .isArray()
+    .notEmpty()
+    .withMessage('Must provide at least one subscription'),
+  handleErrors,
   async (req: Request, res) => {
     if (!req.user) {
       throw new Error('User not found');
@@ -72,8 +76,10 @@ router.post(
 
 router.put(
   '/competitions/:competitionId',
+  body().isArray().withMessage('Body must be an array'),
+  handleErrors,
   getUser,
-  async (req: Request, res) => {
+  async (req: Request, res: Response) => {
     if (!req.user) {
       throw new Error('User not found');
     }
