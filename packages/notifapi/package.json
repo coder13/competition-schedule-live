@@ -1,8 +1,9 @@
 {
   "name": "notifapi",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
+  "license": "MIT",
+  "description": "Notification backend for notify comp infra",
   "scripts": {
     "dev": "concurrently \"yarn prisma:generate:watch\" \"NODE_ENV=development nodemon index.ts\"",
     "prestart": "yarn prisma:generate && yarn prisma:migrate",
@@ -14,9 +15,9 @@
     "prisma:generate": "prisma generate",
     "prisma:generate:watch": "prisma generate --watch"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
+    "@types/cookie-parser": "^1.4.3",
+    "@types/express-session": "^1.17.5",
     "@wca/helpers": "^1.1.2",
     "body-parser": "^1.20.1",
     "cookie-parser": "^1.4.6",
@@ -33,9 +34,6 @@
     "typescript": "^4.9.4"
   },
   "devDependencies": {
-    "@types/cookie-parser": "^1.4.3",
-    "@types/express-session": "^1.17.5",
-    "nodemon": "^2.0.20",
-    "typescript": "^4.9.4"
+    "nodemon": "^2.0.20"
   }
 }
