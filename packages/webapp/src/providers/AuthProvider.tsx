@@ -66,7 +66,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const myApiFetch = useCallback(
     (url: RequestInfo, { headers = {}, ...options } = {} as RequestInit) =>
-      fetch(`${API_URL}/${url}`, {
+      fetch(`${API_URL}${url}`, {
         ...(jwt && {
           headers: {
             'Content-Type': 'application/json',
