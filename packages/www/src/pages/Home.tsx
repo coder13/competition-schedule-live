@@ -95,39 +95,37 @@ function Home() {
           )}
         </Block>
         <hr />
-        {competitionsData?.competitions?.length ? (
-          <>
-            <Block
+        <>
+          <Block
+            style={{
+              display: 'flex',
+            }}>
+            <span className="is-size-5">Competitions</span>
+            <div
               style={{
                 display: 'flex',
+                flex: 1,
+              }}
+            />
+            <Link
+              to="/competitions"
+              style={{
+                border: 'none',
               }}>
-              <span className="is-size-5">Competitions</span>
-              <div
-                style={{
-                  display: 'flex',
-                  flex: 1,
-                }}
-              />
-              <Link
-                to="/competitions"
-                style={{
-                  border: 'none',
-                }}>
-                <Icon size="large">
-                  <i
-                    className="fas fa-search is-size-5"
-                    style={{ color: 'black' }}
-                  />
-                </Icon>
-              </Link>
-            </Block>
-            <Block>
-              {competitionsData.competitions.map((comp) => (
-                <CompetitionCard key={comp.id} {...comp} />
-              ))}
-            </Block>
-          </>
-        ) : null}
+              <Icon size="large">
+                <i
+                  className="fas fa-search is-size-5"
+                  style={{ color: 'black' }}
+                />
+              </Icon>
+            </Link>
+          </Block>
+          <Block>
+            {competitionsData?.competitions.map((comp) => (
+              <CompetitionCard key={comp.id} {...comp} />
+            ))}
+          </Block>
+        </>
       </Section>
     </>
   );
