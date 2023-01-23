@@ -8,7 +8,10 @@ export const activities: QueryResolvers<AppContext>['activities'] = async (
 ) => {
   return db.activityHistory.findMany({
     where: {
-      competitionId,
+      competitionId: {
+        equals: competitionId,
+        mode: 'insensitive',
+      },
     },
   });
 };

@@ -9,7 +9,10 @@ export const webhooks: CompetitionResolvers<AppContext>['webhooks'] = async (
   return (
     await db.webhook.findMany({
       where: {
-        competitionId: parent.id,
+        competitionId: {
+          equals: parent.id,
+          mode: 'insensitive',
+        },
       },
     })
   ).map((w) => ({

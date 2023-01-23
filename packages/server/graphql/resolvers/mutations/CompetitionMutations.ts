@@ -8,7 +8,6 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
     }
 
     const competition = await wcaApi.getWcif(competitionId);
-    console.log(11, competition);
 
     const delegatesAndOrganizers = competition.persons.filter(
       (person) =>

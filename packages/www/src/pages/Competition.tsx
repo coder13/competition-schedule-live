@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MouseEventHandler, useMemo, useState } from 'react';
-import { Block, Button, Icon, Panel, Section } from 'react-bulma-components';
+import { useMemo } from 'react';
+import { Block, Section } from 'react-bulma-components';
 import { useParams } from 'react-router-dom';
 import { BarLoader } from 'react-spinners';
-import PanelBlockWithHover from '../components/PanelBlockWithHover';
+import { List, ListItem } from '../components/List';
+import SelectCompetitorsDialog from '../components/SelectCompetitorsDialog';
 import TriStateCheckIcon from '../components/TriStateCheckIcon';
 import matchesActivityCode from '../helpers/MatchesActivtyCode';
 import useWCIF from '../hooks/useWCIF';
@@ -11,78 +12,6 @@ import {
   updateCompetitionSubscriptions,
   getCompetitionSubscriptions,
 } from '../notifapi';
-
-const List = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <Panel
-      shadowless
-      style={{
-        margin: '-0.5em',
-      }}>
-      {children}
-    </Panel>
-  );
-};
-
-const ListItem = ({
-  children,
-  onClick,
-  icon,
-  primaryText,
-  defaultOpen = false,
-}: {
-  children?: React.ReactNode;
-  icon?: React.ReactNode;
-  onClick?: MouseEventHandler<HTMLDivElement>;
-  primaryText?: string;
-  defaultOpen?: boolean;
-}) => {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <PanelBlockWithHover>
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-        }}>
-        <div
-          onClick={onClick}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-          }}>
-          <Icon size="medium">{icon}</Icon>
-          <span
-            style={{
-              flexGrow: 1,
-            }}>
-            {primaryText}
-          </span>
-          {children && (
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(!open);
-              }}>
-              <Icon size="medium">
-                <i
-                  className={
-                    open
-                      ? 'fas fa-regular fa-chevron-up'
-                      : 'fas fa-regular fa-chevron-down'
-                  }
-                />
-              </Icon>
-            </div>
-          )}
-        </div>
-        {open && <div>{children}</div>}
-      </div>
-    </PanelBlockWithHover>
-  );
-};
 
 function Competition() {
   const params = useParams();
@@ -122,7 +51,7 @@ function Competition() {
     } else {
       return 'some';
     }
-  }, [selectedActivityCodes, roomActivityCodes]);
+  }, [selectedActivityCodes]);
 
   const toggleSubscriptions = useMutation({
     mutationFn: (toggleSubs: Subscription[]) => {
@@ -305,100 +234,107 @@ function Competition() {
       ) : (
         <div style={{ height: '4px' }} />
       )}
-      <Section>
-        <p>{wcif?.name}</p>
-        <hr />
-        <p>Select activities to receive notifications for</p>
-        <br />
-        <div
-          style={{
-            marginLeft: '-1em',
-            marginRight: '-1em',
-          }}>
-          <ListItem
-            icon={<TriStateCheckIcon checked={allRoundsSelected} />}
-            primaryText="All Rounds"
-            onClick={() => {
-              toggleSelected('*');
-            }}
-          />
+      <Section className="divide-y-2 -mt-8 space-y-4">
+        <p className="text-xl">{wcif?.name}</p>
+        <div>
+          <p>Subscribe to competitor notifications</p>
         </div>
-        <List>
-          {roomActivityCodes.map((activityCode) => {
-            const roundActivitiesForActivityCode =
-              getActivitiesForActivityCode(activityCode);
-            const isSelected = selectedActivityCodes?.some((a) =>
-              matchesActivityCode(a)(activityCode)
-            );
-            const hasSome = roundActivitiesForActivityCode?.some((ra) =>
-              ra.childActivities?.some((ca) =>
-                selectedActivityCodes?.some((a) =>
-                  matchesActivityCode(a)(ca.activityCode)
+        <div>
+          <p>Select activities to receive notifications for</p>
+          <div
+            style={{
+              marginLeft: '-1em',
+              marginRight: '-1em',
+            }}>
+            <ListItem
+              icon={<TriStateCheckIcon checked={allRoundsSelected} />}
+              primaryText="All Rounds"
+              onClick={() => {
+                toggleSelected('*');
+              }}
+            />
+          </div>
+          <List>
+            {roomActivityCodes.map((activityCode) => {
+              const roundActivitiesForActivityCode =
+                getActivitiesForActivityCode(activityCode);
+              const isSelected = selectedActivityCodes?.some((a) =>
+                matchesActivityCode(a)(activityCode)
+              );
+              const hasSome = roundActivitiesForActivityCode?.some((ra) =>
+                ra.childActivities?.some((ca) =>
+                  selectedActivityCodes?.some((a) =>
+                    matchesActivityCode(a)(ca.activityCode)
+                  )
                 )
-              )
-            );
+              );
 
-            const childActivities = roundActivitiesForActivityCode
-              ?.map((ra) => ra.childActivities)
-              ?.flat();
-            const childActivityCodes = [
-              ...new Set(
-                childActivities
-                  ?.map((ca) => ca?.activityCode)
-                  .filter(Boolean) || []
-              ),
-            ].sort() as string[];
+              const childActivities = roundActivitiesForActivityCode
+                ?.map((ra) => ra.childActivities)
+                ?.flat();
+              const childActivityCodes = [
+                ...new Set(
+                  childActivities
+                    ?.map((ca) => ca?.activityCode)
+                    .filter(Boolean) || []
+                ),
+              ].sort() as string[];
 
-            return (
-              <ListItem
-                key={activityCode}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleSelected(activityCode);
-                }}
-                icon={
-                  <TriStateCheckIcon
-                    checked={isSelected ? true : !!hasSome && 'some'}
-                  />
-                }
-                primaryText={roundActivitiesForActivityCode?.[0]?.name}
-                children={
-                  childActivityCodes?.length ? (
-                    <Block>
-                      {childActivityCodes.map((childActivityCode) => {
-                        const groupActivities =
-                          getActivitiesForActivityCode(childActivityCode);
+              return (
+                <ListItem
+                  key={activityCode}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelected(activityCode);
+                  }}
+                  icon={
+                    <TriStateCheckIcon
+                      checked={isSelected ? true : !!hasSome && 'some'}
+                    />
+                  }
+                  primaryText={roundActivitiesForActivityCode?.[0]?.name}
+                  children={
+                    childActivityCodes?.length ? (
+                      <Block>
+                        {childActivityCodes.map((childActivityCode) => {
+                          const groupActivities =
+                            getActivitiesForActivityCode(childActivityCode);
 
-                        return (
-                          <ListItem
-                            key={childActivityCode}
-                            primaryText={groupActivities?.[0]?.name
-                              ?.split(', ')
-                              .pop()}
-                            icon={
-                              selectedActivityCodes?.some((a) =>
-                                matchesActivityCode(a)(childActivityCode)
-                              ) ? (
-                                <i className="fa-regular fa-square-check" />
-                              ) : (
-                                <i className="fa-regular fa-square" />
-                              )
-                            }
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleSelected(childActivityCode);
-                            }}
-                          />
-                        );
-                      })}
-                    </Block>
-                  ) : undefined
-                }
-              />
-            );
-          })}
-        </List>
+                          return (
+                            <ListItem
+                              key={childActivityCode}
+                              primaryText={groupActivities?.[0]?.name
+                                ?.split(', ')
+                                .pop()}
+                              icon={
+                                selectedActivityCodes?.some((a) =>
+                                  matchesActivityCode(a)(childActivityCode)
+                                ) ? (
+                                  <i className="fa-regular fa-square-check" />
+                                ) : (
+                                  <i className="fa-regular fa-square" />
+                                )
+                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSelected(childActivityCode);
+                              }}
+                            />
+                          );
+                        })}
+                      </Block>
+                    ) : undefined
+                  }
+                />
+              );
+            })}
+          </List>
+        </div>
       </Section>
+      <SelectCompetitorsDialog
+        open={true}
+        onClose={() => console.log('closing')}
+      />
     </>
   );
 }

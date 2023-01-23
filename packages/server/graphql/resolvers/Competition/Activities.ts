@@ -5,7 +5,10 @@ export const activities: CompetitionResolvers<AppContext>['activities'] =
   async (parent, { ongoing }, { db }) => {
     return db.activityHistory.findMany({
       where: {
-        competitionId: parent.id,
+        competitionId: {
+          equals: parent.id,
+          mode: 'insensitive',
+        },
         ...(ongoing && { endTime: null }),
       },
     });

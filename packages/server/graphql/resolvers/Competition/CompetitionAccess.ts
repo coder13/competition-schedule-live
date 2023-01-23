@@ -5,7 +5,10 @@ export const competitionAccess: CompetitionResolvers<AppContext>['competitionAcc
   async (parent, _, { db }) => {
     return db.competitionAccess.findMany({
       where: {
-        competitionId: parent.id,
+        competitionId: {
+          equals: parent.id,
+          mode: 'insensitive',
+        },
       },
     });
   };

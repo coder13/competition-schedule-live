@@ -1,6 +1,9 @@
 import { withFilter } from 'graphql-subscriptions';
 import { SubscriptionResolvers } from '../../../generated/graphql';
 
+/**
+ * @Deprecated
+ */
 export const activityStarted: SubscriptionResolvers['activityStarted'] = {
   // @ts-expect-error withfilter isn't properly typed.
   subscribe: withFilter(
@@ -10,6 +13,9 @@ export const activityStarted: SubscriptionResolvers['activityStarted'] = {
   ),
 };
 
+/**
+ * @Deprecated
+ */
 export const activityStopped: SubscriptionResolvers['activityStopped'] = {
   // @ts-expect-error withfilter isn't properly typed.
   subscribe: withFilter(
@@ -25,8 +31,11 @@ export const activityUpdated: SubscriptionResolvers['activityUpdated'] = {
   subscribe: withFilter(
     (_, __, { pubsub }) => pubsub.asyncIterator('ACTIVITY_UPDATED'),
     (payload, args) => {
-      console.log(payload.activityUpdated);
-      if (args.competitionIds.includes(payload.activityUpdated.competitionId)) {
+      if (
+        args.competitionIds
+          .map(String.prototype.toLowerCase)
+          .includes(payload.activityUpdated.competitionId.toLowerCase())
+      ) {
         return false;
       }
 

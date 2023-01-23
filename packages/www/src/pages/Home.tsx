@@ -35,6 +35,7 @@ function Home() {
     variables: {
       competitionIds,
     },
+    skip: !competitionIds?.length,
   });
 
   useEffect(() => {

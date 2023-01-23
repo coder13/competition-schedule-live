@@ -11,7 +11,12 @@ export const competitions: QueryResolvers<AppContext>['competitions'] = async (
       activityHistory: true,
     },
     where: {
-      ...(competitionIds && { id: { in: competitionIds } }),
+      ...(competitionIds && {
+        id: {
+          in: competitionIds,
+          mode: 'insensitive',
+        },
+      }),
     },
   });
 };
@@ -26,7 +31,10 @@ export const competition: QueryResolvers<AppContext>['competition'] = async (
       activityHistory: true,
     },
     where: {
-      id: competitionId,
+      id: {
+        equals: competitionId,
+        mode: 'insensitive',
+      },
     },
   });
 };

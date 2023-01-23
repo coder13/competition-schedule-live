@@ -13,7 +13,10 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
 
     const compAccess = await db.competitionAccess.findFirst({
       where: {
-        competitionId,
+        competitionId: {
+          equals: competitionId,
+          mode: 'insensitive',
+        },
         userId: user.id,
       },
     });
@@ -68,7 +71,10 @@ export const stopActivity: MutationResolvers<AppContext>['stopActivity'] =
 
     const compAccess = await db.competitionAccess.findFirst({
       where: {
-        competitionId,
+        competitionId: {
+          equals: competitionId,
+          mode: 'insensitive',
+        },
         userId: user.id,
       },
     });

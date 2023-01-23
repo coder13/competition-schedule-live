@@ -15,8 +15,6 @@ export const createWebhook: MutationResolvers<AppContext>['createWebhook'] =
       },
     });
 
-    console.log(18, wh);
-
     return {
       id: wh.id,
       url: wh.url,
