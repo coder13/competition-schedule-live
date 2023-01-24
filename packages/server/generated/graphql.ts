@@ -22,7 +22,7 @@ export type Activity = {
   activityId: Scalars['Int'];
   competitionId: Scalars['String'];
   endTime?: Maybe<Scalars['DateTime']>;
-  startTime: Scalars['DateTime'];
+  startTime?: Maybe<Scalars['DateTime']>;
 };
 
 export type Competition = {
@@ -73,6 +73,7 @@ export type Mutation = {
   createWebhook: Webhook;
   deleteWebhook?: Maybe<Scalars['Void']>;
   importCompetition?: Maybe<Competition>;
+  resetActivities?: Maybe<Array<Maybe<Activity>>>;
   startActivities?: Maybe<Array<Maybe<Activity>>>;
   startActivity?: Maybe<Activity>;
   stopActivity?: Maybe<Activity>;
@@ -92,6 +93,12 @@ export type MutationDeleteWebhookArgs = {
 
 
 export type MutationImportCompetitionArgs = {
+  competitionId: Scalars['String'];
+};
+
+
+export type MutationResetActivitiesArgs = {
+  activityIds?: InputMaybe<Array<Scalars['Int']>>;
   competitionId: Scalars['String'];
 };
 
@@ -310,7 +317,7 @@ export type ActivityResolvers<ContextType = any, ParentType extends ResolversPar
   activityId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   competitionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   endTime?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  startTime?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  startTime?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -351,6 +358,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   createWebhook?: Resolver<ResolversTypes['Webhook'], ParentType, ContextType, RequireFields<MutationCreateWebhookArgs, 'competitionId' | 'webhook'>>;
   deleteWebhook?: Resolver<Maybe<ResolversTypes['Void']>, ParentType, ContextType, RequireFields<MutationDeleteWebhookArgs, 'id'>>;
   importCompetition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<MutationImportCompetitionArgs, 'competitionId'>>;
+  resetActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationResetActivitiesArgs, 'competitionId'>>;
   startActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationStartActivitiesArgs, 'activityIds' | 'competitionId'>>;
   startActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStartActivityArgs, 'activityId' | 'competitionId'>>;
   stopActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStopActivityArgs, 'activityId' | 'competitionId'>>;

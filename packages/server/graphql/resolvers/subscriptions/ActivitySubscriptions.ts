@@ -25,6 +25,7 @@ export const activityUpdated: SubscriptionResolvers['activityUpdated'] = {
   subscribe: withFilter(
     (_, __, { pubsub }) => pubsub.asyncIterator('ACTIVITY_UPDATED'),
     (payload, args) => {
+      console.log(payload.activityUpdated);
       if (args.competitionIds.includes(payload.activityUpdated.competitionId)) {
         return false;
       }

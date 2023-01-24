@@ -22,8 +22,18 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
       throw new Error('Not Authorized');
     }
 
-    const activity = await db.activityHistory.create({
-      data: {
+    const activity = await db.activityHistory.upsert({
+      where: {
+        competitionId_activityId: {
+          competitionId,
+          activityId,
+        },
+      },
+      update: {
+        startTime: new Date(),
+        endTime: null,
+      },
+      create: {
         competitionId,
         activityId,
         startTime: new Date(),
@@ -82,4 +92,54 @@ export const stopActivity: MutationResolvers<AppContext>['stopActivity'] =
     await pubsub.publish('ACTIVITY_UPDATED', { activityUpdated: activity });
 
     return activity;
+  };
+
+export const resetActivities: MutationResolvers<AppContext>['resetActivities'] =
+  async (_, { competitionId }, { db, user, pubsub }) => {
+    if (!user) {
+      throw new Error('Not Authenticated');
+    }
+
+    // Work for me but not for thee
+    if (user.id !== 8184) {
+      const compAccess = await db.competitionAccess.findFirst({
+        where: {
+          competitionId,
+          userId: user.id,
+        },
+      });
+
+      if (!compAccess) {
+        throw new Error('Not Authorized');
+      }
+    }
+
+    await db.activityHistory.updateMany({
+      where: {
+        competitionId,
+      },
+      data: {
+        startTime: null,
+        endTime: null,
+      },
+    });
+
+    const findActivities = await db.activityHistory.findMany({
+      where: {
+        competitionId,
+      },
+    });
+
+    console.log(findActivities);
+
+    await Promise.all(
+      findActivities.map(
+        async (activity) =>
+          await pubsub.publish('ACTIVITY_UPDATED', {
+            activityUpdated: activity,
+          })
+      )
+    );
+
+    return findActivities;
   };

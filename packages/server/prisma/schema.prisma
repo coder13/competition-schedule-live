@@ -35,7 +35,7 @@ model CompetitionAccess {
 model ActivityHistory {
   competitionId String      @db.VarChar(255)
   activityId    Int
-  startTime     DateTime
+  startTime     DateTime?
   endTime       DateTime?
   competition   Competition @relation(fields: [competitionId], references: [id])
 

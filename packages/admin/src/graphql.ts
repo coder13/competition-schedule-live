@@ -132,6 +132,16 @@ export const StopStartActivityMutation = gql`
   }
 `;
 
+export const ResetActivitiesMutation = gql`
+  mutation ResetActivities($competitionId: String!) {
+    resetActivities(competitionId: $competitionId) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
 export const ActivitiesSubscription = gql`
   subscription Activities($competitionIds: [String!]!) {
     activity: activityUpdated(competitionIds: $competitionIds) {
