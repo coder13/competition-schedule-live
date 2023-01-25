@@ -17,48 +17,82 @@ export const getAllUserCompetitionSubscriptions = (
   activityCodes: string[]
 ) => {
   const values = ['*', ...activityCodes];
-  return prisma.competitionSubscription.findMany({
-    select: {
-      user: {
-        select: {
-          id: true,
-          phoneNumber: true,
-          CompetitionSubscription: {
-            select: {
-              type: true,
-              value: true,
-            },
-            where: {
-              competitionId: competitionId.toLowerCase(),
-              type: CompetitionSubscriptionType.activity,
-              value: {
-                in: values,
-              },
-            },
+  return prisma.user.findMany({
+    include: {
+      CompetitionSubscription: {
+        where: {
+          competitionId: competitionId.toLowerCase(),
+          value: {
+            in: values,
           },
         },
       },
     },
     where: {
-      competitionId: competitionId.toLowerCase(),
-      type: CompetitionSubscriptionType.activity,
-      value: {
-        in: values,
+      CompetitionSubscription: {
+        some: {
+          competitionId: competitionId.toLowerCase(),
+          type: CompetitionSubscriptionType.activity,
+          value: {
+            in: values,
+          },
+        },
       },
     },
   });
 };
 
-export const getCompetitorSubscriptions = (
-  userId: number,
-  verified?: boolean
+export const getAllUserCompetitionCompetitorSubscriptions = (
+  competitionId: string,
+  wcaUserIds: number[]
 ) =>
-  prisma.competitorSubscription.findMany({
+  prisma.competitionSubscription.findMany({
     where: {
-      userId,
-      ...(verified && { verified }),
+      competitionId: competitionId.toLowerCase(),
+      type: CompetitionSubscriptionType.competitor,
+      value: {
+        in: wcaUserIds.map((i) => i.toString()),
+      },
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          phoneNumber: true,
+        },
+      },
     },
   });
+// prisma.competitionSubscription.findMany({
+//   select: {
+//     user: {
+//       select: {
+//         id: true,
+//         phoneNumber: true,
+//         CompetitionSubscription: {
+//           select: {
+//             type: true,
+//             value: true,
+//           },
+//           where: {
+//             competitionId: competitionId.toLowerCase(),
+//             type: CompetitionSubscriptionType.competitor,
+//             value: {
+//               in: wcaUserIds.map((i) => i.toString()),
+//             },
+//           },
+//         },
+//       },
+//     },
+//   },
+//   where: {
+//     competitionId: competitionId.toLowerCase(),
+//     type: CompetitionSubscriptionType.competitor,
+//     value: {
+//       in: wcaUserIds.map((i) => i.toString()),
+//     },
+//   },
+// });
 
 /**
  * Performs a transaction to add competition subscriptions and then does a find to attempt to return the added subscriptions

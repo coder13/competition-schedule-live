@@ -25,6 +25,33 @@ const getParentActivitiyCodes = (activityCode: string): string[] => {
   return [];
 };
 
+// Returns the array items joined with a comma except for the last which is joined with "and"
+const smartJoin = (arr: string[]) =>
+  arr.length > 1
+    ? `${arr.slice(0, -1).join(', ')} and ${arr.pop() as string}`
+    : arr[0];
+
+const translateAssignmentCode = (assignmentCode: string) => {
+  switch (assignmentCode) {
+    case 'competitor':
+      return 'compete';
+    case 'staff-judge':
+      return 'judge';
+    case 'staff-scrambler':
+      return 'scramble';
+    case 'staff-runner':
+      return 'run';
+    case 'staff-dataentry':
+      return 'enter data';
+    case 'staff-delegate':
+      return 'delegate';
+    case 'staff-organizer':
+      return 'organize';
+    default:
+      return assignmentCode;
+  }
+};
+
 const getMessagingServiceSid = async (
   req: Request,
   res: Response,
@@ -106,15 +133,20 @@ interface ActivityNotification {
 interface CompetitorNotification {
   type: 'competitor';
   /**
-   * id of competitor
+   * global wca user id of competitor
    */
-  id: number;
+  wcaUserId: number;
+  /**
+   * local competition id of competitor
+   */
+  registrantId: number;
   /**
    * name of competitor
    */
   name: string;
-  activityId?: number;
-  assignmentCode?: string;
+  wcaId: string;
+  activityId: number;
+  assignmentCode: string;
 }
 
 const isActivity = (
@@ -133,6 +165,9 @@ const isCompetitor = (
  *   notifications: (ActivityNotification | CompetitorNotification)[],
  * }
  *
+ * Assumptions
+ * - all notifications are for the same competition
+ * - there will be at least 1 activity mentioned
  */
 router.post(
   '/notify',
@@ -148,10 +183,13 @@ router.post(
 
           if (isCompetitor(n)) {
             return (
-              n.id &&
-              typeof n.id === 'number' &&
+              n.wcaUserId &&
+              typeof n.wcaUserId === 'number' &&
+              n.registrantId &&
+              typeof n.registrantId === 'number' &&
               n.name &&
               typeof n.name === 'string' &&
+              typeof n.wcaId === 'string' &&
               (n.activityId === undefined ||
                 (n.activityId && typeof n.activityId === 'number')) &&
               (n.assignmentCode === undefined ||
@@ -182,31 +220,24 @@ router.post(
         )
       ).json()) as Schedule;
 
-      /**
-       * I need to group activity notifications by activityCode
-       * I'm going to send this server notifications for activity "17" and "18" and I want to group that into some datastructure that resolves to an activityCode and which rooms are being notified
-       * that data strucutre looks like:
-       * {
-       * "333-r1-g1": [{
-       *   "id": 1,
-       *   "name": "Room 1",
-       * }, {
-       *   "id": 2,
-       *   "name": "Room 2",
-       * }]
-       *
-       * User is subscribed to "333-r1" so they are notified of this.
-       * Their notification looks like "3x3x3 Round 1 group 1 is happening at Room 1 and Room 2"
-       *
-       * This looks like we should create a map of string to array of rooms
-       * We'll iterate over the unique activityCodes and figure out which rooms are being notified among these
-       * When we go to notify users, we can iterate over the unique activityCodes and notify users who are subscribed to that activityCode
-       *
-       */
+      const rooms = scheduleData.venues.flatMap((v) => v.rooms);
+      const roomForActivityId = (activityId: number) =>
+        rooms.find((r) =>
+          r.activities.some(
+            (a) =>
+              a.id === activityId ||
+              a.childActivities?.some((ca) => ca.id === activityId)
+          )
+        );
+      const includeRoomName = rooms.length > 1;
 
       const activityNotifications = notifications.filter(
         (n) => n.type === 'activity'
       ) as ActivityNotification[];
+
+      const competitorNotifications = notifications.filter(
+        (n) => n.type === 'competitor'
+      ) as CompetitorNotification[];
 
       // short lived memory cache of activity data
       const activityData = new Map<number, Activity>();
@@ -234,10 +265,27 @@ router.post(
         ])
       );
 
-      const usersToPing = await getAllUserCompetitionSubscriptions(
-        competitionId,
-        activityCodesForSearch
+      const wcaUserIdsForSearch = uniqueDefinedSet(
+        (
+          notifications.filter(
+            (n) => n.type === 'competitor'
+          ) as CompetitorNotification[]
+        ).map((n) => n.wcaUserId)
       );
+
+      const userCompetitionSubscriptions =
+        await getAllUserCompetitionSubscriptions(competitionId, [
+          ...activityCodesForSearch,
+          ...wcaUserIdsForSearch.map((i) => i.toString()),
+        ]);
+
+      // const userCompetitionCompetitorSubscriptions =
+      //   await getAllUserCompetitionCompetitorSubscriptions(
+      //     competitionId,
+      //     wcaUserIdsForSearch
+      //   );
+
+      console.log(userCompetitionSubscriptions);
 
       const messagesByUser = new Map<number, string[]>();
 
@@ -256,41 +304,101 @@ router.post(
         );
       });
 
-      console.log('Notifying', usersToPing.length, 'users');
-      usersToPing.forEach(({ user }) => {
-        notificationActivityCodes.forEach((code) => {
-          const data = activityCodeData.get(code);
-          if (!data) {
+      console.log('Notifying', userCompetitionSubscriptions.length, 'users');
+      /**
+       * Determines what message to send to each user
+       * Uses the assumption that all are for the same activity
+       * and that there is at least 1 activity mentioned
+       * First determines if there are any competitors for the user to be notified for
+       * If so, then it creates a message that implies that the activity is starting
+       * If not, then it creates a message that explicitly states that the activity has started
+       *  */
+      userCompetitionSubscriptions.forEach(
+        ({ id, CompetitionSubscription: compSubs }) => {
+          const competitorNotificationsForUser = competitorNotifications
+            // determine which competitor notifications to send to user
+            .filter((competitorNotif) =>
+              compSubs.some(
+                (s) => competitorNotif.wcaUserId.toString() === s.value
+              )
+            );
+
+          notificationActivityCodes
+            .filter((code) =>
+              compSubs.some((s) => s.value === '*' || code.startsWith(s.value))
+            )
+            .forEach((code) => {
+              const data = activityCodeData.get(code);
+              if (!data) {
+                return;
+              }
+
+              const activityName = data?.activities[0].name; //  They all have the same name
+
+              const competitors = competitorNotificationsForUser.filter(
+                (competitorNotif) =>
+                  data.activities.some(
+                    (s) => s.id === competitorNotif.activityId
+                  )
+              );
+
+              if (competitors.length === 0) {
+                messagesByUser.set(id, [
+                  ...(messagesByUser.get(id) ?? []),
+                  // TODO: create a more advanced concatenation of the room names
+                  `${activityName} is starting now${
+                    includeRoomName
+                      ? ` on ${smartJoin(
+                          data.rooms.map((room) => `the ${room.name}`)
+                        )}`
+                      : ''
+                  }!`,
+                ]);
+              } else {
+                messagesByUser.set(id, [
+                  ...(messagesByUser.get(id) ?? []),
+                  `${smartJoin(
+                    competitors.map((c) => {
+                      const taskName = translateAssignmentCode(
+                        c.assignmentCode
+                      );
+                      const roomName = roomForActivityId(c.activityId)?.name;
+
+                      return `${c.name} is being called up to ${taskName}${
+                        includeRoomName && roomName ? `on the ${roomName}` : ''
+                      }`;
+                    })
+                  )} for ${activityName}!`,
+                ]);
+                // Some complicated message combining all the competitors being notified
+                console.log(
+                  activityName,
+                  competitors.map((c) => ({
+                    name: c.name,
+                    assignment: translateAssignmentCode(c.assignmentCode),
+                  }))
+                );
+              }
+            });
+        }
+      );
+
+      const twilioRes = await Promise.all(
+        userCompetitionSubscriptions.map(async (user) => {
+          if (!user.phoneNumber) {
             return;
           }
 
-          const activityName = data?.activities[0].name; //  They all have the same name
+          const messages = messagesByUser.get(user.id) ?? [];
 
-          messagesByUser.set(user.id, [
-            ...(messagesByUser.get(user.id) ?? []),
-            // TODO: create a more advanced concatenation of the room names
-            `${activityName} is starting now on the ${data.rooms
-              .map((room) => room.name)
-              .join(' and the ')}!`,
-          ]);
-        });
-      });
-
-      const twilioRes = await Promise.all(
-        [...messagesByUser.entries()].map(async ([userId, messages]) => {
-          const user = usersToPing.find((u) => u.user.id === userId);
-
-          if (!user) {
-            throw new Error('User not found!');
-          }
-
-          if (!user.user.phoneNumber) {
+          if (!messages.length) {
+            // Sanity check. Shouldn't happen.
             return;
           }
 
           return await twilioClient.messages.create({
             messagingServiceSid: req.sid,
-            to: user.user.phoneNumber,
+            to: user.phoneNumber,
             body: messages.join('\n'),
           });
         })
@@ -302,7 +410,7 @@ router.post(
 
       res.json({
         success: true,
-        numberOfUsersNotified: usersToPing.length,
+        numberOfUsersNotified: userCompetitionSubscriptions.length,
         message: `${successfulSends.length} messages sent`,
       });
     } catch (e) {
