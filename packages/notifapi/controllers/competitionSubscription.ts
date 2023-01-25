@@ -60,7 +60,14 @@ export const getCompetitorSubscriptions = (
     },
   });
 
-export const addCompetitionSubscriptions = (
+/**
+ * Performs a transaction to add competition subscriptions and then does a find to attempt to return the added subscriptions
+ * @param userId
+ * @param competitionId
+ * @param subscriptions
+ * @returns
+ */
+export const addCompetitionSubscriptions = async (
   userId: number,
   competitionId: string,
   subscriptions: [
@@ -69,14 +76,42 @@ export const addCompetitionSubscriptions = (
       value: string;
     }
   ]
+) => {
+  const allSubs = await prisma.$transaction([
+    prisma.competitionSubscription.createMany({
+      data: subscriptions.map((subscription) => ({
+        userId,
+        competitionId: competitionId.toLowerCase(),
+        type: subscription.type,
+        value: subscription.value,
+      })),
+    }),
+    prisma.competitionSubscription.findMany({
+      where: {
+        userId,
+        competitionId: competitionId.toLowerCase(),
+      },
+    }),
+  ]);
+
+  return allSubs[1].filter((s) =>
+    subscriptions.some((sub) => sub.value === s.value && sub.type === s.type)
+  );
+};
+
+export const addCompetitionSubscription = async (
+  userId: number,
+  competitionId: string,
+  type: CompetitionSubscriptionType,
+  value: string
 ) =>
-  prisma.competitionSubscription.createMany({
-    data: subscriptions.map((subscription) => ({
+  prisma.competitionSubscription.create({
+    data: {
       userId,
       competitionId: competitionId.toLowerCase(),
-      type: subscription.type,
-      value: subscription.value,
-    })),
+      type,
+      value,
+    },
   });
 
 export const removeCompetitionSubscriptions = (subscriptionIds: number[]) =>

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { Block, Section } from 'react-bulma-components';
-import { useParams } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Block, Button, Icon, Section } from 'react-bulma-components';
+import { Link, useParams } from 'react-router-dom';
 import { BarLoader } from 'react-spinners';
 import { List, ListItem } from '../components/List';
 import SelectCompetitorsDialog from '../components/SelectCompetitorsDialog';
@@ -25,6 +25,9 @@ function Competition() {
     getActivitiesForActivityCode,
   } = useWCIF(competitionId);
 
+  const [selectCompetitorsDialogOpen, setSelectCompetitorsDialogOpen] =
+    useState(false);
+
   const roomActivities = rooms?.map((room) => room.activities).flat();
   const roomActivityCodes = [
     ...new Set(roomActivities?.map((a) => a.activityCode)),
@@ -37,6 +40,20 @@ function Competition() {
         'subscriptions'
       ] as Subscription[],
   });
+
+  const selectedPersons = useMemo(() => {
+    if (!subscriptions) {
+      return [];
+    }
+
+    return (
+      wcif?.persons?.filter((p) =>
+        subscriptions.some(
+          (s) => s.type === 'competitor' && s.value === p.wcaUserId.toString()
+        )
+      ) || []
+    );
+  }, [subscriptions, wcif]);
 
   const selectedActivityCodes = subscriptions
     ?.filter((s) => s.type === 'activity')
@@ -216,6 +233,7 @@ function Competition() {
       );
     },
     onSuccess: (data) => {
+      // Replace the entire array with the new array since we are bulk modifying *all* of the subscriptions with this endpoint
       queryClient.setQueryData<Subscription[]>(
         ['subscriptions', 'competitions', competitionId],
         data.subscriptions
@@ -237,7 +255,32 @@ function Competition() {
       <Section className="divide-y-2 -mt-8 space-y-4">
         <p className="text-xl">{wcif?.name}</p>
         <div>
-          <p>Subscribe to competitor notifications</p>
+          <Block className="flex items-center mb-1">
+            <div className="flex flex-col">
+              <span className="is-size-4">Competitors</span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                flex: 1,
+              }}
+            />
+            <Button
+              className="border-none"
+              onClick={() => setSelectCompetitorsDialogOpen(true)}>
+              <Icon size="large">
+                <i className="fas fa-pencil is-size-5" />
+              </Icon>
+            </Button>
+          </Block>
+          <List>
+            {selectedPersons.map((person) => (
+              <ListItem key={person.name} primaryText={person.name} />
+            ))}
+            {selectedPersons.length === 0 && (
+              <ListItem primaryText="No competitors selected" />
+            )}
+          </List>
         </div>
         <div>
           <p>Select activities to receive notifications for</p>
@@ -292,7 +335,7 @@ function Competition() {
                       checked={isSelected ? true : !!hasSome && 'some'}
                     />
                   }
-                  primaryText={roundActivitiesForActivityCode?.[0]?.name}
+                  primaryText={roundActivitiesForActivityCode?.[0]?.name || ''}
                   children={
                     childActivityCodes?.length ? (
                       <Block>
@@ -303,9 +346,10 @@ function Competition() {
                           return (
                             <ListItem
                               key={childActivityCode}
-                              primaryText={groupActivities?.[0]?.name
-                                ?.split(', ')
-                                .pop()}
+                              primaryText={
+                                groupActivities?.[0]?.name?.split(', ').pop() ||
+                                ''
+                              }
                               icon={
                                 selectedActivityCodes?.some((a) =>
                                   matchesActivityCode(a)(childActivityCode)
@@ -332,8 +376,8 @@ function Competition() {
         </div>
       </Section>
       <SelectCompetitorsDialog
-        open={true}
-        onClose={() => console.log('closing')}
+        open={selectCompetitorsDialogOpen}
+        onClose={() => setSelectCompetitorsDialogOpen(false)}
       />
     </>
   );

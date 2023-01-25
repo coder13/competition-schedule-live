@@ -19,12 +19,14 @@ export const ListItem = ({
   onClick,
   icon,
   primaryText,
+  secondaryText,
   defaultOpen = false,
 }: {
   children?: React.ReactNode;
   icon?: React.ReactNode;
   onClick?: MouseEventHandler<HTMLDivElement>;
-  primaryText?: string;
+  primaryText: string;
+  secondaryText?: string;
   defaultOpen?: boolean;
 }) => {
   const [open, setOpen] = useState(defaultOpen);
@@ -43,13 +45,15 @@ export const ListItem = ({
             display: 'flex',
             alignItems: 'center',
           }}>
-          <Icon size="medium">{icon}</Icon>
-          <span
-            style={{
-              flexGrow: 1,
-            }}>
-            {primaryText}
-          </span>
+          {icon && <Icon size="medium">{icon}</Icon>}
+          <div className="flex flex-1 flex-col">
+            <span>{primaryText}</span>
+            {secondaryText && (
+              <span className="font-normal text-xs" style={{ color: '#666' }}>
+                {secondaryText}
+              </span>
+            )}
+          </div>
           {children && (
             <div
               onClick={(e) => {
