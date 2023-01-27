@@ -252,8 +252,16 @@ function Competition() {
       ) : (
         <div style={{ height: '4px' }} />
       )}
+      <Block className="m-0"></Block>
       <Section className="divide-y-2 -mt-8 space-y-4">
-        <p className="text-xl">{wcif?.name}</p>
+        <div className="flex items-center">
+          <Link to="/">
+            <Icon size="medium" className="-ml-2">
+              <i className="fas fa-chevron-left" />
+            </Icon>
+          </Link>
+          <p className="text-xl">{wcif?.name}</p>
+        </div>
         <div>
           <Block className="flex items-center mb-1">
             <div className="flex flex-col">

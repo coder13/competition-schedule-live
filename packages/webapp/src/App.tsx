@@ -18,7 +18,7 @@
  */
 
 import { Backdrop, CircularProgress, Typography } from '@mui/material';
-import { Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import Mainbar from './components/Mainbar';
 import CompetitionHome from './pages/Competition/Home';
 import CompetitionLayout from './pages/Competition/Layout';
@@ -49,12 +49,21 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
-        <Route index element={jwt ? <Home /> : <LoginPage />} />
-        <Route
-          path="/competitions/:competitionId/"
-          element={<CompetitionLayout />}>
-          <Route index element={<CompetitionHome />} />
-          <Route path="rooms/:roomId" element={<CompetitionRoom />} />
+        {jwt ? (
+          <>
+            <Route index element={<Home />} />
+            <Route
+              path="/competitions/:competitionId/"
+              element={<CompetitionLayout />}>
+              <Route index element={<CompetitionHome />} />
+              <Route path="rooms/:roomId" element={<CompetitionRoom />} />
+            </Route>
+          </>
+        ) : (
+          <Route index element={<LoginPage />} />
+        )}
+        <Route path="*">
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Route>
     </Routes>

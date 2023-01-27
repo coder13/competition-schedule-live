@@ -52,8 +52,10 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
       await createNotificationsForActivity(competitionId, activityId)
     ).then((res) => {
       console.log(
-        competitionId,
-        activityId,
+        {
+          competitionId,
+          activityId,
+        },
         'Pinged',
         res.filter((r) => r.status === 'fulfilled').length,
         'webhooks'

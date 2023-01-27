@@ -25,7 +25,7 @@ function CompetitionLayout() {
   const { isLoading, data: wcif } = useReactQuery<Competition>({
     queryKey: ['public'],
     queryFn: () =>
-      wcaApiFetch(`api/v0/competitions/${competitionId || ''}/wcif/public`),
+      wcaApiFetch(`/api/v0/competitions/${competitionId || ''}/wcif/public`),
   });
 
   const {

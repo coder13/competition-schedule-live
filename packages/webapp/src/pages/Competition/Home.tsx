@@ -89,13 +89,17 @@ function CompetitionHome() {
     [allActivities]
   );
 
+  const ongoingActivities = currentActivities?.activities?.filter(
+    (a) => a.startTime && !a.endTime
+  );
+
   const liveActivitiesWithRoom = useMemo(() => {
-    return currentActivities?.activities?.map((activity) => ({
+    return ongoingActivities?.map((activity) => ({
       ...activity,
       activity: getActivityDataForId(activity.activityId),
       room: getRoomByActivity(activity.activityId),
     }));
-  }, [currentActivities, getActivityDataForId, getRoomByActivity]);
+  }, [ongoingActivities, getActivityDataForId, getRoomByActivity]);
 
   return (
     <Container maxWidth="md">

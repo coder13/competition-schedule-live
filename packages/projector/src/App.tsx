@@ -50,7 +50,9 @@ function CompetitionPage({ competitionId }: { competitionId: string }) {
     return () => unsub();
   }, [wcif]);
 
-  const currentActivities = activities?.activities.filter((a) => !a.endTime);
+  const currentActivities = activities?.activities.filter(
+    (a) => a.startTime && !a.endTime
+  );
 
   useEffect(() => {
     fetch(

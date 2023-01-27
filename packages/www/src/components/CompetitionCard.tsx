@@ -25,7 +25,9 @@ function CompetitionCard({
     return () => clearInterval(interval);
   });
 
-  const ongoingActivities = activities?.filter((activity) => !activity.endTime);
+  const ongoingActivities = activities?.filter(
+    (activity) => activity.startTime && !activity.endTime
+  );
 
   return (
     <Link to={`/competitions/${id}`}>
@@ -49,7 +51,7 @@ function CompetitionCard({
                 (a) => a.id === activity.activityId
               );
 
-              if (!activityData) return null;
+              if (!activityData || !activity.startTime) return null;
 
               const estimatedMinutes = Math.round(
                 (new Date(activityData.endTime).getTime() -
@@ -63,20 +65,21 @@ function CompetitionCard({
               const elapsedHours = elapsedDuration / 1000 / 60 / 60;
               const elapsedMinutes = elapsedDuration / 1000 / 60;
               const elapsedSeconds = (elapsedDuration / 1000) % 60;
-              const elapsedTimeString = [
-                elapsedMinutes > 60
-                  ? Math.floor(elapsedHours).toString().padStart(2, '0')
-                  : null,
-                elapsedMinutes > 60
-                  ? Math.floor(elapsedMinutes % 60)
-                      .toString()
-                      .toString()
-                      .padStart(2, '0')
-                  : Math.floor(elapsedMinutes),
-                Math.floor(elapsedSeconds).toString().padStart(2, '0'),
-              ]
-                .filter(Boolean)
-                .join(':');
+              const elapsedTimeString =
+                elapsedDuration < 1000
+                  ? '00:00'
+                  : [
+                      elapsedMinutes > 60
+                        ? Math.floor(elapsedHours).toString().padStart(2, '0')
+                        : null,
+                      Math.floor(elapsedMinutes % 60)
+                        .toString()
+                        .toString()
+                        .padStart(2, '0'),
+                      Math.floor(elapsedSeconds).toString().padStart(2, '0'),
+                    ]
+                      .filter(Boolean)
+                      .join(':');
 
               return (
                 <div key={activity.activityId} className="list-item">

@@ -59,9 +59,9 @@ function CompetitionSchedule() {
                         const liveActivityData = activities.find(
                           (a) => a.activityId === activity.id
                         );
+                        const hasStarted = liveActivityData?.startTime;
                         const isOver = liveActivityData?.endTime;
-                        const isLive =
-                          liveActivityData && !liveActivityData?.endTime;
+                        const isLive = hasStarted && !isOver;
 
                         return (
                           <div

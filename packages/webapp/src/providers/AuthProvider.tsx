@@ -79,12 +79,36 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     [jwt]
   );
 
+  const basicWcaApiFetch = useCallback(
+    async (
+      url: RequestInfo,
+      { headers = {}, ...options } = {} as RequestInit
+    ) => {
+      const res = await fetch(`${WCA_URL}${url}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.wca.accessToken}`,
+          ...headers,
+        },
+        ...options,
+      });
+
+      if (!res.ok) {
+        console.error(await res.json());
+        return;
+      }
+
+      return res.json();
+    },
+    [user]
+  );
+
   const wcaApiFetch = useCallback(
     async (
       url: RequestInfo,
       { headers = {}, ...options } = {} as RequestInit
     ) => {
-      const res = await fetch(`${WCA_URL}/${url}`, {
+      const res = await fetch(`${WCA_URL}${url}`, {
         ...(user?.wca.accessToken && {
           headers: {
             'Content-Type': 'application/json',
@@ -102,7 +126,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return res.json();
     },
-    []
+    [user]
   );
 
   const logout = useCallback(() => {
@@ -124,6 +148,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!res.ok) {
       setAuthenticating(false);
+      logout();
       throw await res.text();
     }
 

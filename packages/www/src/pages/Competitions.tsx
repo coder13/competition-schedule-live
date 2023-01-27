@@ -1,5 +1,5 @@
 import { useQuery } from '@apollo/client';
-import { Block, Section } from 'react-bulma-components';
+import { Block, Icon, Section } from 'react-bulma-components';
 import CompetitionList from '../components/CompetitionList';
 import { Competition } from '../generated/graphql';
 import { GetCompetitionsQuery } from '../graphql';

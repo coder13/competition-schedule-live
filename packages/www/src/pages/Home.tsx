@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useQuery as useApolloQuery } from '@apollo/client';
-import { Block, Icon, Section } from 'react-bulma-components';
+import { Block, Button, Icon, Section } from 'react-bulma-components';
 import { formatPhoneNumber } from 'react-phone-number-input';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { notifApiFetch } from '../notifapi';
 import { useAuth } from '../Providers/UserProvider';
 import { ActivitiesSubscription, GetSomeCompetitionsQuery } from '../graphql';
@@ -12,6 +12,7 @@ import CompetitionCard from '../components/CompetitionCard';
 import { useEffect } from 'react';
 
 function Home() {
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const { data, isLoading: isUserLoading } = useQuery<{
@@ -47,13 +48,13 @@ function Home() {
 
     const unsub = subscribeToMore<{ activity: Activity }>({
       document: ActivitiesSubscription,
-      variables: { competitionIds: competitionIds },
+      variables: { competitionIds },
       updateQuery: (prev, { subscriptionData }) => {
-        console.log(prev, subscriptionData);
         if (!subscriptionData?.data?.activity) {
           return prev;
         }
 
+        console.log(53, subscriptionData.data.activity);
         const newActivity = subscriptionData.data.activity;
 
         return {
@@ -62,6 +63,8 @@ function Home() {
             if (comp.id !== newActivity.competitionId) {
               return comp;
             }
+
+            console.log(66, comp.id, subscriptionData.data.activity);
 
             return {
               ...comp,
@@ -90,7 +93,6 @@ function Home() {
       )}
       <Section>
         <Block className="has-text-justified">
-          <p>Hello</p>
           {user?.phoneNumber && (
             <p>Signed in with number {formatPhoneNumber(user?.phoneNumber)}</p>
           )}
@@ -125,6 +127,15 @@ function Home() {
             {competitionsData?.competitions.map((comp) => (
               <CompetitionCard key={comp.id} {...comp} />
             ))}
+            {!isCompetitionsLoading && competitionIds.length === 0 && (
+              <div className="flex justify-center">
+                <Button
+                  color="primary"
+                  onClick={() => navigate('/competitions')}>
+                  Find your competition!
+                </Button>
+              </div>
+            )}
           </Block>
         </>
       </Section>

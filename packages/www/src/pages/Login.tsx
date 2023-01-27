@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { Block, Button, Container, Form, Panel } from 'react-bulma-components';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
@@ -41,9 +41,15 @@ function Login() {
     [phoneNumber]
   );
 
+  useEffect(() => {
+    if (code && code.length === 6) {
+      handleSubmitCode();
+    }
+  }, [code]);
+
   const handleSubmitCode = useCallback(
-    async (e: FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
+    async (e?: FormEvent<HTMLFormElement>) => {
+      e?.preventDefault();
 
       if (!code) {
         setError('Please enter a code');
@@ -89,7 +95,7 @@ function Login() {
             className="is-flex is-flex-direction-column"
             style={{ backgroundColor: 'white' }}>
             <Block>
-              No password required. We'll send you a text message with a code to
+              No password required. You'll be sent a text message with a code to
               login with.
             </Block>
             <Block style={{ width: '100%' }}>
@@ -111,7 +117,7 @@ function Login() {
               {codeSent ? (
                 <>
                   <Block style={{ marginTop: '1em' }}>
-                    We sent you a code. Enter it below to login.
+                    You were sent you a code. Enter it below to login.
                   </Block>
                   <form onSubmit={(e) => void handleSubmitCode(e)}>
                     <Form.Field>

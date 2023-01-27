@@ -30,10 +30,10 @@ export const activityUpdated: SubscriptionResolvers['activityUpdated'] = {
   // @ts-expect-error withfilter isn't properly typed.
   subscribe: withFilter(
     (_, __, { pubsub }) => pubsub.asyncIterator('ACTIVITY_UPDATED'),
-    (payload, args) => {
+    (payload, args: { roomId?: number; competitionIds: string[] }) => {
       if (
-        args.competitionIds
-          .map(String.prototype.toLowerCase)
+        !args.competitionIds
+          .map((x) => x.toLowerCase())
           .includes(payload.activityUpdated.competitionId.toLowerCase())
       ) {
         return false;

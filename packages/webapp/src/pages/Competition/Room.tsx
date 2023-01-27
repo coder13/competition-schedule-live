@@ -132,11 +132,9 @@ function CompetitionRoom() {
           (a) => a.activityId === activity.id
         );
 
-        if (!liveActivity) {
-          return true;
-        }
-
-        return !liveActivity?.startTime && !liveActivity.endTime;
+        return (
+          !liveActivity || (!liveActivity.startTime && !liveActivity.endTime)
+        );
       }),
     [childActivities, activities]
   );
@@ -203,7 +201,7 @@ function CompetitionRoom() {
     }
 
     return Math.round(
-      (time.getTime() - new Date(nextActivity.startTime).getTime()) / 1000 / 60
+      (new Date(nextActivity.startTime).getTime() - time.getTime()) / 1000 / 60
     );
   }, [nextActivity, time]);
 
@@ -415,9 +413,20 @@ function CompetitionRoom() {
                 <b>
                   {minutesTillNextActivity === 0
                     ? 'now'
-                    : `in ${formatDuration({
-                        minutes: -minutesTillNextActivity,
-                      })}`}
+                    : `in ${formatDuration(
+                        {
+                          ...(minutesTillNextActivity > 60 && {
+                            hours: Math.floor(minutesTillNextActivity / 60),
+                          }),
+                          minutes: Math.floor(minutesTillNextActivity % 60),
+                          ...(minutesTillNextActivity < 1 && {
+                            seconds: Math.floor(minutesTillNextActivity * 60),
+                          }),
+                        },
+                        {
+                          format: ['days', 'hours', 'minutes', 'seconds'],
+                        }
+                      )}`}
                 </b>
               </Typography>
             ) : (

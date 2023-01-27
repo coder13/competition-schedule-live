@@ -179,7 +179,7 @@ export type SubscriptionActivityStoppedArgs = {
 
 
 export type SubscriptionActivityUpdatedArgs = {
-  competitionIds?: InputMaybe<Array<Scalars['String']>>;
+  competitionIds: Array<Scalars['String']>;
   roomId?: InputMaybe<Scalars['Int']>;
 };
 
@@ -376,7 +376,7 @@ export type SubscriptionResolvers<ContextType = any, ParentType extends Resolver
   activities?: SubscriptionResolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, "activities", ParentType, ContextType, RequireFields<SubscriptionActivitiesArgs, 'competitionIds'>>;
   activityStarted?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityStarted", ParentType, ContextType, RequireFields<SubscriptionActivityStartedArgs, 'competitionId'>>;
   activityStopped?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityStopped", ParentType, ContextType, RequireFields<SubscriptionActivityStoppedArgs, 'competitionId'>>;
-  activityUpdated?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityUpdated", ParentType, ContextType, Partial<SubscriptionActivityUpdatedArgs>>;
+  activityUpdated?: SubscriptionResolver<Maybe<ResolversTypes['Activity']>, "activityUpdated", ParentType, ContextType, RequireFields<SubscriptionActivityUpdatedArgs, 'competitionIds'>>;
 };
 
 export type UserResolvers<ContextType = any, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
