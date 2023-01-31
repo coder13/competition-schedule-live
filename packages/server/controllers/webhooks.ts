@@ -2,21 +2,6 @@ import fetch from 'node-fetch';
 import prisma from '../db';
 import { Header, Webhook } from '../prisma/generated/client';
 
-export const createNotificationsForActivity = async (
-  competitionId: string,
-  activityId: number
-) => {
-  return {
-    competitionId,
-    notifications: [
-      {
-        type: 'activity',
-        id: activityId,
-      },
-    ],
-  };
-};
-
 export const sendWebhook = async (
   webhook: Webhook & { Header: Header[] },
   data: Record<string, unknown>

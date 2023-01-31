@@ -26,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/coder13/competition-schedule-live/issues"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@wca/helpers": "^1.1.2"
+  }
 }

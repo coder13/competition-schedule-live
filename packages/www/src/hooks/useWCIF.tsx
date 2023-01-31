@@ -18,14 +18,12 @@ function useWCIF(competitionId: string) {
   const rooms = wcif?.schedule?.venues.map((venue) => venue.rooms).flat();
 
   const allActivities = rooms
-    ?.map((room) => room.activities)
-    .flat()
-    ?.map((activity) =>
+    ?.flatMap((room) => room.activities)
+    ?.flatMap((activity) =>
       activity.childActivities
         ? [...activity.childActivities, activity]
         : activity
-    )
-    ?.flat();
+    );
 
   const getActivitiesForActivityCode = (activityCode: string) =>
     allActivities?.filter((a) => a.activityCode === activityCode);

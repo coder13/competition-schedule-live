@@ -125,30 +125,6 @@ const roomsAndActivitiesFromCode = (schedule: Schedule, code: string) => {
 
 const router = Router();
 
-interface ActivityNotification {
-  type: 'activity';
-  id: number;
-}
-
-interface CompetitorNotification {
-  type: 'competitor';
-  /**
-   * global wca user id of competitor
-   */
-  wcaUserId: number;
-  /**
-   * local competition id of competitor
-   */
-  registrantId: number;
-  /**
-   * name of competitor
-   */
-  name: string;
-  wcaId: string;
-  activityId: number;
-  assignmentCode: string;
-}
-
 const isActivity = (
   a: ActivityNotification | CompetitorNotification
 ): a is ActivityNotification => a.type === 'activity';

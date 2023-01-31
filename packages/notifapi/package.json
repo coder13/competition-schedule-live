@@ -16,6 +16,7 @@
     "prisma:generate:watch": "prisma generate --watch"
   },
   "dependencies": {
+    "@notifycomp/frontend-common": "^0.0.1",
     "@types/cookie-parser": "^1.4.3",
     "@types/express-session": "^1.17.5",
     "@wca/helpers": "^1.1.2",

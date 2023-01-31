@@ -1,12 +1,10 @@
 import { AppContext } from '../../../server';
 import { MutationResolvers } from '../../../generated/graphql';
-import {
-  createNotificationsForActivity,
-  sendWebhooksForCompetition,
-} from '../../../controllers/webhooks';
+import { sendWebhooksForCompetition } from '../../../controllers/webhooks';
+import { createNotificationsForActivity } from '../../../lib/notifications';
 
 export const startActivity: MutationResolvers<AppContext>['startActivity'] =
-  async (_, { competitionId, activityId }, { db, user, pubsub }) => {
+  async (_, { competitionId, activityId }, { db, user, pubsub, wcaApi }) => {
     if (!user) {
       throw new Error('Not Authenticated');
     }
@@ -47,9 +45,11 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
     // TODO: Expose room somehow
     await pubsub.publish('ACTIVITY_UPDATED', { activityUpdated: activity });
 
+    const wcif = await wcaApi.getWcif(competitionId);
+
     void sendWebhooksForCompetition(
       competitionId,
-      await createNotificationsForActivity(competitionId, activityId)
+      await createNotificationsForActivity(wcif, [activityId])
     ).then((res) => {
       console.log(
         {
