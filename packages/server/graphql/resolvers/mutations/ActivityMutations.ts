@@ -151,3 +151,42 @@ export const resetActivities: MutationResolvers<AppContext>['resetActivities'] =
 
     return findActivities;
   };
+
+export const resetActivity: MutationResolvers<AppContext>['resetActivity'] =
+  async (_, { competitionId, activityId }, { db, user, pubsub }) => {
+    if (!user) {
+      throw new Error('Not Authenticated');
+    }
+
+    const compAccess = await db.competitionAccess.findFirst({
+      where: {
+        competitionId: {
+          equals: competitionId,
+          mode: 'insensitive',
+        },
+        userId: user.id,
+      },
+    });
+
+    if (!compAccess) {
+      throw new Error('Not Authorized');
+    }
+
+    const activity = await db.activityHistory.update({
+      where: {
+        competitionId_activityId: {
+          competitionId,
+          activityId,
+        },
+      },
+      data: {
+        startTime: null,
+        endTime: null,
+      },
+    });
+
+    // TODO: Expose room somehow
+    await pubsub.publish('ACTIVITY_UPDATED', { activityUpdated: activity });
+
+    return activity;
+  };

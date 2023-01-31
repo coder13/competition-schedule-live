@@ -8,6 +8,7 @@ import './index.css';
 import AuthProvider from './providers/AuthProvider';
 import { StoreProvider } from './providers/BasicStoreProvider';
 import client from './apolloClient';
+import { ConfirmProvider } from 'material-ui-confirm';
 const theme = createTheme();
 
 const queryClient = new QueryClient();
@@ -21,7 +22,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           <AuthProvider>
             <ApolloProvider client={client}>
               <QueryClientProvider client={queryClient}>
-                <App />
+                <ConfirmProvider>
+                  <App />
+                </ConfirmProvider>
               </QueryClientProvider>
             </ApolloProvider>
           </AuthProvider>

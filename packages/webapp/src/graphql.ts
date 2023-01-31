@@ -54,6 +54,16 @@ export const StopActivityMutation = gql`
   }
 `;
 
+export const ResetActivityMutation = gql`
+  mutation ResetActivity($competitionId: String!, $activityId: Int!) {
+    resetActivity(competitionId: $competitionId, activityId: $activityId) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
 export const StopStartActivityMutation = gql`
   mutation StopStartActivity(
     $competitionId: String!

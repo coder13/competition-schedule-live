@@ -48,6 +48,11 @@ router.get('/wca/', (req, res) => {
   res.redirect(`${WCA_ORIGIN}/oauth/authorize?${params.toString()}`);
 });
 
+const SignOpts: jwt.SignOptions = {
+  algorithm: 'RS256',
+  expiresIn: 2 * 24 * 60 * 60, // 2 days
+};
+
 const signJWT = async (profile: WcaprofileRes, token: WcaOauthRes) =>
   new Promise<string>((resolve, reject) => {
     jwt.sign(
@@ -67,10 +72,7 @@ const signJWT = async (profile: WcaprofileRes, token: WcaOauthRes) =>
         },
       },
       String(PRIVATE_KEY),
-      {
-        algorithm: 'RS256',
-        expiresIn: 2 * 24 * 60 * 60,
-      },
+      SignOpts,
       (err, token) => {
         if (err) {
           return reject(err);
@@ -87,25 +89,17 @@ const signJWT = async (profile: WcaprofileRes, token: WcaOauthRes) =>
 
 const resignJWT = async ({ exp, iat, ...data }: User) =>
   new Promise<string>((resolve, reject) => {
-    jwt.sign(
-      data,
-      String(PRIVATE_KEY),
-      {
-        algorithm: 'RS256',
-        expiresIn: 2 * 24 * 60 * 60,
-      },
-      (err, token) => {
-        if (err) {
-          return reject(err);
-        }
-
-        if (!token) {
-          return reject(new Error('Token is not defined'));
-        }
-
-        resolve(token);
+    jwt.sign(data, String(PRIVATE_KEY), SignOpts, (err, token) => {
+      if (err) {
+        return reject(err);
       }
-    );
+
+      if (!token) {
+        return reject(new Error('Token is not defined'));
+      }
+
+      resolve(token);
+    });
   });
 
 /**

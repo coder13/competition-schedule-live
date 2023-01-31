@@ -162,7 +162,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (user?.wca.exp < Date.now()) {
-      console.log(62, 'token expired');
+      console.log(62, 'wca access token expired');
       refreshToken();
       return;
     }

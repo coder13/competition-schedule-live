@@ -1,12 +1,14 @@
-import { useCallback, useMemo, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@apollo/client';
 import {
   Button,
   ButtonGroup,
+  colors,
   Container,
   Divider,
   LinearProgress,
   List,
+  ListItem,
   ListItemButton,
   ListItemText,
   ListSubheader,
@@ -20,11 +22,14 @@ import intervalToDuration from 'date-fns/intervalToDuration';
 import { Activity } from '../../generated/graphql';
 import {
   ActivitiesQuery,
+  ResetActivityMutation,
   StartActivityMutation,
   StopActivityMutation,
   StopStartActivityMutation,
 } from '../../graphql';
 import { useWCIFContext } from './Layout';
+import { useConfirm } from 'material-ui-confirm';
+import { allChildActivities } from '@notifycomp/frontend-common/lib';
 
 const durationToMinutes = (start: Date, end: Date): number =>
   Math.round((end.getTime() - start.getTime()) / 1000 / 60);
@@ -57,6 +62,7 @@ const colorForLate = (minutes: number): string => {
 };
 
 function CompetitionRoom() {
+  const confirm = useConfirm();
   const {
     wcif,
     loading: loadingWcif,
@@ -91,6 +97,16 @@ function CompetitionRoom() {
     },
     onError: (error) => {
       console.log('Error stopping activity', error);
+    },
+  });
+
+  const [resetActivity] = useMutation<Activity>(ResetActivityMutation, {
+    refetchQueries: [ActivitiesQuery],
+    onCompleted: (data) => {
+      console.log('Reset Activitiy!', data);
+    },
+    onError: (error) => {
+      console.log('Error resetting activity', error);
     },
   });
 
@@ -153,9 +169,24 @@ function CompetitionRoom() {
     return nextActivities?.[0];
   }, [nextActivities]);
 
-  const startStopActivity = (activityId: number) => {
+  const startStopActivity = async (activityId: number) => {
     console.log('startStopActivity', activityId);
-    if (currentActivities?.find((a) => a.activityId === activityId)) {
+
+    const activityData = childActivities?.find((a) => a.id === activityId);
+    const isCurrent = currentActivities?.find(
+      (a) => a.activityId === activityId
+    );
+
+    if (isCurrent) {
+      const res = await confirm({
+        description: (
+          <p>
+            This will stop activity: <b>{activityData?.name}</b>
+          </p>
+        ),
+        confirmationText: 'Stop',
+      });
+      console.log(res);
       stopActivity({
         variables: {
           competitionId: wcif?.id,
@@ -163,6 +194,16 @@ function CompetitionRoom() {
         },
       });
     } else {
+      const res = await confirm({
+        description: (
+          <p>
+            This will start activity: <b>{activityData?.name}</b>
+          </p>
+        ),
+        confirmationText: 'Start',
+      });
+      console.log(res);
+
       startActivity({
         variables: {
           competitionId: wcif?.id,
@@ -172,19 +213,61 @@ function CompetitionRoom() {
     }
   };
 
-  const advanceToNextActivity = useCallback(() => {
+  const advanceToNextActivity = useCallback(async () => {
     if (currentActivities?.length && nextActivity) {
+      const startActivityId = nextActivity?.id;
+      const stopActivityId = currentActivities?.[0].activityId;
+
+      const startActivity = childActivities?.find(
+        (ca) => ca.id === startActivityId
+      );
+      const stopActivity = childActivities?.find(
+        (ca) => ca.id === stopActivityId
+      );
+
+      await confirm({
+        description: (
+          <p>
+            This would stop activity: <br />
+            <b>{stopActivity?.name}</b>
+            <br /> and start activity: <br />
+            <b>{startActivity?.name}</b>
+          </p>
+        ),
+        confirmationText: 'Advance',
+      });
+
       stopAndStartActivity({
         variables: {
           competitionId: wcif?.id,
-          stopActivityId: currentActivities?.[0].activityId,
-          startActivityId: nextActivity?.id,
+          stopActivityId,
+          startActivityId,
         },
       });
     }
   }, [wcif, nextActivity, currentActivities]);
 
-  const stopCurrentActivities = useCallback(() => {
+  const stopCurrentActivities = useCallback(async () => {
+    await confirm({
+      description: (
+        <p>
+          This would stop activities:
+          <List dense>
+            {currentActivities
+              ?.map((a) =>
+                childActivities?.find((ca) => ca.id === a.activityId)
+              )
+              .map((ca) => (
+                <ListItem>
+                  <ListItemText primary={ca?.name} />
+                </ListItem>
+              ))}
+          </List>
+        </p>
+      ),
+      confirmationText: 'Stop',
+    });
+
     currentActivities?.forEach((activity) => {
       stopActivity({
         variables: {
@@ -194,6 +277,35 @@ function CompetitionRoom() {
       });
     });
   }, [currentActivities, stopActivity, wcif?.id]);
+
+  const handleResetActivity = useCallback(
+    async (activityId: number) => {
+      const activityData = childActivities?.find((a) => a.id === activityId);
+
+      await confirm({
+        description: (
+          <>
+            <p>
+              This will reset activity: <b>{activityData?.name}</b>
+            </p>
+            <p>
+              The start and stop times will reset as if the activity never
+              happened.
+            </p>
+          </>
+        ),
+        confirmationText: 'Reset',
+      });
+
+      resetActivity({
+        variables: {
+          competitionId: wcif?.id,
+          activityId: activityId,
+        },
+      });
+    },
+    [wcif, childActivities]
+  );
 
   const minutesTillNextActivity: number = useMemo(() => {
     if (!nextActivity) {
@@ -325,8 +437,7 @@ function CompetitionRoom() {
 
                 return (
                   <ListItemButton
-                    disabled={!!liveActivity?.endTime}
-                    onClick={() => startStopActivity(activity.id)}
+                    onClick={() => handleResetActivity(activity.id)}
                     key={activity.id}>
                     <ListItemText
                       primary={activity.name}

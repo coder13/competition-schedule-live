@@ -74,6 +74,7 @@ export type Mutation = {
   deleteWebhook?: Maybe<Scalars['Void']>;
   importCompetition?: Maybe<Competition>;
   resetActivities?: Maybe<Array<Maybe<Activity>>>;
+  resetActivity?: Maybe<Activity>;
   startActivities?: Maybe<Array<Maybe<Activity>>>;
   startActivity?: Maybe<Activity>;
   stopActivity?: Maybe<Activity>;
@@ -99,6 +100,12 @@ export type MutationImportCompetitionArgs = {
 
 export type MutationResetActivitiesArgs = {
   activityIds?: InputMaybe<Array<Scalars['Int']>>;
+  competitionId: Scalars['String'];
+};
+
+
+export type MutationResetActivityArgs = {
+  activityId: Scalars['Int'];
   competitionId: Scalars['String'];
 };
 
@@ -359,6 +366,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   deleteWebhook?: Resolver<Maybe<ResolversTypes['Void']>, ParentType, ContextType, RequireFields<MutationDeleteWebhookArgs, 'id'>>;
   importCompetition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<MutationImportCompetitionArgs, 'competitionId'>>;
   resetActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationResetActivitiesArgs, 'competitionId'>>;
+  resetActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationResetActivityArgs, 'activityId' | 'competitionId'>>;
   startActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationStartActivitiesArgs, 'activityIds' | 'competitionId'>>;
   startActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStartActivityArgs, 'activityId' | 'competitionId'>>;
   stopActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStopActivityArgs, 'activityId' | 'competitionId'>>;
