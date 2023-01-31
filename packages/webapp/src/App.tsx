@@ -23,6 +23,7 @@ import Mainbar from './components/Mainbar';
 import CompetitionHome from './pages/Competition/Home';
 import CompetitionLayout from './pages/Competition/Layout';
 import CompetitionRoom from './pages/Competition/Room';
+import CompetitionWebhooks from './pages/Competition/Webhooks';
 import Home from './pages/Home';
 import LoginPage from './pages/Login';
 import { useAuth } from './providers/AuthProvider';
@@ -57,6 +58,7 @@ function App() {
               element={<CompetitionLayout />}>
               <Route index element={<CompetitionHome />} />
               <Route path="rooms/:roomId" element={<CompetitionRoom />} />
+              <Route path="webhooks" element={<CompetitionWebhooks />} />
             </Route>
           </>
         ) : (

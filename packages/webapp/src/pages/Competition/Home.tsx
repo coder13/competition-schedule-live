@@ -1,26 +1,21 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Avatar,
   Container,
+  Divider,
   List,
   ListItemAvatar,
   ListItemButton,
   ListItemText,
   ListSubheader,
+  MenuItem,
+  MenuList,
 } from '@mui/material';
-import { useWCIFContext } from './Layout';
+import { useCompetition } from './Layout';
 import { Link } from '../../components/Link';
-import { ActivitiesQuery, ActivitiesSubscription } from '../../graphql';
-import { useQuery } from '@apollo/client';
-import { Activity } from '../../generated/graphql';
 
 function CompetitionHome() {
-  const { wcif } = useWCIFContext();
-  const { data: currentActivities, subscribeToMore } = useQuery<{
-    activities: Activity[];
-  }>(ActivitiesQuery, {
-    variables: { competitionId: wcif?.id },
-  });
+  const { wcif, ongoingActivities } = useCompetition();
 
   const rooms = useMemo(() => {
     if (!wcif) return;
@@ -38,36 +33,6 @@ function CompetitionHome() {
       )
       ?.flat();
   }, [rooms]);
-
-  useEffect(() => {
-    if (!wcif?.id) {
-      return;
-    }
-
-    const unsub = subscribeToMore<{ activity: Activity }>({
-      document: ActivitiesSubscription,
-      variables: { competitionId: wcif?.id },
-      updateQuery: (prev, { subscriptionData }) => {
-        if (!subscriptionData?.data?.activity) {
-          return prev;
-        }
-
-        const newActivity = subscriptionData.data.activity;
-
-        return {
-          ...prev,
-          activities: [
-            ...prev.activities.filter(
-              (a) => a.activityId !== newActivity.activityId
-            ),
-            newActivity,
-          ],
-        };
-      },
-    });
-
-    return () => unsub();
-  }, [wcif]);
 
   const getRoomByActivity = useCallback(
     (activityId: number) => {
@@ -87,10 +52,6 @@ function CompetitionHome() {
       return allActivities?.find((a) => a.id === activityId);
     },
     [allActivities]
-  );
-
-  const ongoingActivities = currentActivities?.activities?.filter(
-    (a) => a.startTime && !a.endTime
   );
 
   const liveActivitiesWithRoom = useMemo(() => {
@@ -136,15 +97,15 @@ function CompetitionHome() {
           </React.Fragment>
         ))}
       </List>
-      {/* <Stack spacing={1}>
+      <MenuList>
         <Divider />
-        <Button fullWidth variant="outlined">
+        <MenuItem component={Link} to="webhooks">
           Configure webhooks
-        </Button>
-        <Button fullWidth variant="outlined">
+        </MenuItem>
+        {/* <Button fullWidth variant="outlined">
           Configure access
-        </Button>
-      </Stack> */}
+        </Button> */}
+      </MenuList>
     </Container>
   );
 }

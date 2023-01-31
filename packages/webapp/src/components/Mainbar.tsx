@@ -14,10 +14,13 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MenuIcon from '@mui/icons-material/Menu';
 import { StoreContext } from '../providers/BasicStoreProvider';
 import { useAuth } from '../providers/AuthProvider';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const navItems = [{ name: 'Competitions' }, { name: 'Import Competition' }];
 
 function Mainbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const { jwt, logout, user } = useAuth();
   const [appTitle] = useContext(StoreContext).appTitle;
@@ -44,6 +47,17 @@ function Mainbar() {
           sx={{
             pr: '24px',
           }}>
+          {location.pathname !== '/' && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="go back"
+              onClick={() => navigate(-1)}
+              sx={{ mr: 2 }}>
+              <ChevronLeftIcon />
+            </IconButton>
+          )}
+
           <Box sx={{ flexGrow: 1 }}>
             <Typography
               variant="h6"

@@ -27,7 +27,7 @@ import {
   StopActivityMutation,
   StopStartActivityMutation,
 } from '../../graphql';
-import { useWCIFContext } from './Layout';
+import { useCompetition } from './Layout';
 import { useConfirm } from 'material-ui-confirm';
 import { allChildActivities } from '@notifycomp/frontend-common/lib';
 
@@ -67,8 +67,9 @@ function CompetitionRoom() {
     wcif,
     loading: loadingWcif,
     activities,
+    ongoingActivities,
     activitiesLoading,
-  } = useWCIFContext();
+  } = useCompetition();
   const { roomId } = useParams<{ roomId: string }>();
 
   const [time, setTime] = useState(new Date());
@@ -137,10 +138,6 @@ function CompetitionRoom() {
     )
     .flat();
 
-  const currentActivities = activities?.filter(
-    (activity) => activity.startTime && !activity.endTime
-  ) as Array<Activity & { startTime: string }>;
-
   const nextActivities = useMemo(
     () =>
       childActivities?.filter((activity) => {
@@ -160,7 +157,7 @@ function CompetitionRoom() {
       childActivities?.filter(
         (a) =>
           !nextActivities?.find((next) => next.id === a.id) &&
-          !currentActivities?.find((current) => current.activityId === a.id)
+          !ongoingActivities?.find((current) => current.activityId === a.id)
       ),
     [nextActivities, childActivities]
   );
@@ -173,13 +170,13 @@ function CompetitionRoom() {
     console.log('startStopActivity', activityId);
 
     const activityData = childActivities?.find((a) => a.id === activityId);
-    const isCurrent = currentActivities?.find(
+    const isCurrent = ongoingActivities?.find(
       (a) => a.activityId === activityId
     );
 
     if (isCurrent) {
       const res = await confirm({
-        description: (
+        content: (
           <p>
             This will stop activity: <b>{activityData?.name}</b>
           </p>
@@ -195,7 +192,7 @@ function CompetitionRoom() {
       });
     } else {
       const res = await confirm({
-        description: (
+        content: (
           <p>
             This will start activity: <b>{activityData?.name}</b>
           </p>
@@ -214,9 +211,9 @@ function CompetitionRoom() {
   };
 
   const advanceToNextActivity = useCallback(async () => {
-    if (currentActivities?.length && nextActivity) {
+    if (ongoingActivities?.length && nextActivity) {
       const startActivityId = nextActivity?.id;
-      const stopActivityId = currentActivities?.[0].activityId;
+      const stopActivityId = ongoingActivities?.[0].activityId;
 
       const startActivity = childActivities?.find(
         (ca) => ca.id === startActivityId
@@ -226,7 +223,7 @@ function CompetitionRoom() {
       );
 
       await confirm({
-        description: (
+        content: (
           <p>
             This would stop activity: <br />
             <b>{stopActivity?.name}</b>
@@ -245,15 +242,15 @@ function CompetitionRoom() {
         },
       });
     }
-  }, [wcif, nextActivity, currentActivities]);
+  }, [wcif, nextActivity, ongoingActivities]);
 
-  const stopCurrentActivities = useCallback(async () => {
+  const stopongoingActivities = useCallback(async () => {
     await confirm({
-      description: (
+      content: (
         <p>
           This would stop activities:
           <List dense>
-            {currentActivities
+            {ongoingActivities
               ?.map((a) =>
                 childActivities?.find((ca) => ca.id === a.activityId)
               )
@@ -268,7 +265,7 @@ function CompetitionRoom() {
       confirmationText: 'Stop',
     });
 
-    currentActivities?.forEach((activity) => {
+    ongoingActivities?.forEach((activity) => {
       stopActivity({
         variables: {
           competitionId: wcif?.id,
@@ -276,14 +273,14 @@ function CompetitionRoom() {
         },
       });
     });
-  }, [currentActivities, stopActivity, wcif?.id]);
+  }, [ongoingActivities, stopActivity, wcif?.id]);
 
   const handleResetActivity = useCallback(
     async (activityId: number) => {
       const activityData = childActivities?.find((a) => a.id === activityId);
 
       await confirm({
-        description: (
+        content: (
           <>
             <p>
               This will reset activity: <b>{activityData?.name}</b>
@@ -466,13 +463,13 @@ function CompetitionRoom() {
                 : 'white',
             }}>
             <Typography variant="h6">
-              Current {pluralize('Activity', currentActivities?.length)}
+              Current {pluralize('Activity', ongoingActivities?.length)}
             </Typography>
-            {currentActivities?.length === 0 ? (
+            {ongoingActivities?.length === 0 ? (
               <b>None</b>
             ) : (
               <List dense>
-                {currentActivities?.map((activity) => {
+                {ongoingActivities?.map((activity) => {
                   const wcifActivity = childActivities?.find(
                     (a) => a.id === activity.activityId
                   );
@@ -546,15 +543,15 @@ function CompetitionRoom() {
           </div>
           <Divider />
           <ButtonGroup fullWidth>
-            {currentActivities?.length && nextActivity ? (
+            {ongoingActivities?.length && nextActivity ? (
               <Button
                 variant="contained"
                 onClick={advanceToNextActivity}
-                disabled={!currentActivities?.length || !nextActivity}>
+                disabled={!ongoingActivities?.length || !nextActivity}>
                 Advance to Next Activity
               </Button>
             ) : null}
-            {!currentActivities?.length && nextActivity ? (
+            {!ongoingActivities?.length && nextActivity ? (
               <Button
                 variant="contained"
                 onClick={() => startStopActivity(nextActivity.id)}>
@@ -565,8 +562,8 @@ function CompetitionRoom() {
             <Button
               fullWidth
               variant="contained"
-              onClick={stopCurrentActivities}
-              disabled={!currentActivities?.length}>
+              onClick={stopongoingActivities}
+              disabled={!ongoingActivities?.length}>
               Stop Current {pluralize('activity', childActivities?.length || 0)}
             </Button>
           </ButtonGroup>

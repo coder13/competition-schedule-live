@@ -13,6 +13,7 @@ interface IWCIFContext {
   wcif?: Competition;
   loading?: boolean;
   activities?: Activity[];
+  ongoingActivities?: Array<Activity & { startTime: string }>;
   activitiesLoading?: boolean;
 }
 
@@ -72,12 +73,17 @@ function CompetitionLayout() {
     setAppTitle(wcif?.name || 'Competition Schedule Live');
   }, [wcif?.name]);
 
+  const ongoingActivities = currentActivities?.activities?.filter(
+    (activity) => activity.startTime && !activity.endTime
+  ) as Array<Activity & { startTime: string }>;
+
   return (
     <WCIFContext.Provider
       value={{
         loading: isLoading,
         wcif,
         activities: currentActivities?.activities,
+        ongoingActivities,
         activitiesLoading,
       }}>
       {isLoading ? <LinearProgress /> : null}
@@ -86,6 +92,6 @@ function CompetitionLayout() {
   );
 }
 
-export const useWCIFContext = () => useContext(WCIFContext);
+export const useCompetition = () => useContext(WCIFContext);
 
 export default CompetitionLayout;

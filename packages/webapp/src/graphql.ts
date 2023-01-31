@@ -98,3 +98,54 @@ export const ActivitiesSubscription = gql`
     }
   }
 `;
+
+export const WebhooksQuery = gql`
+  query Webhooks($competitionId: String!) {
+    competition(competitionId: $competitionId) {
+      id
+      webhooks {
+        id
+        url
+        method
+        headers {
+          key
+          value
+        }
+      }
+    }
+  }
+`;
+
+export const CreateWebhookMutation = gql`
+  mutation CreateWebhook($competitionId: String!, $webhook: WebhookInput!) {
+    createWebhook(competitionId: $competitionId, webhook: $webhook) {
+      id
+      url
+      method
+      headers {
+        key
+        value
+      }
+    }
+  }
+`;
+
+export const UpdateWebhookMutation = gql`
+  mutation UpdateWebhook($id: Int!, $webhook: WebhookInput!) {
+    updateWebhook(id: $id, webhook: $webhook) {
+      id
+      url
+      method
+      headers {
+        key
+        value
+      }
+    }
+  }
+`;
+
+export const DeleteWebhookMutation = gql`
+  mutation DeleteWebhook($id: Int!) {
+    deleteWebhook(id: $id)
+  }
+`;
