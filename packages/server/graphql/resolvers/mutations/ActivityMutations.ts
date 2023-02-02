@@ -56,10 +56,16 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
           competitionId,
           activityId,
         },
-        'Pinged',
+        competitionId,
+        'Sucessfully pinged',
         res.filter((r) => r.status === 'fulfilled').length,
         'webhooks'
       );
+      (
+        res.filter((r) => r.status === 'rejected') as PromiseRejectedResult[]
+      ).forEach((r) => {
+        console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
+      });
     });
 
     return activity;
