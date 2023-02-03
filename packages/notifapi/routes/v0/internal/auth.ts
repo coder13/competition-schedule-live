@@ -38,7 +38,7 @@ authRouter.post('/number', async (req, res) => {
 
     await sendMessage({
       to: number,
-      body: `Your CompNotify code is ${code}. This code expires in 15 minutes. Don't share this code with anyone.`,
+      body: `Your NotifyComp code is ${code}. This code expires in 15 minutes. Don't share this code with anyone.`,
     });
 
     res.json({ success: true });
