@@ -60,7 +60,7 @@ const getMessagingServiceSid = async (
   const messagingServiceId = await prisma.competitionSid.findFirst({
     where: {
       competitionId: {
-        equals: req.body.competitionId.toLowerCase(),
+        equals: req.body.competitionId,
         mode: 'insensitive',
       },
     },

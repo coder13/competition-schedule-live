@@ -21,7 +21,7 @@ export const getAllUserCompetitionSubscriptions = (
     include: {
       CompetitionSubscription: {
         where: {
-          competitionId: competitionId.toLowerCase(),
+          competitionId,
           value: {
             in: values,
           },
@@ -31,7 +31,7 @@ export const getAllUserCompetitionSubscriptions = (
     where: {
       CompetitionSubscription: {
         some: {
-          competitionId: competitionId.toLowerCase(),
+          competitionId,
           type: CompetitionSubscriptionType.activity,
           value: {
             in: values,
@@ -48,7 +48,10 @@ export const getAllUserCompetitionCompetitorSubscriptions = (
 ) =>
   prisma.competitionSubscription.findMany({
     where: {
-      competitionId: competitionId.toLowerCase(),
+      competitionId: {
+        equals: competitionId,
+        mode: 'insensitive',
+      },
       type: CompetitionSubscriptionType.competitor,
       value: {
         in: wcaUserIds.map((i) => i.toString()),
@@ -75,7 +78,7 @@ export const getAllUserCompetitionCompetitorSubscriptions = (
 //             value: true,
 //           },
 //           where: {
-//             competitionId: competitionId.toLowerCase(),
+//             competitionId,
 //             type: CompetitionSubscriptionType.competitor,
 //             value: {
 //               in: wcaUserIds.map((i) => i.toString()),
@@ -86,7 +89,7 @@ export const getAllUserCompetitionCompetitorSubscriptions = (
 //     },
 //   },
 //   where: {
-//     competitionId: competitionId.toLowerCase(),
+//     competitionId,
 //     type: CompetitionSubscriptionType.competitor,
 //     value: {
 //       in: wcaUserIds.map((i) => i.toString()),
@@ -115,7 +118,7 @@ export const addCompetitionSubscriptions = async (
     prisma.competitionSubscription.createMany({
       data: subscriptions.map((subscription) => ({
         userId,
-        competitionId: competitionId.toLowerCase(),
+        competitionId,
         type: subscription.type,
         value: subscription.value,
       })),
@@ -123,7 +126,10 @@ export const addCompetitionSubscriptions = async (
     prisma.competitionSubscription.findMany({
       where: {
         userId,
-        competitionId: competitionId.toLowerCase(),
+        competitionId: {
+          equals: competitionId,
+          mode: 'insensitive',
+        },
       },
     }),
   ]);
@@ -142,7 +148,7 @@ export const addCompetitionSubscription = async (
   prisma.competitionSubscription.create({
     data: {
       userId,
-      competitionId: competitionId.toLowerCase(),
+      competitionId,
       type,
       value,
     },
@@ -171,13 +177,13 @@ export const replaceCompetitionSubscriptions = async (
     prisma.competitionSubscription.deleteMany({
       where: {
         userId,
-        competitionId: competitionId.toLowerCase(),
+        competitionId,
       },
     }),
     prisma.competitionSubscription.createMany({
       data: newSubscriptions.map((subscription) => ({
         userId,
-        competitionId: competitionId.toLowerCase(),
+        competitionId,
         type: subscription.type,
         value: subscription.value,
       })),
@@ -185,7 +191,10 @@ export const replaceCompetitionSubscriptions = async (
     prisma.competitionSubscription.findMany({
       where: {
         userId,
-        competitionId: competitionId.toLowerCase(),
+        competitionId: {
+          equals: competitionId,
+          mode: 'insensitive',
+        },
       },
     }),
   ]);
