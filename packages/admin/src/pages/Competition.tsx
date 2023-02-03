@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useQuery as useApolloQuery } from '@apollo/client';
-import React, { FormEventHandler, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { FormEventHandler, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { GetCompetitionQuery } from '../graphql';
 import { Competition, Webhook } from '../generated/graphql';
 import { Button, Input, UserLink } from '../components/Tailwind';
@@ -20,6 +20,7 @@ const UserList = ({ users }: { users: User[] }) => (
 );
 
 function CompetitionPage() {
+  const navigate = useNavigate();
   const { competitionId } = useParams();
   const [sid, setSid] = useState('');
 
@@ -66,6 +67,12 @@ function CompetitionPage() {
       return res;
     },
   });
+
+  useEffect(() => {
+    if (apiComp?.id && apiComp?.id !== competitionId) {
+      navigate(`/competitions/${apiComp?.id}`, { replace: true });
+    }
+  }, [competitionId, apiComp]);
 
   const { data: compData } = useApolloQuery<{ competition: Competition }>(
     GetCompetitionQuery,

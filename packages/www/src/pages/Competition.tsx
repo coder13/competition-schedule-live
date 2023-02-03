@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Block, Button, Icon, Section } from 'react-bulma-components';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { BarLoader } from 'react-spinners';
 import { List, ListItem } from '../components/List';
 import SelectCompetitorsDialog from '../components/SelectCompetitorsDialog';
@@ -14,6 +14,7 @@ import {
 } from '../notifapi';
 
 function Competition() {
+  const navigate = useNavigate();
   const params = useParams();
   const queryClient = useQueryClient();
   const competitionId = params.competitionId as string; // It is *going* to exist
@@ -24,6 +25,12 @@ function Competition() {
     allUniqueActivityCodes,
     getActivitiesForActivityCode,
   } = useWCIF(competitionId);
+
+  useEffect(() => {
+    if (wcif && wcif?.id !== competitionId) {
+      navigate(`/competitions/${wcif?.id}`, { replace: true });
+    }
+  }, [competitionId, wcif]);
 
   const [selectCompetitorsDialogOpen, setSelectCompetitorsDialogOpen] =
     useState(false);

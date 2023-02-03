@@ -3,7 +3,7 @@ import { LinearProgress } from '@mui/material';
 import { useQuery as useReactQuery } from '@tanstack/react-query';
 import { Competition } from '@wca/helpers';
 import { createContext, useContext, useEffect } from 'react';
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { Activity } from '../../generated/graphql';
 import { ActivitiesQuery, ActivitiesSubscription } from '../../graphql';
 import { useAuth } from '../../providers/AuthProvider';
@@ -20,6 +20,7 @@ interface IWCIFContext {
 const WCIFContext = createContext<IWCIFContext>({});
 
 function CompetitionLayout() {
+  const navigate = useNavigate();
   const { wcaApiFetch } = useAuth();
   const [_, setAppTitle] = useContext(StoreContext).appTitle;
   const { competitionId } = useParams<{ competitionId: string }>();
@@ -28,6 +29,12 @@ function CompetitionLayout() {
     queryFn: () =>
       wcaApiFetch(`/api/v0/competitions/${competitionId || ''}/wcif/public`),
   });
+
+  useEffect(() => {
+    if (wcif && wcif?.id !== competitionId) {
+      navigate(`/competitions/${wcif?.id}`, { replace: true });
+    }
+  }, [competitionId, wcif]);
 
   const {
     data: currentActivities,
