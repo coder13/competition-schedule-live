@@ -359,7 +359,7 @@ router.post(
         }
       );
 
-      const twilioRes = await Promise.all(
+      const twilioRes = await Promise.allSettled(
         userCompetitionSubscriptions.map(async (user) => {
           if (!user.phoneNumber) {
             return;
@@ -381,7 +381,7 @@ router.post(
       );
 
       const successfulSends = twilioRes.filter(
-        (r) => r && r.status === 'accepted'
+        (r) => r && r.status === 'fulfilled'
       );
 
       res.json({
