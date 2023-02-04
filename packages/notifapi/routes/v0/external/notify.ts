@@ -1,10 +1,10 @@
 import { Activity, Room, Schedule } from '@wca/helpers';
 import { NextFunction, Request, Response, Router } from 'express';
-import { check } from 'express-validator';
+// import { check } from 'express-validator';
 import fetch from 'node-fetch';
 import { getAllUserCompetitionSubscriptions } from '../../../controllers/competitionSubscription';
 import prisma from '../../../db';
-import { handleErrors } from '../../../middlewares/errors';
+// import { handleErrors } from '../../../middlewares/errors';
 import { twilioClient } from '../../../services/twilio';
 
 const uniqueDefinedSet = <T>(arr: Array<T | null | undefined>): T[] => [
@@ -125,12 +125,12 @@ const roomsAndActivitiesFromCode = (schedule: Schedule, code: string) => {
 
 const router = Router();
 
-const isActivity = (
-  a: ActivityNotification | CompetitorNotification
-): a is ActivityNotification => a.type === 'activity';
-const isCompetitor = (
-  a: ActivityNotification | CompetitorNotification
-): a is CompetitorNotification => a.type === 'competitor';
+// const isActivity = (
+//   a: ActivityNotification | CompetitorNotification
+// ): a is ActivityNotification => a.type === 'activity';
+// const isCompetitor = (
+//   a: ActivityNotification | CompetitorNotification
+// ): a is CompetitorNotification => a.type === 'competitor';
 
 /**
  * Main route with which to ping users
@@ -139,45 +139,45 @@ const isCompetitor = (
  * body: {
  *   competitionId: string,
  *   notifications: (ActivityNotification | CompetitorNotification)[],
- * }
+ * } for the same competition
+ * - there will be at leas
  *
  * Assumptions
- * - all notifications are for the same competition
- * - there will be at least 1 activity mentioned
+ * - all notifications aret 1 activity mentioned
  */
 router.post(
   '/notify',
-  check('competitionId').exists().isString(),
-  check('notifications')
-    .isArray()
-    .custom((notifications) => {
-      return notifications.every(
-        (n: ActivityNotification | CompetitorNotification) => {
-          if (isActivity(n)) {
-            return n.id === undefined || (n.id && typeof n.id === 'number');
-          }
+  // check('competitionId').exists().isString(),
+  // check('notifications')
+  //   .isArray()
+  //   .custom((notifications) => {
+  //     return notifications.every(
+  //       (n: ActivityNotification | CompetitorNotification) => {
+  //         if (isActivity(n)) {
+  //           return n.id === undefined || (n.id && typeof n.id === 'number');
+  //         }
 
-          if (isCompetitor(n)) {
-            return (
-              n.wcaUserId &&
-              typeof n.wcaUserId === 'number' &&
-              n.registrantId &&
-              typeof n.registrantId === 'number' &&
-              n.name &&
-              typeof n.name === 'string' &&
-              typeof n.wcaId === 'string' &&
-              (n.activityId === undefined ||
-                (n.activityId && typeof n.activityId === 'number')) &&
-              (n.assignmentCode === undefined ||
-                (n.assignmentCode && typeof n.assignmentCode === 'string'))
-            );
-          }
+  //         if (isCompetitor(n)) {
+  //           return (
+  //             n.wcaUserId &&
+  //             typeof n.wcaUserId === 'number' &&
+  //             n.registrantId &&
+  //             typeof n.registrantId === 'number' &&
+  //             n.name &&
+  //             typeof n.name === 'string' &&
+  //             typeof n.wcaId === 'string' &&
+  //             (n.activityId === undefined ||
+  //               (n.activityId && typeof n.activityId === 'number')) &&
+  //             (n.assignmentCode === undefined ||
+  //               (n.assignmentCode && typeof n.assignmentCode === 'string'))
+  //           );
+  //         }
 
-          return false;
-        }
-      );
-    }),
-  handleErrors,
+  //         return false;
+  //       }
+  //     );
+  //   }),
+  // handleErrors,
   getMessagingServiceSid,
   async (req: Request, res: Response) => {
     try {
