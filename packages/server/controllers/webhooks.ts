@@ -17,7 +17,9 @@ export const sendWebhook = async (
 
   if (!response.ok) {
     throw new Error(
-      `Webhook failed with status code ${response.status} and message ${response.statusText}`
+      `Webhook failed with status code ${response.status} and message ${
+        response.statusText
+      }: ${await response.text()}`
     );
   }
 
