@@ -24,6 +24,10 @@ export const GetCompetitionQuery = gql`
         id
         url
         method
+        headers {
+          key
+          value
+        }
       }
       activities {
         activityId

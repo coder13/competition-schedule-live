@@ -198,7 +198,7 @@ export type User = {
 
 export type Webhook = {
   __typename?: 'Webhook';
-  headers?: Maybe<Array<Maybe<Header>>>;
+  headers?: Maybe<Array<Header>>;
   id: Scalars['Int'];
   method: HttpMethod;
   url: Scalars['String'];
@@ -398,7 +398,7 @@ export interface VoidScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes
 }
 
 export type WebhookResolvers<ContextType = any, ParentType extends ResolversParentTypes['Webhook'] = ResolversParentTypes['Webhook']> = {
-  headers?: Resolver<Maybe<Array<Maybe<ResolversTypes['Header']>>>, ParentType, ContextType>;
+  headers?: Resolver<Maybe<Array<ResolversTypes['Header']>>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   method?: Resolver<ResolversTypes['HTTPMethod'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

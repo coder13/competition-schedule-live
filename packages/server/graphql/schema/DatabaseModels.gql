@@ -36,7 +36,7 @@ type Webhook {
   id: Int!
   url: String!
   method: HTTPMethod!
-  headers: [Header]
+  headers: [Header!]
 }
 
 type Header {

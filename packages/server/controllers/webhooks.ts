@@ -1,16 +1,22 @@
 import fetch from 'node-fetch';
 import prisma from '../db';
-import { Header, Webhook } from '../prisma/generated/client';
+import { Header } from '../generated/graphql';
+import { Webhook } from '../prisma/generated/client';
 
 export const sendWebhook = async (
-  webhook: Webhook & { Header: Header[] },
+  webhook: Webhook,
   data: Record<string, unknown>
 ) => {
+  const headers = (webhook.headers as Header[]).reduce(
+    (acc, h) => ({ ...acc, [h.key]: h.value }),
+    {}
+  );
+
   const response = await fetch(webhook.url, {
     method: webhook.method,
     headers: {
       'Content-Type': 'application/json',
-      ...webhook.Header.reduce((acc, h) => ({ ...acc, [h.key]: h.value }), {}),
+      ...headers,
     },
     body: JSON.stringify(data),
   });
@@ -33,9 +39,6 @@ export const sendWebhooksForCompetition = async (
   const webhooks = await prisma.webhook.findMany({
     where: {
       competitionId,
-    },
-    include: {
-      Header: true,
     },
   });
 

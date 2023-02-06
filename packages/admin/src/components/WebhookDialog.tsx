@@ -3,7 +3,12 @@ import { FormEventHandler, useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { useParams } from 'react-router-dom';
 
-import { HttpMethod, Webhook, WebhookInput } from '../generated/graphql';
+import {
+  Header,
+  HttpMethod,
+  Webhook,
+  WebhookInput,
+} from '../generated/graphql';
 import {
   CreateWebhookMutation,
   GetCompetitionQuery,
@@ -28,10 +33,17 @@ function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
   const [method, setMethod] = useState<HttpMethod>(
     webhook?.method ?? HttpMethod.Get
   );
+  const [headers, setHeaders] = useState<Header[]>(webhook?.headers ?? []);
+
+  const [newHeader, setNewHeader] = useState({
+    key: '',
+    value: '',
+  });
 
   useEffect(() => {
     setUrl(webhook?.url ?? '');
     setMethod(webhook?.method ?? HttpMethod.Get);
+    setHeaders(webhook?.headers ?? []);
   }, [webhook]);
 
   const [createWebhook, { error: createError }] = useMutation<{
@@ -48,6 +60,7 @@ function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
       console.log('Error created webhook', error);
     },
   });
+
   const [updateWebhook, { error: updateError }] = useMutation<{
     id: number;
     webhook: WebhookInput;
@@ -69,7 +82,7 @@ function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
         webhook: {
           url,
           method,
-          headers: [],
+          headers: headers.map((h) => ({ key: h.key, value: h.value })),
         },
       },
     });
@@ -82,7 +95,7 @@ function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
         webhook: {
           url,
           method,
-          headers: [],
+          headers: headers.map((h) => ({ key: h.key, value: h.value })),
         },
       },
     });
@@ -95,6 +108,9 @@ function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
     } else {
       handleCreate();
     }
+    setUrl('');
+    setMethod(HttpMethod.Get);
+    setHeaders([]);
   };
 
   return (
@@ -146,10 +162,84 @@ function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
             <option value="PUT">PUT</option>
           </Select>
         </div>
-        <div className="flex space-x-2 items-center">
+        <div className="flex flex-col space-x-2 space-y-2">
           <label>Headers</label>
+          <ul className="flex flex-col space-y-2">
+            {headers.map((header) => (
+              <li key={header.key} className="list-none">
+                <div className="flex space-x-2">
+                  <Input
+                    value={header.key}
+                    id="webhookKey"
+                    name="webhooKey"
+                    onChange={(e) =>
+                      setHeaders(
+                        headers.map((h) =>
+                          h.key === header.key
+                            ? { ...h, key: e.target.value }
+                            : h
+                        )
+                      )
+                    }
+                  />
+                  <Input
+                    id="webhookValue"
+                    name="webhooValue"
+                    value={header.value}
+                    onChange={(e) =>
+                      setHeaders(
+                        headers.map((h) =>
+                          h.key === header.key
+                            ? { ...h, value: e.target.value }
+                            : h
+                        )
+                      )
+                    }
+                  />
+                  <Button
+                    className="bg-red-500"
+                    type="button"
+                    onClick={() =>
+                      setHeaders(headers.filter((h) => h.key !== header.key))
+                    }>
+                    Remove
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="flex space-x-2">
+            <Input
+              id="webhookKey"
+              name="webhooKey"
+              value={newHeader.key}
+              onChange={(e) =>
+                setNewHeader({ ...newHeader, key: e.target.value })
+              }
+            />
+            <Input
+              id="webhookValue"
+              name="webhooValue"
+              value={newHeader.value}
+              onChange={(e) =>
+                setNewHeader({ ...newHeader, value: e.target.value })
+              }
+            />
+            <Button
+              className="bg-green-500"
+              type="button"
+              onClick={() => {
+                if (headers.some((h) => h.key === newHeader.key)) return;
+
+                setHeaders([...headers, newHeader]);
+                setNewHeader({ key: '', value: '' });
+              }}>
+              Add
+            </Button>
+          </div>
         </div>
       </form>
+      <br />
       <div className="flex flex-1" />
       <div className="flex justify-between">
         {webhook ? (

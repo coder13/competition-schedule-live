@@ -57,20 +57,9 @@ model Webhook {
   competitionId String     @db.VarChar(255)
   url           String     @db.VarChar(255)
   method        HTTPMethod
+  headers       Json?
 
   competition Competition @relation(fields: [competitionId], references: [id])
-  Header      Header[]
 
   @@unique([competitionId, url])
-}
-
-model Header {
-  id        Int    @id @default(autoincrement())
-  webhookId Int
-  key       String @db.VarChar(255)
-  value     String @db.VarChar(255)
-
-  webhook Webhook @relation(fields: [webhookId], references: [id])
-
-  @@unique([webhookId, key])
 }

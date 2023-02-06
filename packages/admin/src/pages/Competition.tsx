@@ -47,6 +47,7 @@ function CompetitionPage() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            'x-api-key': import.meta.env.VITE_NOTIFAPI_KEY,
           },
           body: JSON.stringify({
             sid: newSid,

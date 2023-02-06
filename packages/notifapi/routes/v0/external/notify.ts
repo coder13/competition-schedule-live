@@ -4,6 +4,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 import fetch from 'node-fetch';
 import { getAllUserCompetitionSubscriptions } from '../../../controllers/competitionSubscription';
 import prisma from '../../../db';
+import { apikeyCheck } from '../../../middlewares/apiKeyCheck';
 // import { handleErrors } from '../../../middlewares/errors';
 import { twilioClient } from '../../../services/twilio';
 
@@ -147,6 +148,7 @@ const router = Router();
  */
 router.post(
   '/notify',
+  apikeyCheck,
   // check('competitionId').exists().isString(),
   // check('notifications')
   //   .isArray()
