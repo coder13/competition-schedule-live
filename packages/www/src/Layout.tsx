@@ -1,5 +1,5 @@
 import { Container } from 'react-bulma-components';
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import { useAuth } from './Providers/UserProvider';
 
 function Layout() {
@@ -10,7 +10,7 @@ function Layout() {
         <nav>
           <ul className="flex">
             <li className="py-3 px-2 text-green-600">
-              <NavLink to="/">Home</NavLink>
+              <Link to="/">Home</Link>
             </li>
             <div className="flex flex-grow" />
             <li>

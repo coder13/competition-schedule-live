@@ -1,4 +1,4 @@
-import { formatTime } from '@notifycomp/frontend-common';
+import { formatDate, formatTime } from '@notifycomp/frontend-common';
 import { useEffect, useState } from 'react';
 import { Card, Progress } from 'react-bulma-components';
 import { Link } from 'react-router-dom';
@@ -14,6 +14,7 @@ function CompetitionCard({
   name,
   country,
   activities,
+  startDate,
 }: CompetitionCardProps) {
   const { allActivities, isLoading } = useWCIF(id);
 
@@ -44,7 +45,9 @@ function CompetitionCard({
           <Card.Header.Title>{name}</Card.Header.Title>
         </Card.Header>
         <Card.Content className="flex flex-col">
-          <p className="is-size-5">Ongoing</p>
+          {!ongoingActivities?.length && (
+            <div>Starts on {formatDate(startDate)}</div>
+          )}
           <div className="list">
             {ongoingActivities?.map((activity) => {
               const activityData = allActivities?.find(

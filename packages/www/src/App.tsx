@@ -10,7 +10,6 @@ import { useAuth } from './Providers/UserProvider';
 
 function App() {
   const { user } = useAuth();
-  console.log(13, user);
 
   if (!user?.id) {
     return <Login />;

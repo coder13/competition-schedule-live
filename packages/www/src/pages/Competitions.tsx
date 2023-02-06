@@ -6,7 +6,12 @@ import { GetCompetitionsQuery } from '../graphql';
 
 function Competitions() {
   const { data } = useQuery<{ competitions: Competition[] }>(
-    GetCompetitionsQuery
+    GetCompetitionsQuery,
+    {
+      variables: {
+        after: new Date().toISOString(),
+      },
+    }
   );
 
   return (

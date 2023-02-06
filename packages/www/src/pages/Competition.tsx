@@ -131,7 +131,7 @@ function Competition() {
 
               return (
                 <ListItem
-                  key={activities?.[0].activityCode}
+                  key={activityCode}
                   primaryText={activities?.[0]?.name || ''}
                 />
               );

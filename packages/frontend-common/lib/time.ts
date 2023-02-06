@@ -14,12 +14,12 @@ export const FormatDateSettings: Intl.DateTimeFormatOptions = {
 
 export const stringToDatePreserveTimezone = (isoString: string) => {
   const date = new Date(isoString);
-  // const offset = date.getTimezoneOffset() * 60 * 1000;
-  return new Date(date.getTime());
+  const offset = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() + offset);
 };
 
 export const formatTime = (isoString: string) =>
-  stringToDatePreserveTimezone(isoString).toLocaleTimeString(
+  new Date(isoString).toLocaleTimeString(
     [...navigator.languages],
     FormatTimeSettings
   );
@@ -30,13 +30,10 @@ export const formatDate = (isoString: string) =>
   ]);
 
 export const formatDateTime = (isoString: string) =>
-  stringToDatePreserveTimezone(isoString).toLocaleTimeString(
-    [...navigator.languages],
-    {
-      ...FormatDateSettings,
-      ...FormatTimeSettings,
-    }
-  );
+  new Date(isoString).toLocaleTimeString([...navigator.languages], {
+    ...FormatDateSettings,
+    ...FormatTimeSettings,
+  });
 
 export const formatTimeRange = (start: string, end: string) =>
   `${formatTime(start)} - ${formatTime(end)}`;

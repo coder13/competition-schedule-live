@@ -24,7 +24,10 @@ router.get(
       return;
     }
 
-    const subscriptions = await getCompetitionSubscriptions(req.user.id);
+    const subscriptions = await getCompetitionSubscriptions(
+      req.params.competitionId,
+      req.user.id
+    );
     res.json({
       success: true,
       subscriptions: subscriptions.map((s) => ({

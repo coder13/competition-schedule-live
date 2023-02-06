@@ -111,7 +111,7 @@ function Home() {
               </Icon>
             </Link>
           </Block>
-          <Block>
+          <Block className="flex flex-col space-y-4">
             {competitionsData?.competitions.map((comp) => (
               <CompetitionCard key={comp.id} {...comp} />
             ))}

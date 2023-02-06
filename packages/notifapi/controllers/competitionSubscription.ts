@@ -2,11 +2,16 @@ import prisma from '../db';
 import { CompetitionSubscriptionType } from '../prisma/generated/client';
 
 export const getCompetitionSubscriptions = (
+  competitionId: string,
   userId: number,
   type?: CompetitionSubscriptionType
 ) =>
   prisma.competitionSubscription.findMany({
     where: {
+      competitionId: {
+        equals: competitionId,
+        mode: 'insensitive',
+      },
       userId,
       ...(type && { type }),
     },
@@ -21,7 +26,10 @@ export const getAllUserCompetitionSubscriptions = (
     include: {
       CompetitionSubscription: {
         where: {
-          competitionId,
+          competitionId: {
+            equals: competitionId,
+            mode: 'insensitive',
+          },
           value: {
             in: values,
           },
@@ -31,7 +39,10 @@ export const getAllUserCompetitionSubscriptions = (
     where: {
       CompetitionSubscription: {
         some: {
-          competitionId,
+          competitionId: {
+            equals: competitionId,
+            mode: 'insensitive',
+          },
           type: CompetitionSubscriptionType.activity,
           value: {
             in: values,
@@ -177,7 +188,10 @@ export const replaceCompetitionSubscriptions = async (
     prisma.competitionSubscription.deleteMany({
       where: {
         userId,
-        competitionId,
+        competitionId: {
+          equals: competitionId,
+          mode: 'insensitive',
+        },
       },
     }),
     prisma.competitionSubscription.createMany({
