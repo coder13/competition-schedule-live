@@ -3,6 +3,7 @@ import { SessionData } from 'express-session';
 import { sendMessage } from '../../../services/twilio';
 import prisma from '../../../db';
 import { genCode } from '../../../lib/utils';
+import logger from '../../../lib/logger';
 
 const authRouter = Router();
 
@@ -48,7 +49,7 @@ authRouter.post('/number', async (req, res) => {
 
     res.json({ success: true });
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     res.status(500).json({ success: false, message: (e as Error).message });
   }
 });
@@ -93,7 +94,7 @@ authRouter.post('/number/code', async (req, res) => {
 
     res.json({ success: true, user });
   } catch (e) {
-    console.error(e);
+    logger.error(e);
     res.status(500).json({ success: false, message: (e as Error).message });
   }
 });
@@ -101,7 +102,7 @@ authRouter.post('/number/code', async (req, res) => {
 authRouter.post('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ success: false, message: (err as Error).message });
       return;
     }

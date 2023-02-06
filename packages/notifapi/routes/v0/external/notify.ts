@@ -4,6 +4,7 @@ import { check } from 'express-validator';
 import fetch from 'node-fetch';
 import { getAllUserCompetitionSubscriptions } from '../../../controllers/competitionSubscription';
 import prisma from '../../../db';
+import logger from '../../../lib/logger';
 import { apikeyCheck } from '../../../middlewares/apiKeyCheck';
 import { handleErrors } from '../../../middlewares/errors';
 import { twilioClient } from '../../../services/twilio';
@@ -149,10 +150,6 @@ const isCompetitor = (
 router.post(
   '/notify',
   apikeyCheck,
-  (req, res, next) => {
-    console.log(153, req.body);
-    next();
-  },
   check('competitionId').exists().isString(),
   check('notifications')
     .isArray()
@@ -261,14 +258,6 @@ router.post(
           ...wcaUserIdsForSearch.map((i) => i.toString()),
         ]);
 
-      // const userCompetitionCompetitorSubscriptions =
-      //   await getAllUserCompetitionCompetitorSubscriptions(
-      //     competitionId,
-      //     wcaUserIdsForSearch
-      //   );
-
-      console.log(userCompetitionSubscriptions);
-
       const messagesByUser = new Map<number, string[]>();
 
       const activityCodeData = new Map<
@@ -286,7 +275,7 @@ router.post(
         );
       });
 
-      console.log('Notifying', userCompetitionSubscriptions.length, 'users');
+      logger.info(`Notifying ${userCompetitionSubscriptions.length} users`);
       /**
        * Determines what message to send to each user
        * Uses the assumption that all are for the same activity
@@ -395,8 +384,13 @@ router.post(
         numberOfUsersNotified: userCompetitionSubscriptions.length,
         message: `${successfulSends.length} messages sent`,
       });
-    } catch (e) {
-      console.error(e);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        logger.error(e.message);
+      } else {
+        logger.error(e);
+      }
+
       res.status(500).json({
         success: false,
         message: 'Error occured while sending notifications',

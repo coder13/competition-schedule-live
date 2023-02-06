@@ -17,7 +17,6 @@ dotenv.config({
 });
 
 import express from 'express';
-import morgan from 'morgan';
 import cors from 'cors';
 import { json } from 'body-parser';
 import session, { SessionOptions } from 'express-session';
@@ -26,6 +25,8 @@ import prisma from './db';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 
 import { internal, external } from './routes/v0';
+import logger from './lib/logger';
+import morganMiddleware from './middlewares/morgan.middleware';
 
 const SECRET = process.env.SESSION_SECRET ?? 'compnotifySecret';
 
@@ -52,7 +53,7 @@ export async function init() {
   const app = express();
 
   app.use(json());
-  app.use(morgan('tiny'));
+  app.use(morganMiddleware);
 
   app.get('/', (_, res) => {
     res.end('Hello World!');
@@ -70,7 +71,7 @@ export async function init() {
 
   app.use('/v0/external', external);
 
-  console.log(
+  logger.info(
     `Allowing the following origins: ${
       process.env.CORS_ORIGINS?.split(',')?.join(', ') ?? 'none'
     }`

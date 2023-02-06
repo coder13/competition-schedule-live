@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
 import prisma from '../../../db';
+import logger from '../../../lib/logger';
 
 const router = Router();
 
@@ -53,7 +54,7 @@ router.put(
         }),
       });
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       res.status(500).json({
         success: false,
         message: 'Error occured while updating competition messaging service',

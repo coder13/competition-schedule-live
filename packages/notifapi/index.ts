@@ -1,3 +1,4 @@
+import logger from './lib/logger';
 import { init } from './server';
 
 const port = process.env.PORT ? +process.env.PORT : 8090;
@@ -7,12 +8,12 @@ init()
   .then((app) => {
     if (host) {
       app.listen(port, host, () => {
-        console.log('Server is running on port', port, 'host', host);
+        logger.info(`Server is running on ${host}:${port}`);
       });
     } else {
       app.listen(port, () => {
-        console.log('Server is running on port', port);
+        logger.info(`Server is running on port ${port}`);
       });
     }
   })
-  .catch((e) => console.error(e));
+  .catch((e) => logger.error(e));

@@ -6,6 +6,7 @@ import {
   removeCompetitionSubscriptions,
   replaceCompetitionSubscriptions,
 } from '../../../controllers/competitionSubscription';
+import logger from '../../../lib/logger';
 import { handleErrors } from '../../../middlewares/errors';
 import { getUser } from '../../../middlewares/user';
 import { CompetitionSubscriptionType } from '../../../prisma/generated/client';
@@ -45,7 +46,6 @@ const isArrayOfSubscriptions = body().custom((subscriptions) => {
     if (!validTypes.includes(subscription.type)) {
       throw new Error('Invalid subscription type');
     }
-    console.log(subscription.value, typeof subscription.value);
     if (typeof subscription.value !== 'string') {
       throw new Error('Subscription value must be a string');
     }
@@ -89,7 +89,7 @@ router.post(
         subscription,
       });
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       res.status(500).json({
         success: false,
         message: 'Error occured while adding competition subscriptions',
@@ -127,7 +127,7 @@ router.put(
         subscriptions,
       });
     } catch (e) {
-      console.error(e);
+      logger.error((e as Error).message);
       res.status(500).json({
         success: false,
         message: 'Error occured while updating competition subscriptions',
