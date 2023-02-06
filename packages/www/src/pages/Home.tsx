@@ -13,18 +13,9 @@ import { useEffect } from 'react';
 
 function Home() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: isUserLoading } = useAuth();
 
-  const { data, isLoading: isUserLoading } = useQuery<{
-    user: User & {
-      competitionSubscriptions: Record<string, Subscription[]>;
-    };
-  }>({
-    queryKey: ['me'],
-    queryFn: () => notifApiFetch('/v0/internal/me'),
-  });
-
-  const competitionIds = Object.keys(data?.user.competitionSubscriptions || []);
+  const competitionIds = Object.keys(user?.competitionSubscriptions || []);
 
   const {
     data: competitionsData,
@@ -54,7 +45,6 @@ function Home() {
           return prev;
         }
 
-        console.log(53, subscriptionData.data.activity);
         const newActivity = subscriptionData.data.activity;
 
         return {
@@ -63,8 +53,6 @@ function Home() {
             if (comp.id !== newActivity.competitionId) {
               return comp;
             }
-
-            console.log(66, comp.id, subscriptionData.data.activity);
 
             return {
               ...comp,

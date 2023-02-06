@@ -7,8 +7,8 @@ import { useAuth } from '../Providers/UserProvider';
 import { notifApiFetch } from '../notifapi';
 
 function Login() {
+  const { submitCode } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
-  const { setUser } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState(
     localStorage.getItem('compNotify.phoneNumber') || ''
   );
@@ -56,20 +56,11 @@ function Login() {
         return;
       }
 
-      try {
-        const { user } = await notifApiFetch('/v0/internal/auth/number/code', {
-          method: 'POST',
-          body: JSON.stringify({
-            code,
-          }),
-        });
-
-        if (user) {
-          setUser(user as User);
-        }
-      } catch (e) {
-        console.error(e);
-      }
+      submitCode?.mutate(code, {
+        onError: (e) => {
+          setError(e.message);
+        },
+      });
     },
     [code]
   );
@@ -104,6 +95,7 @@ function Login() {
                   <Form.Control>
                     <Form.Label>Phone Number</Form.Label>
                     <PhoneInput
+                      defaultCountry="US"
                       placeholder="Enter phone number"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e || '')}
@@ -124,7 +116,7 @@ function Login() {
                       <Form.Control>
                         <Form.Label>Code</Form.Label>
                         <Form.Input
-                          type="text"
+                          type="tel"
                           placeholder="Enter code"
                           value={code}
                           onChange={(e) => setCode(e.target.value)}

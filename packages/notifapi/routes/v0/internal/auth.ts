@@ -24,6 +24,7 @@ authRouter.post('/number', async (req, res) => {
   const { number } = req.body;
 
   const session = req.session as SessionData;
+  console.log(27, session);
 
   try {
     const code = genCode();
@@ -91,6 +92,18 @@ authRouter.post('/number/code', async (req, res) => {
     console.error(e);
     res.status(500).json({ success: false, message: (e as Error).message });
   }
+});
+
+authRouter.post('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ success: false, message: (err as Error).message });
+      return;
+    }
+
+    res.json({ success: true });
+  });
 });
 
 export default authRouter;

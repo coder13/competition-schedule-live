@@ -3,6 +3,7 @@
 interface User {
   id: number;
   phoneNumber?: string;
+  competitionSubscriptions?: Record<string, CompetitionSubscription[]>;
 }
 
 type Subscription = {
