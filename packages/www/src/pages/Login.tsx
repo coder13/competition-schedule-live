@@ -61,11 +61,6 @@ function Login() {
     async (e?: FormEvent<HTMLFormElement>) => {
       e?.preventDefault();
 
-      if (!code) {
-        setError('Please enter a code');
-        return;
-      }
-
       submitCode?.mutate(code, {
         onError: (e) => {
           enqueueSnackbar(e.message, { variant: 'error' });
