@@ -5,6 +5,7 @@ import PhoneInput from 'react-phone-number-input';
 import { useSnackbar } from 'notistack';
 import { useAuth } from '../Providers/UserProvider';
 import { notifApiFetch } from '../notifapi';
+import { useQuery } from '@tanstack/react-query';
 
 function Login() {
   const { submitCode } = useAuth();
@@ -12,11 +13,20 @@ function Login() {
   const [phoneNumber, setPhoneNumber] = useState(
     localStorage.getItem('compNotify.phoneNumber') || ''
   );
-  const [codeSent, setCodeSent] = useState(
-    JSON.parse(localStorage.getItem('compNotify.codeSent') || 'false')
-  );
+  const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState<string>('');
-  const [error, setError] = useState<undefined | string>();
+  const [setError] = useState<undefined | string>();
+
+  useQuery({
+    queryKey: ['session'],
+    queryFn: () => notifApiFetch('/v0/internal/auth/session'),
+    onSuccess: (data) => {
+      if (data.session) {
+        setCodeSent(data.session.code);
+        setPhoneNumber(data.session.number);
+      }
+    },
+  });
 
   const handleSubmitNumber = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
@@ -35,7 +45,7 @@ function Login() {
         localStorage.setItem('compNotify.codeSent', 'true');
         setCodeSent(true);
       } catch (e) {
-        console.error(e);
+        enqueueSnackbar((e as Error).message, { variant: 'error' });
       }
     },
     [phoneNumber]
@@ -58,7 +68,7 @@ function Login() {
 
       submitCode?.mutate(code, {
         onError: (e) => {
-          setError(e.message);
+          enqueueSnackbar(e.message, { variant: 'error' });
         },
       });
     },

@@ -3,17 +3,21 @@ import { SessionData } from 'express-session';
 import { sendMessage } from '../../../services/twilio';
 import prisma from '../../../db';
 import { genCode } from '../../../lib/utils';
-import { getUser } from '../../../middlewares/user';
 
 const authRouter = Router();
 
-authRouter.get('/test', getUser, (req: Request, res) => {
-  if (!req.user) {
-    res.status(401).json({ success: false });
-    return;
+authRouter.get('/session', (req: Request, res) => {
+  if (req.session) {
+    res.json({
+      success: true,
+      session: req.session.auth?.number && {
+        number: req.session.auth.number.number,
+        codeSent: !!req.session.auth.number.code,
+      },
+    });
+  } else {
+    res.status(500).json({ success: false, message: 'No session found' });
   }
-
-  res.json({ success: true, user: req.user });
 });
 
 /**
