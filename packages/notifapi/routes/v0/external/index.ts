@@ -37,7 +37,7 @@ router.use(
         },
       });
 
-      res.json({ success: true, count });
+      res.json({ success: true, count: count.length });
     } catch (e) {
       res.status(500).json({ success: false, error: (e as Error)?.message });
     }
