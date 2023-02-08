@@ -149,3 +149,27 @@ export const DeleteWebhookMutation = gql`
     deleteWebhook(id: $id)
   }
 `;
+
+export const TestWebhooksMutation = gql`
+  mutation TestWebhooks($competitionId: String!) {
+    testWebhooks(competitionId: $competitionId) {
+      url
+      status
+      statusText
+      body
+    }
+  }
+`;
+
+export const TestEditingWebhookMutation = gql`
+  mutation TestEditingWebhook(
+    $competitionId: String!
+    $webhook: WebhookInput!
+  ) {
+    testEditingWebhook(competitionId: $competitionId, webhook: $webhook) {
+      status
+      statusText
+      body
+    }
+  }
+`;

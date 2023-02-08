@@ -78,6 +78,9 @@ export type Mutation = {
   startActivities?: Maybe<Array<Maybe<Activity>>>;
   startActivity?: Maybe<Activity>;
   stopActivity?: Maybe<Activity>;
+  testEditingWebhook?: Maybe<WebhookResponse>;
+  testWebhook?: Maybe<WebhookResponse>;
+  testWebhooks: Array<Maybe<WebhookResponse>>;
   updateWebhook: Webhook;
 };
 
@@ -124,6 +127,22 @@ export type MutationStartActivityArgs = {
 
 export type MutationStopActivityArgs = {
   activityId: Scalars['Int'];
+  competitionId: Scalars['String'];
+};
+
+
+export type MutationTestEditingWebhookArgs = {
+  competitionId: Scalars['String'];
+  webhook: WebhookInput;
+};
+
+
+export type MutationTestWebhookArgs = {
+  id: Scalars['Int'];
+};
+
+
+export type MutationTestWebhooksArgs = {
   competitionId: Scalars['String'];
 };
 
@@ -207,6 +226,14 @@ export type Webhook = {
 export type WebhookInput = {
   headers?: InputMaybe<Array<HeaderInput>>;
   method: HttpMethod;
+  url: Scalars['String'];
+};
+
+export type WebhookResponse = {
+  __typename?: 'WebhookResponse';
+  body?: Maybe<Scalars['String']>;
+  status: Scalars['Int'];
+  statusText: Scalars['String'];
   url: Scalars['String'];
 };
 
@@ -297,6 +324,7 @@ export type ResolversTypes = {
   Void: ResolverTypeWrapper<Scalars['Void']>;
   Webhook: ResolverTypeWrapper<Webhook>;
   WebhookInput: WebhookInput;
+  WebhookResponse: ResolverTypeWrapper<WebhookResponse>;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -318,6 +346,7 @@ export type ResolversParentTypes = {
   Void: Scalars['Void'];
   Webhook: Webhook;
   WebhookInput: WebhookInput;
+  WebhookResponse: WebhookResponse;
 };
 
 export type ActivityResolvers<ContextType = any, ParentType extends ResolversParentTypes['Activity'] = ResolversParentTypes['Activity']> = {
@@ -370,6 +399,9 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   startActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationStartActivitiesArgs, 'activityIds' | 'competitionId'>>;
   startActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStartActivityArgs, 'activityId' | 'competitionId'>>;
   stopActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStopActivityArgs, 'activityId' | 'competitionId'>>;
+  testEditingWebhook?: Resolver<Maybe<ResolversTypes['WebhookResponse']>, ParentType, ContextType, RequireFields<MutationTestEditingWebhookArgs, 'competitionId' | 'webhook'>>;
+  testWebhook?: Resolver<Maybe<ResolversTypes['WebhookResponse']>, ParentType, ContextType, RequireFields<MutationTestWebhookArgs, 'id'>>;
+  testWebhooks?: Resolver<Array<Maybe<ResolversTypes['WebhookResponse']>>, ParentType, ContextType, RequireFields<MutationTestWebhooksArgs, 'competitionId'>>;
   updateWebhook?: Resolver<ResolversTypes['Webhook'], ParentType, ContextType, RequireFields<MutationUpdateWebhookArgs, 'id' | 'webhook'>>;
 };
 
@@ -405,6 +437,14 @@ export type WebhookResolvers<ContextType = any, ParentType extends ResolversPare
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type WebhookResponseResolvers<ContextType = any, ParentType extends ResolversParentTypes['WebhookResponse'] = ResolversParentTypes['WebhookResponse']> = {
+  body?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  statusText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type Resolvers<ContextType = any> = {
   Activity?: ActivityResolvers<ContextType>;
   Competition?: CompetitionResolvers<ContextType>;
@@ -418,5 +458,6 @@ export type Resolvers<ContextType = any> = {
   User?: UserResolvers<ContextType>;
   Void?: GraphQLScalarType;
   Webhook?: WebhookResolvers<ContextType>;
+  WebhookResponse?: WebhookResponseResolvers<ContextType>;
 };
 

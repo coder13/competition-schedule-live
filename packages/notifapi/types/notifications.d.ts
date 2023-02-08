@@ -21,3 +21,7 @@ interface CompetitorNotification {
   activityId: number;
   assignmentCode: string;
 }
+
+interface PingNotification {
+  type: 'ping';
+}

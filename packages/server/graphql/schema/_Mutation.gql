@@ -4,6 +4,13 @@ type Mutation {
   updateWebhook(id: Int!, webhook: WebhookInput!): Webhook!
   deleteWebhook(id: Int!): Void
 
+  testWebhook(id: Int!): WebhookResponse
+  testEditingWebhook(
+    competitionId: String!
+    webhook: WebhookInput!
+  ): WebhookResponse
+  testWebhooks(competitionId: String!): [WebhookResponse]!
+
   startActivity(competitionId: String!, activityId: Int!): Activity
   stopActivity(competitionId: String!, activityId: Int!): Activity
   resetActivity(competitionId: String!, activityId: Int!): Activity
@@ -20,4 +27,11 @@ input WebhookInput {
 input HeaderInput {
   key: String!
   value: String!
+}
+
+type WebhookResponse {
+  url: String!
+  status: Int!
+  statusText: String!
+  body: String
 }

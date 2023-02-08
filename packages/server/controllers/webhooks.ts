@@ -3,7 +3,7 @@ import prisma from '../db';
 import { Header } from '../generated/graphql';
 import { Webhook } from '../prisma/generated/client';
 
-export const sendWebhook = async (
+export const webhookFetch = async (
   webhook: Webhook,
   data: Record<string, unknown>
 ) => {
@@ -11,8 +11,7 @@ export const sendWebhook = async (
     (acc, h) => ({ ...acc, [h.key]: h.value }),
     {}
   );
-
-  const response = await fetch(webhook.url, {
+  return fetch(webhook.url, {
     method: webhook.method,
     headers: {
       'Content-Type': 'application/json',
@@ -20,6 +19,13 @@ export const sendWebhook = async (
     },
     body: JSON.stringify(data),
   });
+};
+
+export const sendWebhook = async (
+  webhook: Webhook,
+  data: Record<string, unknown>
+) => {
+  const response = await webhookFetch(webhook, data);
 
   if (!response.ok) {
     throw new Error(
@@ -38,7 +44,10 @@ export const sendWebhooksForCompetition = async (
 ) => {
   const webhooks = await prisma.webhook.findMany({
     where: {
-      competitionId,
+      competitionId: {
+        equals: competitionId,
+        mode: 'insensitive',
+      },
     },
   });
 

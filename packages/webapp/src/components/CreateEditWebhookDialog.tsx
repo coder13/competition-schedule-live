@@ -27,6 +27,7 @@ import { useMutation } from '@apollo/client';
 import {
   CreateWebhookMutation,
   DeleteWebhookMutation,
+  TestEditingWebhookMutation,
   UpdateWebhookMutation,
   WebhooksQuery,
 } from '../graphql';
@@ -59,11 +60,13 @@ function CreateEditWebhookDialog({
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [url, setUrl] = useState(webhook?.url ?? '');
-  const [method, setMethod] = useState<HttpMethod | undefined>(webhook?.method);
+  const [method, setMethod] = useState<HttpMethod>(
+    webhook?.method ?? HttpMethod.Post
+  );
 
   useEffect(() => {
     setUrl(webhook?.url ?? '');
-    setMethod(webhook?.method);
+    setMethod(webhook?.method ?? HttpMethod.Post);
   }, [webhook]);
 
   const [createWebhook] = useMutation<{
@@ -107,6 +110,8 @@ function CreateEditWebhookDialog({
       console.log('Error deleting webhook', error);
     },
   });
+
+  const [testWebhook] = useMutation(TestEditingWebhookMutation);
 
   const handleSave = () => {
     if (webhook) {
@@ -198,6 +203,21 @@ function CreateEditWebhookDialog({
             </Select>
           </FormControl>
           <Divider />
+          <Button
+            variant="outlined"
+            onClick={() =>
+              testWebhook({
+                variables: {
+                  competitionId,
+                  webhook: {
+                    url,
+                    method,
+                  },
+                },
+              })
+            }>
+            Test Webhook
+          </Button>
           {webhook && (
             <Button
               variant="outlined"

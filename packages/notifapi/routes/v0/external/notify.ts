@@ -127,12 +127,16 @@ const roomsAndActivitiesFromCode = (schedule: Schedule, code: string) => {
 
 const router = Router();
 
-const isActivity = (
-  a: ActivityNotification | CompetitorNotification
-): a is ActivityNotification => a.type === 'activity';
-const isCompetitor = (
-  a: ActivityNotification | CompetitorNotification
-): a is CompetitorNotification => a.type === 'competitor';
+type Notification =
+  | ActivityNotification
+  | CompetitorNotification
+  | PingNotification;
+
+const isActivity = (a: Notification): a is ActivityNotification =>
+  a.type === 'activity';
+const isCompetitor = (a: Notification): a is CompetitorNotification =>
+  a.type === 'competitor';
+const isPing = (a: Notification): a is PingNotification => a.type === 'ping';
 
 /**
  * Main route with which to ping users
@@ -156,6 +160,10 @@ router.post(
     .custom((notifications) => {
       return notifications.every(
         (n: ActivityNotification | CompetitorNotification) => {
+          if (isPing(n)) {
+            return true;
+          }
+
           if (isActivity(n)) {
             return n.id === undefined || (n.id && typeof n.id === 'number');
           }
