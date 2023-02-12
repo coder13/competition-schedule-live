@@ -29,8 +29,6 @@ authRouter.post('/number', async (req, res) => {
   const { number } = req.body;
 
   const session = req.session as SessionData;
-  console.log(27, session);
-
   try {
     const code = genCode();
     session.auth = {

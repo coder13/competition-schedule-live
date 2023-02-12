@@ -12,12 +12,6 @@ router.use(
   })
 );
 
-// router.use((req, _, next) => {
-//   console.log(req.headers);
-
-//   next();
-// });
-
 router.use('/admin', admin);
 
 router.use(
