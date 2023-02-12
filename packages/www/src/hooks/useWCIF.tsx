@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 
 function useWCIF(competitionId: string) {
   const { isLoading, data: wcif } = useQuery({
-    queryKey: ['wcif'],
+    queryKey: ['wcif', competitionId],
     queryFn: async () => {
       const res = await fetch(
         `${
