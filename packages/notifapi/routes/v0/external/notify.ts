@@ -344,7 +344,7 @@ router.post(
                       const roomName = roomForActivityId(c.activityId)?.name;
 
                       return `${c.name} is being called up to ${taskName}${
-                        includeRoomName && roomName ? `on the ${roomName}` : ''
+                        includeRoomName && roomName ? ` on the ${roomName}` : ''
                       }`;
                     })
                   )} for ${activityName}!`,

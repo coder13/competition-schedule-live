@@ -96,6 +96,14 @@ function CompetitionHome() {
             })}
           </React.Fragment>
         ))}
+        {wcif && (
+          <ListItemButton component={Link} to={`rooms/all`} key={'allRooms'}>
+            <ListItemAvatar>
+              <Avatar sx={{ bgcolor: 'black' }} />
+            </ListItemAvatar>
+            <ListItemText primary={'All Rooms'} />
+          </ListItemButton>
+        )}
       </List>
       <MenuList>
         <Divider />

@@ -44,9 +44,29 @@ export const StartActivityMutation = gql`
   }
 `;
 
+export const StartActivitiesMutation = gql`
+  mutation StartActivities($competitionId: String!, $activityIds: [Int!]!) {
+    startActivity(competitionId: $competitionId, activityIds: $activityIds) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
 export const StopActivityMutation = gql`
   mutation StopActivity($competitionId: String!, $activityId: Int!) {
     stopActivity(competitionId: $competitionId, activityId: $activityId) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
+export const StopActivitiesMutation = gql`
+  mutation StopActivities($competitionId: String!, $activityIds: [Int!]!) {
+    stopActivity(competitionId: $competitionId, activityIds: $activityIds) {
       activityId
       startTime
       endTime
@@ -81,6 +101,31 @@ export const StopStartActivityMutation = gql`
     start: startActivity(
       competitionId: $competitionId
       activityId: $startActivityId
+    ) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
+export const StopStartActivitiesMutation = gql`
+  mutation StopStartActivities(
+    $competitionId: String!
+    $stopActivityIds: [Int!]!
+    $startActivityIds: [Int!]!
+  ) {
+    stop: stopActivities(
+      competitionId: $competitionId
+      activityIds: $stopActivityIds
+    ) {
+      activityId
+      startTime
+      endTime
+    }
+    start: startActivity(
+      competitionId: $competitionId
+      activityIds: $startActivityIds
     ) {
       activityId
       startTime

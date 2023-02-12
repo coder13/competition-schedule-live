@@ -1,9 +1,8 @@
 import React, { useCallback, useMemo, useEffect, useState } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation } from '@apollo/client';
 import {
   Button,
   ButtonGroup,
-  colors,
   Container,
   Divider,
   LinearProgress,
@@ -15,53 +14,25 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
 import pluralize from 'pluralize';
 import formatDuration from 'date-fns/formatDuration';
 import intervalToDuration from 'date-fns/intervalToDuration';
+import wCA from '@wca/helpers';
 import { Activity } from '../../generated/graphql';
 import {
   ActivitiesQuery,
   ResetActivityMutation,
-  StartActivityMutation,
+  StartActivitiesMutation,
   StopActivityMutation,
-  StopStartActivityMutation,
+  StopStartActivitiesMutation,
 } from '../../graphql';
 import { useCompetition } from './Layout';
 import { useConfirm } from 'material-ui-confirm';
-import { allChildActivities } from '@notifycomp/frontend-common/lib';
 
 const durationToMinutes = (start: Date, end: Date): number =>
   Math.round((end.getTime() - start.getTime()) / 1000 / 60);
 
-// import red from '@mui/material/colors/red';
-// import yellow from '@mui/material/colors/yellow';
-
-const colorForLate = (minutes: number): string => {
-  return 'white';
-  // if (minutes <= -5) {
-  // }
-
-  // if (minutes < 0) {
-  //   return yellow[100];
-  // }
-
-  // if (minutes < 5) {
-  //   return red[200];
-  // }
-
-  // if (minutes < 15) {
-  //   return red[300];
-  // }
-
-  // if (minutes < 60) {
-  //   return red[100];
-  // }
-
-  // return red[300];
-};
-
-function CompetitionRoom() {
+function CompetitionAllRooms() {
   const confirm = useConfirm();
   const {
     wcif,
@@ -70,8 +41,6 @@ function CompetitionRoom() {
     ongoingActivities,
     activitiesLoading,
   } = useCompetition();
-  const { roomId } = useParams<{ roomId: string }>();
-
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -81,7 +50,7 @@ function CompetitionRoom() {
     return () => clearInterval(interval);
   }, []);
 
-  const [startActivity] = useMutation<Activity>(StartActivityMutation, {
+  const [startActivities] = useMutation<Activity>(StartActivitiesMutation, {
     refetchQueries: [ActivitiesQuery],
     onCompleted: (data) => {
       console.log('Started Activity!', data);
@@ -111,10 +80,10 @@ function CompetitionRoom() {
     },
   });
 
-  const [stopAndStartActivity] = useMutation<{
-    stop: Activity;
-    start: Activity;
-  }>(StopStartActivityMutation, {
+  const [stopAndStartActivities] = useMutation<{
+    stop: Activity[];
+    start: Activity[];
+  }>(StopStartActivitiesMutation, {
     refetchQueries: [ActivitiesQuery],
     onCompleted: (data) => {
       console.log('Stopped Activity!', data.stop);
@@ -125,120 +94,238 @@ function CompetitionRoom() {
     },
   });
 
-  const room = roomId
-    ? wcif?.schedule.venues
-        .map((venue) => venue.rooms)
-        .flat()
-        .find((room) => room.id === +roomId)
-    : null;
+  const rooms = wcif?.schedule.venues.flatMap((venue) => venue.rooms);
 
-  const childActivities = room?.activities
-    .map((activity) =>
+  const allChildActivities = rooms
+    ?.flatMap((room) => room.activities)
+    .flatMap((activity) =>
       activity?.childActivities?.length ? activity.childActivities : activity
     )
-    .flat();
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  const uniqueActivityCodes = useMemo(
+    () => [
+      ...new Set(
+        allChildActivities?.map((a) => {
+          if (a.activityCode === 'other-misc') {
+            return `other-misc-${a.name.toLowerCase().replace(' ', '-')}`;
+          }
+          return a.activityCode;
+        })
+      ),
+    ],
+    [allChildActivities]
+  );
+
+  const activitiesByActivityCodeMap = useMemo(() => {
+    const activitiesByActivityCode: Record<
+      string,
+      {
+        scheduledActivities: wCA.Activity[];
+        liveActivities: Activity[];
+        name: string;
+        startTime: string;
+      }
+    > = {};
+
+    uniqueActivityCodes?.forEach((activityCode) => {
+      const childActivities = childActivitiesForActivityCode(activityCode);
+      const liveActivities = activities?.filter((a) =>
+        childActivities?.some((activity) => a.activityId === activity.id)
+      );
+
+      if (!childActivities || !childActivities.length) {
+        return;
+      }
+
+      activitiesByActivityCode[activityCode] = {
+        scheduledActivities: childActivities || [],
+        liveActivities: liveActivities || [],
+        name: childActivities[0].name || '',
+        startTime: childActivities[0].startTime,
+      };
+    });
+    return activitiesByActivityCode;
+  }, [activities, uniqueActivityCodes]);
+
+  const childActivitiesForActivityCode = (activityCode: string) =>
+    allChildActivities?.filter((a) => {
+      if (activityCode.startsWith('other-misc-')) {
+        return (
+          a.activityCode === 'other-misc' &&
+          a.name.toLowerCase().replace(' ', '-') ===
+            activityCode.replace('other-misc-', '')
+        );
+      }
+      return a.activityCode === activityCode;
+    });
 
   const nextActivities = useMemo(
     () =>
-      childActivities?.filter((activity) => {
-        const liveActivity = activities?.find(
-          (a) => a.activityId === activity.id
-        );
+      uniqueActivityCodes
+        // filters to only activities that have not started yet
+        ?.filter((activityCode) => {
+          const { liveActivities } = activitiesByActivityCodeMap[activityCode];
 
-        return (
-          !liveActivity || (!liveActivity.startTime && !liveActivity.endTime)
-        );
-      }),
-    [childActivities, activities]
+          const noActivitiesHaveStarted = !liveActivities?.some(
+            (a) => a.startTime
+          );
+
+          return !liveActivities || noActivitiesHaveStarted;
+        })
+        .map((activityCode) => activitiesByActivityCodeMap[activityCode]),
+    [allChildActivities, activities]
   );
 
   const doneActivities = useMemo(
     () =>
-      childActivities?.filter(
-        (a) =>
-          !nextActivities?.find((next) => next.id === a.id) &&
-          !ongoingActivities?.find((current) => current.activityId === a.id)
-      ),
-    [nextActivities, childActivities]
+      uniqueActivityCodes
+        // filters to only activities that have not started yet
+        ?.filter((activityCode) => {
+          const { liveActivities } = activitiesByActivityCodeMap[activityCode];
+
+          // if there are no live activities, then all activities have ended
+          const allActivitiesHaveEnded = !liveActivities?.some(
+            (a) => !a.startTime || !a.endTime
+          );
+
+          return allActivitiesHaveEnded;
+        })
+        .map((activityCode) => activitiesByActivityCodeMap[activityCode]),
+    [nextActivities, allChildActivities]
   );
 
   const nextActivity = useMemo(() => {
     return nextActivities?.[0];
   }, [nextActivities]);
 
-  const startStopActivity = async (activityId: number) => {
-    console.log('startStopActivity', activityId);
+  const startOrStopActivities = async (activityCode: string) => {
+    console.log('startStopActivity', activityCode);
 
-    const activityData = childActivities?.find((a) => a.id === activityId);
-    const isCurrent = ongoingActivities?.find(
-      (a) => a.activityId === activityId
+    const { scheduledActivities, liveActivities } =
+      activitiesByActivityCodeMap[activityCode];
+
+    // filter out activities that have already started or stopped
+    const startingActivities = scheduledActivities?.filter((a) => {
+      const liveActivity = liveActivities?.find((la) => la.activityId === a.id);
+      return !liveActivity?.startTime || !liveActivity?.endTime;
+    });
+
+    const roomsForStartingActivities = rooms?.filter((room) =>
+      startingActivities?.some((a) =>
+        room.activities.some(
+          (ra) =>
+            ra.id === a.id || ra?.childActivities?.some((ca) => ca.id === a.id)
+        )
+      )
     );
 
-    if (isCurrent) {
-      const res = await confirm({
-        content: (
-          <p>
-            This will stop activity: <b>{activityData?.name}</b>
-          </p>
-        ),
-        confirmationText: 'Stop',
-      });
-      console.log(res);
-      stopActivity({
-        variables: {
-          competitionId: wcif?.id,
-          activityId: activityId,
-        },
-      });
-    } else {
-      const res = await confirm({
-        content: (
-          <p>
-            This will start activity: <b>{activityData?.name}</b>
-          </p>
-        ),
-        confirmationText: 'Start',
-      });
-      console.log(res);
+    const stopping = scheduledActivities?.filter((a) => {
+      const liveActivity = liveActivities?.find((la) => la.activityId === a.id);
+      return liveActivity?.startTime || !liveActivity?.endTime;
+    });
 
-      startActivity({
-        variables: {
-          competitionId: wcif?.id,
-          activityId: activityId,
-        },
-      });
-    }
+    await confirm({
+      content: (
+        <>
+          <p>
+            This will start activities <b>{startingActivities?.[0]?.name}</b> in
+            rooms{' '}
+            <b>{roomsForStartingActivities?.map((r) => r.name).join(', ')}</b>
+          </p>
+          <p>
+            This will stop activities <b>{stopping?.[0]?.name}</b> in rooms{' '}
+            <b>{roomsForStartingActivities?.map((r) => r.name).join(', ')}</b>
+          </p>
+        </>
+      ),
+      confirmationText: 'Start',
+    });
   };
 
-  const advanceToNextActivity = useCallback(async () => {
-    if (ongoingActivities?.length && nextActivity) {
-      const startActivityId = nextActivity?.id;
-      const stopActivityId = ongoingActivities?.[0].activityId;
+  //   if (isCurrent) {
+  //     await confirm({
+  //       content: (
+  //         <p>
+  //           This will stop activities: <b>{childActivities?.[0]?.name}</b> in
+  //           all rooms
+  //         </p>
+  //       ),
+  //       confirmationText: 'Stop',
+  //     });
+  //     stopActivity({
+  //       variables: {
+  //         competitionId: wcif?.id,
+  //         activityIds,
+  //       },
+  //     });
+  //   } else {
+  //     await confirm({
+  //       content: (
+  //         <p>
+  //           This will stop activity: <b>{childActivities?.[0]?.name}</b> in all
+  //           rooms
+  //         </p>
+  //       ),
+  //       confirmationText: 'Start',
+  //     });
 
-      const startActivity = childActivities?.find(
-        (ca) => ca.id === startActivityId
+  //     startActivities({
+  //       variables: {
+  //         competitionId: wcif?.id,
+  //         activityIds,
+  //       },
+  //     });
+  //   }
+  // };
+
+  const advanceToNextActivities = useCallback(async () => {
+    if (ongoingActivities?.length && nextActivity) {
+      const stopActivities = ongoingActivities?.flatMap((a) =>
+        allChildActivities?.find((ca) => ca.id === a.activityId)
       );
-      const stopActivity = childActivities?.find(
-        (ca) => ca.id === stopActivityId
-      );
+
+      // const roomsForChildActivitiesToStart = rooms?.filter((room) =>
+      //   room.activities.some(
+      //     (activity) =>
+      //       nextActivity.childActivities.some((ca) => ca.id === activity.id) ||
+      //       activity?.childActivities?.some((ca) => ca.id === activity.id)
+      //   )
+      // );
+      const starting = nextActivity.scheduledActivities?.filter((a) => {
+        const liveActivity = activities?.find((la) => la.activityId === a.id);
+        return !liveActivity?.startTime || !liveActivity?.endTime;
+      });
 
       await confirm({
         content: (
           <p>
-            This would stop activity: <br />
-            <b>{stopActivity?.name}</b>
-            <br /> and start activity: <br />
-            <b>{startActivity?.name}</b>
+            This would stop activities:
+            <List dense>
+              {stopActivities?.map((activity) => (
+                <ListItem>
+                  <ListItemText primary={activity.name} />
+                </ListItem>
+              ))}
+            </List>
+            <br /> and start activities: <br />
+            <List dense>
+              {starting?.map((activity) => {
+                <ListItem>
+                  <ListItemText primary={activity.name} />
+                </ListItem>;
+              })}
+            </List>
           </p>
         ),
         confirmationText: 'Advance',
       });
 
-      stopAndStartActivity({
+      stopAndStartActivities({
         variables: {
           competitionId: wcif?.id,
-          stopActivityId,
-          startActivityId,
+          stopActivityIds: ongoingActivities?.map((a) => a.activityId),
+          startActivityId: nextActivity.childActivities[0].id,
         },
       });
     }
@@ -252,7 +339,7 @@ function CompetitionRoom() {
           <List dense>
             {ongoingActivities
               ?.map((a) =>
-                childActivities?.find((ca) => ca.id === a.activityId)
+                allChildActivities?.find((ca) => ca.id === a.activityId)
               )
               .map((ca) => (
                 <ListItem>
@@ -277,7 +364,7 @@ function CompetitionRoom() {
 
   const handleResetActivity = useCallback(
     async (activityId: number) => {
-      const activityData = childActivities?.find((a) => a.id === activityId);
+      const activityData = allChildActivities?.find((a) => a.id === activityId);
 
       await confirm({
         content: (
@@ -301,7 +388,7 @@ function CompetitionRoom() {
         },
       });
     },
-    [wcif, childActivities]
+    [wcif, allChildActivities]
   );
 
   const minutesTillNextActivity: number = useMemo(() => {
@@ -310,7 +397,10 @@ function CompetitionRoom() {
     }
 
     return Math.round(
-      (new Date(nextActivity.startTime).getTime() - time.getTime()) / 1000 / 60
+      (new Date(nextActivity.childActivities[0].startTime).getTime() -
+        time.getTime()) /
+        1000 /
+        60
     );
   }, [nextActivity, time]);
 
@@ -320,7 +410,6 @@ function CompetitionRoom() {
         display: 'flex',
         flexDirection: 'column',
         flex: 1,
-        height: '100%',
       }}>
       <Container
         maxWidth="md"
@@ -332,53 +421,46 @@ function CompetitionRoom() {
         }}>
         {loadingWcif || activitiesLoading ? <LinearProgress /> : null}
         <Typography variant="h4" sx={{ p: 1 }}>
-          {room?.name}
+          All Rooms
         </Typography>
         <Divider />
         <List dense>
           {nextActivities?.length ? (
             <>
               <ListSubheader disableSticky>Next</ListSubheader>
-              {nextActivities?.map((activity) => {
-                const liveActivity = activities?.find(
-                  (a) => a.activityId === activity.id
-                );
-                let secondaryText = '';
-
-                if (!liveActivity?.startTime) {
-                  secondaryText = new Date(activity.startTime).toLocaleString();
-                } else if (!!liveActivity?.startTime && !liveActivity.endTime) {
-                  secondaryText = `Started ${formatDuration(
-                    intervalToDuration({
-                      start: new Date(liveActivity.startTime),
-                      end: time,
-                    })
-                  )} ago`;
-                } else if (
-                  !!liveActivity?.startTime &&
-                  !!liveActivity?.endTime
-                ) {
-                  const minutes = durationToMinutes(
-                    new Date(liveActivity.startTime),
-                    new Date(liveActivity.endTime)
+              {nextActivities?.map(
+                ({ activityCode, childActivities, name }) => {
+                  const liveActivities = activities?.find((a) =>
+                    childActivities?.some((ca) => ca.id === a.activityId)
                   );
-                  secondaryText = `Ended ${formatDuration({ minutes })} ${
-                    minutes < 0 ? 'early' : 'late'
-                  }`;
-                }
 
-                return (
-                  <ListItemButton
-                    disabled={!!liveActivity?.endTime}
-                    onClick={() => startStopActivity(activity.id)}
-                    key={activity.id}>
-                    <ListItemText
-                      primary={activity.name}
-                      secondary={secondaryText}
-                    />
-                  </ListItemButton>
-                );
-              })}
+                  const startTimes = [
+                    ...new Set(childActivities?.map((ca) => ca.startTime)),
+                  ];
+
+                  let secondaryText = '';
+
+                  if (startTimes.length === 1) {
+                    secondaryText = new Date(startTimes[0]).toLocaleString();
+                  } else {
+                    secondaryText = startTimes
+                      .map((startTime) => new Date(startTime).toLocaleString())
+                      .join(', ');
+                  }
+
+                  return (
+                    <ListItemButton
+                      onClick={() =>
+                        startOrStopActivities(
+                          childActivities?.map((ca) => ca.id)
+                        )
+                      }
+                      key={activityCode}>
+                      <ListItemText primary={name} secondary={secondaryText} />
+                    </ListItemButton>
+                  );
+                }
+              )}
             </>
           ) : null}
           {doneActivities?.length ? (
@@ -459,9 +541,7 @@ function CompetitionRoom() {
             style={{
               padding: '0.5em',
               transition: 'background-color 5s',
-              backgroundColor: nextActivity
-                ? colorForLate(minutesTillNextActivity)
-                : 'white',
+              backgroundColor: 'white',
             }}>
             <Typography variant="h6">
               Current {pluralize('Activity', ongoingActivities?.length)}
@@ -471,7 +551,7 @@ function CompetitionRoom() {
             ) : (
               <List dense>
                 {ongoingActivities?.map((activity) => {
-                  const wcifActivity = childActivities?.find(
+                  const wcifActivity = allChildActivities?.find(
                     (a) => a.id === activity.activityId
                   );
                   const duration = formatDuration(
@@ -487,7 +567,7 @@ function CompetitionRoom() {
                       key={activity.activityId}>
                       <ListItemText
                         primary={
-                          childActivities?.find(
+                          allChildActivities?.find(
                             (a) => a.id === activity.activityId
                           )?.name
                         }
@@ -547,7 +627,7 @@ function CompetitionRoom() {
             {ongoingActivities?.length && nextActivity ? (
               <Button
                 variant="contained"
-                onClick={advanceToNextActivity}
+                onClick={advanceToNextActivities}
                 disabled={!ongoingActivities?.length || !nextActivity}>
                 Advance to Next Activity
               </Button>
@@ -565,7 +645,8 @@ function CompetitionRoom() {
               variant="contained"
               onClick={stopongoingActivities}
               disabled={!ongoingActivities?.length}>
-              Stop Current {pluralize('activity', childActivities?.length || 0)}
+              Stop Current{' '}
+              {pluralize('activity', allChildActivities?.length || 0)}
             </Button>
           </ButtonGroup>
         </Paper>
@@ -574,4 +655,4 @@ function CompetitionRoom() {
   );
 }
 
-export default CompetitionRoom;
+export default CompetitionAllRooms;
