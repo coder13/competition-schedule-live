@@ -84,7 +84,7 @@ function CompetitionRoom() {
   const [startActivity] = useMutation<Activity>(StartActivityMutation, {
     refetchQueries: [ActivitiesQuery],
     onCompleted: (data) => {
-      console.log('Started Activitiy!', data);
+      console.log('Started Activity!', data);
     },
     onError: (error) => {
       console.log('Error starting activity', error);
@@ -94,7 +94,7 @@ function CompetitionRoom() {
   const [stopActivity] = useMutation<Activity>(StopActivityMutation, {
     refetchQueries: [ActivitiesQuery],
     onCompleted: (data) => {
-      console.log('Stopped Activitiy!', data);
+      console.log('Stopped Activity!', data);
     },
     onError: (error) => {
       console.log('Error stopping activity', error);
@@ -104,7 +104,7 @@ function CompetitionRoom() {
   const [resetActivity] = useMutation<Activity>(ResetActivityMutation, {
     refetchQueries: [ActivitiesQuery],
     onCompleted: (data) => {
-      console.log('Reset Activitiy!', data);
+      console.log('Reset Activity!', data);
     },
     onError: (error) => {
       console.log('Error resetting activity', error);
@@ -117,8 +117,8 @@ function CompetitionRoom() {
   }>(StopStartActivityMutation, {
     refetchQueries: [ActivitiesQuery],
     onCompleted: (data) => {
-      console.log('Stopped Activitiy!', data.stop);
-      console.log('Started Activitiy!', data.start);
+      console.log('Stopped Activity!', data.stop);
+      console.log('Started Activity!', data.start);
     },
     onError: (error) => {
       console.log('Error advancing activities', error);
@@ -320,6 +320,7 @@ function CompetitionRoom() {
         display: 'flex',
         flexDirection: 'column',
         flex: 1,
+        height: '100%',
       }}>
       <Container
         maxWidth="md"

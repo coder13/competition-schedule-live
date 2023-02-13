@@ -44,6 +44,16 @@ export const StartActivityMutation = gql`
   }
 `;
 
+export const StartActivitiesMutation = gql`
+  mutation StartActivities($competitionId: String!, $activityIds: [Int!]!) {
+    startActivities(competitionId: $competitionId, activityIds: $activityIds) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
 export const StopActivityMutation = gql`
   mutation StopActivity($competitionId: String!, $activityId: Int!) {
     stopActivity(competitionId: $competitionId, activityId: $activityId) {
@@ -54,9 +64,29 @@ export const StopActivityMutation = gql`
   }
 `;
 
+export const StopActivitiesMutation = gql`
+  mutation StopActivities($competitionId: String!, $activityIds: [Int!]!) {
+    stopActivities(competitionId: $competitionId, activityIds: $activityIds) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
 export const ResetActivityMutation = gql`
   mutation ResetActivity($competitionId: String!, $activityId: Int!) {
     resetActivity(competitionId: $competitionId, activityId: $activityId) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
+export const ResetActivitiesMutation = gql`
+  mutation ResetActivities($competitionId: String!) {
+    resetActivities(competitionId: $competitionId) {
       activityId
       startTime
       endTime
@@ -81,6 +111,31 @@ export const StopStartActivityMutation = gql`
     start: startActivity(
       competitionId: $competitionId
       activityId: $startActivityId
+    ) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
+export const StopStartActivitiesMutation = gql`
+  mutation StopStartActivities(
+    $competitionId: String!
+    $stopActivityIds: [Int!]!
+    $startActivityIds: [Int!]!
+  ) {
+    stop: stopActivities(
+      competitionId: $competitionId
+      activityIds: $stopActivityIds
+    ) {
+      activityId
+      startTime
+      endTime
+    }
+    start: startActivities(
+      competitionId: $competitionId
+      activityIds: $startActivityIds
     ) {
       activityId
       startTime

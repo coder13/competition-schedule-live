@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/client';
 import { LinearProgress } from '@mui/material';
 import { useQuery as useReactQuery } from '@tanstack/react-query';
-import { Competition } from '@wca/helpers';
+import WCA, { Competition, Room } from '@wca/helpers';
 import { createContext, useContext, useEffect } from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { Activity } from '../../generated/graphql';
@@ -15,9 +15,16 @@ interface IWCIFContext {
   activities?: Activity[];
   ongoingActivities?: Array<Activity & { startTime: string }>;
   activitiesLoading?: boolean;
+  rooms?: Room[];
+  getRoomForActivity: (activity: WCA.Activity) => Room | undefined;
 }
 
-const WCIFContext = createContext<IWCIFContext>({});
+// Cache from activityId to room
+const ActivityForRoomCache = new Map<number, Room>();
+
+const WCIFContext = createContext<IWCIFContext>({
+  getRoomForActivity: () => undefined,
+});
 
 function CompetitionLayout() {
   const navigate = useNavigate();
@@ -84,6 +91,28 @@ function CompetitionLayout() {
     (activity) => activity.startTime && !activity.endTime
   ) as Array<Activity & { startTime: string }>;
 
+  const rooms = wcif?.schedule.venues.flatMap((venue) => venue.rooms);
+
+  const getRoomForActivity = (activity: WCA.Activity) => {
+    if (!ActivityForRoomCache.has(activity.id)) {
+      const room = rooms?.find((room) =>
+        room.activities.some(
+          (a) =>
+            a.id === activity.id ||
+            a?.childActivities?.some((ca) => ca.id === activity.id)
+        )
+      );
+
+      if (room) {
+        ActivityForRoomCache.set(activity.id, room);
+      }
+
+      return room;
+    }
+
+    return ActivityForRoomCache.get(activity.id);
+  };
+
   return (
     <WCIFContext.Provider
       value={{
@@ -92,6 +121,8 @@ function CompetitionLayout() {
         activities: currentActivities?.activities,
         ongoingActivities,
         activitiesLoading,
+        rooms,
+        getRoomForActivity,
       }}>
       {isLoading ? <LinearProgress /> : null}
       <Outlet />
