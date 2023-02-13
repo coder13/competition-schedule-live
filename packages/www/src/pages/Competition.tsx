@@ -69,13 +69,21 @@ function Competition() {
       )}
       <Block className="m-0"></Block>
       <Section className="divide-y-2 -mt-8 space-y-4">
-        <div className="flex items-center">
+        <div className="flex flex-col items-center">
           <p className="text-xl">{wcif?.name}</p>
+          <p className="text-sm ">
+            You will be notified of any competitors you subscribe to as well as
+            any additional activities you subscribe to.
+          </p>
         </div>
         <div>
           <Block className="flex items-center mb-1">
             <div className="flex flex-col">
               <span className="is-size-4">Competitors</span>
+              <span className="text-sm">
+                Subscribe to any competitors and you will be notified of all of
+                their assignments.
+              </span>
             </div>
             <div
               style={{
@@ -103,7 +111,11 @@ function Competition() {
         <div>
           <Block className="flex items-center mb-1">
             <div className="flex flex-col">
-              <span className="is-size-4">Activities</span>
+              <span className="is-size-4">Extra Activities</span>
+              <span className="text-sm">
+                Subscribe to any other activities outside of your competitors'
+                assignments.
+              </span>
             </div>
             <div
               style={{

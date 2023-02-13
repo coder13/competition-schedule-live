@@ -259,12 +259,6 @@ function SelectCompetitorsDialog({
       const roundActivitiesForActivityCode =
         getActivitiesForActivityCode(activityCode);
 
-      // const childActivityCodes = [
-      //   ...new Set(
-      //     childActivities?.map((ca) => ca?.activityCode).filter(Boolean) || []
-      //   ),
-      // ] as string[];
-
       const childActivityCodes = roundActivitiesForActivityCode?.flatMap(
         (a) => {
           return a.childActivities?.length
@@ -373,11 +367,11 @@ function SelectCompetitorsDialog({
           </List>
         </Modal.Card.Body>
         <Modal.Card.Footer className="flex flex-col items-start">
-          <span>Signed up for {countNotifications} notifications</span>
           <span>
             Select rounds, groups, or other activities to receive notifications
             for when they are starting
           </span>
+          <span>Signed up for {countNotifications} activity notifications</span>
         </Modal.Card.Footer>
       </Modal.Card>
     </Modal>
