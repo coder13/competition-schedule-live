@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { parseActivityCode } from '@wca/helpers';
 import { useMemo } from 'react';
 import { Block, Modal } from 'react-bulma-components';
 import { useParams } from 'react-router-dom';
@@ -231,6 +232,51 @@ function SelectCompetitorsDialog({
     toggleSubscriptions.mutate([{ type: 'activity', value: activityCode }]);
   };
 
+  const countNotifications = useMemo(() => {
+    if (!selectedActivityCodes) {
+      return 0;
+    }
+
+    if (selectedActivityCodes.includes('*')) {
+      const childActivityCodes = roomActivityCodes.flatMap((activityCode) => {
+        const roundActivitiesForActivityCode =
+          getActivitiesForActivityCode(activityCode);
+
+        return roundActivitiesForActivityCode?.flatMap((a) => {
+          if (a.activityCode === 'other-misc') {
+            return a.activityCode + a.name;
+          }
+
+          return a.childActivities?.length
+            ? a.childActivities.map((ca) => ca.activityCode)
+            : a.activityCode;
+        });
+      });
+      return [...new Set(childActivityCodes)].length;
+    }
+
+    return selectedActivityCodes.reduce((acc, activityCode) => {
+      const roundActivitiesForActivityCode =
+        getActivitiesForActivityCode(activityCode);
+
+      // const childActivityCodes = [
+      //   ...new Set(
+      //     childActivities?.map((ca) => ca?.activityCode).filter(Boolean) || []
+      //   ),
+      // ] as string[];
+
+      const childActivityCodes = roundActivitiesForActivityCode?.flatMap(
+        (a) => {
+          return a.childActivities?.length
+            ? a.childActivities.map((ca) => ca.activityCode)
+            : a.activityCode;
+        }
+      );
+
+      return acc + [...new Set(childActivityCodes)].length || 1;
+    }, 0);
+  }, [selectedActivityCodes, getActivitiesForActivityCode]);
+
   return (
     <Modal show={open} onClose={onClose} showClose={false}>
       <Modal.Card>
@@ -295,16 +341,13 @@ function SelectCompetitorsDialog({
                     childActivityCodes?.length ? (
                       <Block>
                         {childActivityCodes.map((childActivityCode) => {
-                          const groupActivities =
-                            getActivitiesForActivityCode(childActivityCode);
+                          const { groupNumber } =
+                            parseActivityCode(childActivityCode);
 
                           return (
                             <ListItem
                               key={childActivityCode}
-                              primaryText={
-                                groupActivities?.[0]?.name?.split(', ').pop() ||
-                                ''
-                              }
+                              primaryText={`Group ${groupNumber}`}
                               icon={
                                 selectedActivityCodes?.some((a) =>
                                   matchesActivityCode(a)(childActivityCode)
@@ -329,9 +372,12 @@ function SelectCompetitorsDialog({
             })}
           </List>
         </Modal.Card.Body>
-        <Modal.Card.Footer>
-          Select rouds, groups, or other activities to receive notifications for
-          when they are starting
+        <Modal.Card.Footer className="flex flex-col items-start">
+          <span>Signed up for {countNotifications} notifications</span>
+          <span>
+            Select rounds, groups, or other activities to receive notifications
+            for when they are starting
+          </span>
         </Modal.Card.Footer>
       </Modal.Card>
     </Modal>
