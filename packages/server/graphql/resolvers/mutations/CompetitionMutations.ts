@@ -19,7 +19,7 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
     // Have to calculate end Date
     const endDate = new Date(
       new Date(competition.schedule.startDate).getTime() +
-        1000 * 60 * 60 * 24 * competition.schedule.numberOfDays
+        1000 * 60 * 60 * 24 * (competition.schedule.numberOfDays - 1)
     )
       .toISOString()
       .split('T')[0];
