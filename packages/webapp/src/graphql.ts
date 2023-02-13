@@ -133,7 +133,7 @@ export const StopStartActivitiesMutation = gql`
       startTime
       endTime
     }
-    start: startActivity(
+    start: startActivities(
       competitionId: $competitionId
       activityIds: $startActivityIds
     ) {
