@@ -16,7 +16,7 @@ function CompetitionCard({
   activities,
   startDate,
 }: CompetitionCardProps) {
-  const { allActivities, isLoading } = useWCIF(id);
+  const { allActivities, isLoading, rooms } = useWCIF(id);
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
@@ -84,10 +84,23 @@ function CompetitionCard({
                       .filter(Boolean)
                       .join(':');
 
+              const room = rooms?.find((r) =>
+                r.activities.some(
+                  (a) =>
+                    a.id === activity.activityId ||
+                    a?.childActivities?.some(
+                      (ca) => ca.id === activity.activityId
+                    )
+                )
+              );
+
               return (
                 <div key={activity.activityId} className="list-item">
-                  <div className="flex justify-between items-center">
-                    <span>{activityData.name} </span>
+                  <div className="flex justify-around items-center space-x-2">
+                    <span className="">
+                      {rooms?.length && rooms?.length > 0 && `${room?.name}`}
+                    </span>
+                    <span className="">{activityData.name}</span>
                   </div>
                   <Progress
                     size="small"
