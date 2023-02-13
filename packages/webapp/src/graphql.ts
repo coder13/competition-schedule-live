@@ -46,7 +46,7 @@ export const StartActivityMutation = gql`
 
 export const StartActivitiesMutation = gql`
   mutation StartActivities($competitionId: String!, $activityIds: [Int!]!) {
-    startActivity(competitionId: $competitionId, activityIds: $activityIds) {
+    startActivities(competitionId: $competitionId, activityIds: $activityIds) {
       activityId
       startTime
       endTime
@@ -66,7 +66,7 @@ export const StopActivityMutation = gql`
 
 export const StopActivitiesMutation = gql`
   mutation StopActivities($competitionId: String!, $activityIds: [Int!]!) {
-    stopActivity(competitionId: $competitionId, activityIds: $activityIds) {
+    stopActivities(competitionId: $competitionId, activityIds: $activityIds) {
       activityId
       startTime
       endTime
@@ -77,6 +77,16 @@ export const StopActivitiesMutation = gql`
 export const ResetActivityMutation = gql`
   mutation ResetActivity($competitionId: String!, $activityId: Int!) {
     resetActivity(competitionId: $competitionId, activityId: $activityId) {
+      activityId
+      startTime
+      endTime
+    }
+  }
+`;
+
+export const ResetActivitiesMutation = gql`
+  mutation ResetActivities($competitionId: String!) {
+    resetActivities(competitionId: $competitionId) {
       activityId
       startTime
       endTime
