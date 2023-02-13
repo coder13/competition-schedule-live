@@ -299,7 +299,7 @@ function CompetitionAllRooms() {
         content: (
           <p>
             This will start activity: <b>{name}</b> in rooms:{' '}
-            {roomsForActivities.map((r) => r.name).join(', ')}
+            {roomsForActivities.map((r) => r?.name).join(', ')}
           </p>
         ),
         confirmationText: 'Start',
