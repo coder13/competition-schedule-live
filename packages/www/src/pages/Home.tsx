@@ -112,9 +112,14 @@ function Home() {
             </Link>
           </Block>
           <Block className="flex flex-col space-y-4">
-            {competitionsData?.competitions.map((comp) => (
-              <CompetitionCard key={comp.id} {...comp} />
-            ))}
+            {competitionsData?.competitions
+              .filter(
+                (comp) =>
+                  !(comp.endDate < new Date().toISOString().split('T')[0])
+              )
+              .map((comp) => (
+                <CompetitionCard key={comp.id} {...comp} />
+              ))}
             {!isCompetitionsLoading && competitionIds.length === 0 && (
               <div className="flex justify-center">
                 <Button
