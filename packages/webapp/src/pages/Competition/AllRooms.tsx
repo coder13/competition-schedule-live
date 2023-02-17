@@ -17,11 +17,12 @@ import {
 import pluralize from 'pluralize';
 import formatDuration from 'date-fns/formatDuration';
 import intervalToDuration from 'date-fns/intervalToDuration';
-import wCA from '@wca/helpers';
+import WCA from '@wca/helpers';
 import { Activity } from '../../generated/graphql';
 import {
   ActivitiesQuery,
   ResetActivitiesMutation,
+  ResetActivityMutation,
   StartActivitiesMutation,
   StopActivitiesMutation,
   StopStartActivitiesMutation,
@@ -56,7 +57,7 @@ const filterBetterActivityCode =
 
 interface ActivityCodeDataObject {
   activityCode: string;
-  scheduledActivities: wCA.Activity[];
+  scheduledActivities: WCA.Activity[];
   liveActivities: Activity[];
   name: string;
   startTime: string;
@@ -105,7 +106,7 @@ function CompetitionAllRooms() {
     },
   });
 
-  const [resetActivities] = useMutation<Activity>(ResetActivitiesMutation, {
+  const [resetActivity] = useMutation<Activity>(ResetActivityMutation, {
     refetchQueries: [ActivitiesQuery],
     onCompleted: (data) => {
       console.log('Reset Activity!', data);
@@ -257,23 +258,6 @@ function CompetitionAllRooms() {
       return liveActivity?.startTime || !liveActivity?.endTime;
     });
 
-    // await confirm({
-    //   content: (
-    //     <>
-    //       <p>
-    //         This will start activities <b>{startingActivities?.[0]?.name}</b> in
-    //         rooms{' '}
-    //         <b>{roomsForStartingActivities?.map((r) => r.name).join(', ')}</b>
-    //       </p>
-    //       <p>
-    //         This will stop activities <b>{stopping?.[0]?.name}</b> in rooms{' '}
-    //         <b>{roomsForStartingActivities?.map((r) => r.name).join(', ')}</b>
-    //       </p>
-    //     </>
-    //   ),
-    //   confirmationText: 'Start',
-    // });
-
     const isCurrent = scheduledActivities.every(
       (a) => liveActivities.find((la) => la.activityId === a.id)?.startTime
     );
@@ -383,69 +367,82 @@ function CompetitionAllRooms() {
     });
   }, [wcif, nextActivity, ongoingActivities]);
 
-  const stopongoingActivities = useCallback(async () => {}, []);
-  // const stopongoingActivities = useCallback(async () => {
-  //   await confirm({
-  //     content: (
-  //       <p>
-  //         This would stop activities:
-  //         <List dense>
-  //           {ongoingActivities
-  //             ?.map((a) =>
-  //               allChildActivities?.find((ca) => ca.id === a.activityId)
-  //             )
-  //             .map((ca) => (
-  //               <ListItem>
-  //                 <ListItemText primary={ca?.name} />
-  //               </ListItem>
-  //             ))}
-  //         </List>
-  //       </p>
-  //     ),
-  //     confirmationText: 'Stop',
-  //   });
+  const stopongoingActivities = useCallback(async () => {
+    if (!ongoingActivities) {
+      return;
+    }
 
-  //   ongoingActivities?.forEach((activity) => {
-  //     stopActivity({
-  //       variables: {
-  //         competitionId: wcif?.id,
-  //         activityId: activity.activityId,
-  //       },
-  //     });
-  //   });
-  // }, [ongoingActivities, stopActivity, wcif?.id]);
+    await confirm({
+      content: (
+        <p>
+          This would stop activities:
+          <List dense>
+            {ongoingActivities?.map((activity) => {
+              const activityData = allChildActivities?.find(
+                (ca) => ca.id === activity.activityId
+              );
+
+              if (!activityData) {
+                return null;
+              }
+              const room = getRoomForActivity(activityData);
+
+              return (
+                <ListItem>
+                  <ListItemText
+                    primary={activityData?.name}
+                    secondary={room?.name ?? '???'}
+                  />
+                </ListItem>
+              );
+            })}
+          </List>
+        </p>
+      ),
+      confirmationText: 'Stop',
+    });
+
+    stopActivities({
+      variables: {
+        competitionId: wcif?.id,
+        activityIds: ongoingActivities.map((a) => a.activityId),
+      },
+    });
+  }, [ongoingActivities, stopActivities, wcif?.id]);
 
   const handleResetActivities = useCallback(
-    (activityCodeDataObj: ActivityCodeDataObject) => {},
-    []
+    async ({ name, scheduledActivities }: ActivityCodeDataObject) => {
+      const roomsForActivities = scheduledActivities.map((a) =>
+        getRoomForActivity(a)
+      );
+
+      await confirm({
+        content: (
+          <>
+            <p>
+              This will reset activity: <b>{name}</b> in rooms:{' '}
+              {roomsForActivities.map((r) => r?.name).join(', ')}
+            </p>
+            <p>
+              The start and stop times will reset as if the activity never
+              happened.
+            </p>
+          </>
+        ),
+        confirmationText: 'Reset',
+      });
+
+      scheduledActivities.forEach((a) => {
+        resetActivity({
+          variables: {
+            competitionId: wcif?.id,
+            activityId: a.id,
+          },
+        });
+      });
+    },
+    [wcif, allChildActivities]
   );
-  //   async (activityId: number) => {
-  //     const activityData = allChildActivities?.find((a) => a.id === activityId);
-
-  //     await confirm({
-  //       content: (
-  //         <>
-  //           <p>
-  //             This will reset activity: <b>{activityData?.name}</b>
-  //           </p>
-  //           <p>
-  //             The start and stop times will reset as if the activity never
-  //             happened.
-  //           </p>
-  //         </>
-  //       ),
-  //       confirmationText: 'Reset',
-  //     });
-
-  //     resetActivity({
-  //       variables: {
-  //         competitionId: wcif?.id,
-  //         activityId: activityId,
-  //       },
-  //     });
-  //   },
-  //   [wcif, allChildActivities]
-  // );
 
   const minutesTillNextActivity: number = useMemo(() => {
     if (!nextActivity) {
@@ -515,64 +512,7 @@ function CompetitionAllRooms() {
             <>
               <ListSubheader disableSticky>Done</ListSubheader>
               {doneActivities.map((activityCodeDataObj) => {
-                const {
-                  activityCode,
-                  liveActivities,
-                  scheduledActivities,
-                  name,
-                } = activityCodeDataObj;
-                let secondaryText: JSX.Element | string = '';
-
-                // const firstStartTime = liveActivities[0].startTime;
-                // if (liveActivities.slice(1).every((a) => a === firstStartTime)) {
-                //   if (!liveActivities) {
-                //     secondaryText = new Date(
-                //       activity.startTime
-                //     ).toLocaleString();
-                //   } else if (
-                //     !!liveActivity?.startTime &&
-                //     !liveActivity.endTime
-                //   ) {
-                //     secondaryText = `Started ${formatDuration(
-                //       intervalToDuration({
-                //         start: new Date(liveActivity.startTime),
-                //         end: time,
-                //       })
-                //     )} ago`;
-                //   } else if (
-                //     !!liveActivity?.startTime &&
-                //     !!liveActivity?.endTime
-                //   ) {
-                //     const minutesLate = Math.round(
-                //       (new Date(activity.endTime).getTime() -
-                //         new Date(liveActivity.startTime).getTime()) /
-                //         1000 /
-                //         60
-                //     );
-                //     const activityDuration = Math.round(
-                //       (new Date(liveActivity.endTime).getTime() -
-                //         new Date(liveActivity.startTime).getTime()) /
-                //         1000
-                //     );
-                //     secondaryText = (
-                //       <>
-                //         Ended{' '}
-                //         {formatDuration({ minutes: Math.abs(minutesLate) })}{' '}
-                //         {minutesLate < 0 ? 'late' : 'early'}
-                //         <br />
-                //         Ran for{' '}
-                //         {formatDuration({
-                //           ...(activityDuration < 60
-                //             ? {
-                //                 seconds: activityDuration,
-                //               }
-                //             : {
-                //                 minutes: Math.round(activityDuration / 60),
-                //               }),
-                //         })}
-                //       </>
-                //     );
-                //   }
+                const { activityCode, name } = activityCodeDataObj;
 
                 return (
                   <ListItemButton

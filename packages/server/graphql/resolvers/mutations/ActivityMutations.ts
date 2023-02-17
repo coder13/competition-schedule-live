@@ -203,12 +203,17 @@ export const stopActivities: MutationResolvers<AppContext>['stopActivities'] =
   };
 
 export const resetActivities: MutationResolvers<AppContext>['resetActivities'] =
-  async (_, { competitionId }, { db, user, pubsub }) => {
+  async (_, { competitionId, activityIds }, { db, user, pubsub }) => {
     void isAuthorized(db, competitionId, user);
 
     await db.activityHistory.updateMany({
       where: {
         competitionId,
+        ...(activityIds && {
+          activityId: {
+            in: activityIds,
+          },
+        }),
       },
       data: {
         startTime: null,
@@ -219,6 +224,11 @@ export const resetActivities: MutationResolvers<AppContext>['resetActivities'] =
     const findActivities = await db.activityHistory.findMany({
       where: {
         competitionId,
+        ...(activityIds && {
+          activityId: {
+            in: activityIds,
+          },
+        }),
       },
     });
 
