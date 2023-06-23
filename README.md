@@ -23,29 +23,23 @@ Now, a "webhook" application could manage this problem on it's own. We can send 
 Alternatively: The main server can cache this information and have a standarized method to communicate the competitionId, list of people and their assignments to the webhook server and the webhook server wouldn't need to lookup much more. The webhook server can also be a consumer of the graphql api to ask for a specific subset of information of the competition when needed thus avoiding consuming too much of the WCA website's resources.
 I leave this problem still unsolved.
 
-### `packages/webpp`
+### `packages/webapp`
 
-This is the main remote control app that competition organizers use to advance groups.
-
-### `packages/projedctor`
-
-Very simple example website that consumes the graphql subscription for groups as they advance
+This is the main app that competition owners will interact with. This is a material-UI app that talks directly to the main server (packages/server)
 
 ### `packages/notifapi`
 
-This is an API that consumes webhooks coming from `server` and sends texts to users who sign up
+This is the service that handles text notifications to individual people. Users sign up via a frontend and it saves the data here.
+
+This service is pinged from the core server to send the notifications.
 
 ### `packages/www`
 
-Frontend website for the above backend
+This is the main frontend that users interact with to sign up for notifications. This site is very simple and just helps with competition discovery, authenticating user's phone numbers, and gives users a way to sign up for competitors as well as additional activities.
 
 ### `packages/admin`
 
-This is an admin specific website for the maintainer of this codebase, me, to manage the databases that server and notifapi talk to.
-
-### `packages/frontend-common`
-
-Code that is accessed through multi packages
+This is the UI I interact with to setup competitions.
 
 ## Glossary
 
