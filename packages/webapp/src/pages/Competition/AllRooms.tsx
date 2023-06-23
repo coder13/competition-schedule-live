@@ -457,6 +457,8 @@ function CompetitionAllRooms() {
     );
   }, [nextActivity, time]);
 
+  console.log(minutesTillNextActivity);
+
   return (
     <div
       style={{
@@ -604,22 +606,38 @@ function CompetitionAllRooms() {
               <Typography>
                 Next Activity: <b>{nextActivity.name}</b> scheduled to start{' '}
                 <b>
-                  {minutesTillNextActivity === 0
-                    ? 'now'
-                    : `in ${formatDuration(
-                        {
-                          ...(minutesTillNextActivity > 60 && {
-                            hours: Math.floor(minutesTillNextActivity / 60),
-                          }),
-                          minutes: Math.floor(minutesTillNextActivity % 60),
-                          ...(minutesTillNextActivity < 1 && {
-                            seconds: Math.floor(minutesTillNextActivity * 60),
-                          }),
-                        },
-                        {
-                          format: ['days', 'hours', 'minutes', 'seconds'],
-                        }
-                      )}`}
+                  {minutesTillNextActivity === 0 && 'now'}
+                  {minutesTillNextActivity > 0 &&
+                    `in ${formatDuration(
+                      {
+                        ...(minutesTillNextActivity > 60 && {
+                          hours: Math.floor(minutesTillNextActivity / 60),
+                        }),
+                        minutes: Math.floor(minutesTillNextActivity % 60),
+                        ...(minutesTillNextActivity < 1 && {
+                          seconds: Math.floor(minutesTillNextActivity * 60),
+                        }),
+                      },
+                      {
+                        format: ['days', 'hours', 'minutes', 'seconds'],
+                      }
+                    )}`}
+                  {minutesTillNextActivity < 0 &&
+                    `${formatDuration(
+                      {
+                        ...(Math.abs(minutesTillNextActivity) > 60 && {
+                          hours: Math.floor(
+                            Math.abs(minutesTillNextActivity) / 60
+                          ),
+                        }),
+                        minutes: Math.floor(
+                          Math.abs(minutesTillNextActivity) % 60
+                        ),
+                      },
+                      {
+                        format: ['days', 'hours', 'minutes', 'seconds'],
+                      }
+                    )} ago`}
                 </b>
               </Typography>
             ) : (
