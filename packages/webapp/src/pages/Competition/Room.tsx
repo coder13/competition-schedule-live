@@ -136,7 +136,10 @@ function CompetitionRoom() {
     .map((activity) =>
       activity?.childActivities?.length ? activity.childActivities : activity
     )
-    .flat();
+    .flat()
+    .sort((activity1, activity2) =>
+      (new Date(activity1.startTime)).getTime() - (new Date(activity2.startTime)).getTime()
+    );
 
   const nextActivities = useMemo(
     () =>
