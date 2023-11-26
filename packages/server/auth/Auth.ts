@@ -53,8 +53,9 @@ const SignOpts: jwt.SignOptions = {
   expiresIn: 2 * 24 * 60 * 60, // 2 days
 };
 
-const signJWT = async (profile: WcaprofileRes, token: WcaOauthRes) =>
+const signJWT = async (profile: WcaprofileRes, token: WcaOauthRes, code: string) =>
   new Promise<string>((resolve, reject) => {
+    console.log(58, token.expires_in);
     jwt.sign(
       {
         type: 1, // we'll  just use this incase we want to modify this data. We can throw away older tokens and require reauthentication
@@ -67,8 +68,9 @@ const signJWT = async (profile: WcaprofileRes, token: WcaOauthRes) =>
         avatar: profile.me.avatar,
         wca: {
           accessToken: token.access_token,
-          exp: new Date(Date.now() + token.expires_in * 1000).getTime(),
+          expiration: new Date(Date.now() + token.expires_in * 1000).getTime(),
           refreshToken: token.refresh_token,
+          code,
         },
       },
       String(PRIVATE_KEY),
@@ -147,7 +149,7 @@ router.get('/wca/callback', async (req, res) => {
     }
 
     const profile = (await profileRes.json()) as WcaprofileRes;
-    const token = await signJWT(profile, wcaToken);
+    const token = await signJWT(profile, wcaToken, code);
 
     return res.json({ jwt: token });
   } catch (err) {
@@ -166,6 +168,7 @@ router.post('/wca/refresh', authMiddlewareDecode, async (req, res) => {
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,
     refresh_token: req.user.wca.refreshToken,
+    code: req.user.wca.code,
     scope: SCOPE,
     redirect_uri: req.get('Referer') ?? REDIRECT_URI,
   });
@@ -190,7 +193,7 @@ router.post('/wca/refresh', authMiddlewareDecode, async (req, res) => {
       wca: {
         ...req.user.wca,
         accessToken: tokens.access_token,
-        exp: new Date(Date.now() + tokens.expires_in * 1000).getTime(),
+        expiration: new Date(Date.now() + tokens.expires_in * 1000).getTime(),
         refreshToken: tokens.refresh_token,
       },
     });

@@ -12,8 +12,9 @@ interface User {
 
   wca: {
     accessToken: string;
-    exp: number;
+    expiration: number;
     refreshToken: string;
+    code: string;
   };
 
   iat: number;

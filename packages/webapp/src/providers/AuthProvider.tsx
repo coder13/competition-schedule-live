@@ -53,8 +53,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     [location.search]
   );
 
-  console.log(54, user?.wca);
-
   const login = useCallback(() => {
     const redirectUri = window.location.href;
     localStorage.setItem('redirectUri', redirectUri);
@@ -108,7 +106,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       url: RequestInfo,
       { headers = {}, ...options } = {} as RequestInit
     ) => {
-      console.log(106, user);
       const res = await fetch(`${WCA_URL}${url}`, {
         ...(user?.wca.accessToken && {
           headers: {
@@ -140,7 +137,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    console.log('refreshing', user?.wca.exp - 1000 * 10);
+    console.log('refreshing', user?.wca.expiration - 1000 * 10);
     setAuthenticating(true);
 
     const res = await myApiFetch('/auth/wca/refresh', {
@@ -153,7 +150,10 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       throw await res.text();
     }
 
-    setJWT((await res.json()).jwt);
+    const data = await res.json();
+
+    setJWT(data.jwt);
+    localStorage.setItem('jwt', data.jwt);
     setAuthenticating(false);
   }, [myApiFetch]);
 
@@ -162,13 +162,13 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    if (user?.wca.exp < Date.now()) {
-      console.log(62, 'wca access token expired');
+    if (user?.wca.expiration < Date.now()) {
       refreshToken();
       return;
     }
 
-    const expiresIn = user?.wca.exp - Date.now() - 1000 * 10;
+    // Refresh 10 seconds before expiration
+    const expiresIn = user?.wca.expiration - Date.now() - 1000 * 10;
     console.log(
       'refreshing in',
       formatDuration({
@@ -209,7 +209,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
           return res.json();
         })
         .then((data) => {
-          console.log('Data', data);
           setJWT(data.jwt);
           localStorage.setItem('jwt', data.jwt);
           setAuthenticating(false);
