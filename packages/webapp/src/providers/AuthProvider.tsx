@@ -108,6 +108,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       url: RequestInfo,
       { headers = {}, ...options } = {} as RequestInit
     ) => {
+      console.log(106, user);
       const res = await fetch(`${WCA_URL}${url}`, {
         ...(user?.wca.accessToken && {
           headers: {
