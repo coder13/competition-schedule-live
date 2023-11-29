@@ -1,5 +1,5 @@
 import { Container } from '@mui/material';
-import CompetitionList from './CompetitionList';
+import { CompetitionList } from '../containers/CompetitionList';
 
 function Home() {
   return (

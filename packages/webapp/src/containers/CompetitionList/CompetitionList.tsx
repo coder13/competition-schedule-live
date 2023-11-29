@@ -10,12 +10,12 @@ import {
   ListSubheader,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import { User } from '../generated/graphql';
-import ImportCompetitionDialog from '../components/ImportCompetitionDialog';
-import { GetCompetitionsQuery } from '../graphql';
-import { Link } from '../components/Link';
+import { User } from '../../generated/graphql';
+import ImportCompetitionDialog from '../../components/ImportCompetitionDialog';
+import { GetCompetitionsQuery } from '../../graphql';
+import { Link } from '../../components/Link';
 
-function CompetitionList() {
+export function CompetitionList() {
   const { data, loading } = useQuery<{ currentUser: User }>(
     GetCompetitionsQuery,
     {
@@ -29,10 +29,19 @@ function CompetitionList() {
   const competitions = useMemo(
     () =>
       data?.currentUser?.competitions
-        ? [...data.currentUser.competitions].sort(
-            (a, b) =>
-              new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-          )
+        ? [...data.currentUser.competitions]
+            .filter(
+              (comp) =>
+                comp.startDate >
+                new Date(
+                  Date.now() - 1000 * 60 * 60 * 24 * 7 * 2
+                ).toLocaleString()
+            )
+            .sort(
+              (a, b) =>
+                new Date(b.startDate).getTime() -
+                new Date(a.startDate).getTime()
+            )
         : [],
     [data]
   );
@@ -80,5 +89,3 @@ function CompetitionList() {
     </>
   );
 }
-
-export default CompetitionList;
