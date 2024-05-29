@@ -1,70 +1,31 @@
-import React, { useCallback, useMemo, useEffect, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useMutation } from '@apollo/client';
 import {
+  Box,
   Button,
-  ButtonGroup,
   Container,
   Divider,
   LinearProgress,
   List,
-  ListItem,
   ListItemButton,
   ListItemText,
   ListSubheader,
-  Paper,
   Typography,
 } from '@mui/material';
-import pluralize from 'pluralize';
-import formatDuration from 'date-fns/formatDuration';
-import intervalToDuration from 'date-fns/intervalToDuration';
-import WCA from '@wca/helpers';
 import { Activity } from '../../generated/graphql';
 import {
   ActivitiesQuery,
-  ResetActivitiesMutation,
   ResetActivityMutation,
   StartActivitiesMutation,
   StopActivitiesMutation,
-  StopStartActivitiesMutation,
 } from '../../graphql';
 import { useCompetition } from './Layout';
 import { useConfirm } from 'material-ui-confirm';
-
-const mapToBetterActivityCode = ({
-  name,
-  activityCode,
-}: {
-  name: string;
-  activityCode: string;
-}) => {
-  if (activityCode === 'other-misc') {
-    return `other-misc-${name.toLowerCase().replace(' ', '-')}`;
-  }
-  return activityCode;
-};
-
-const filterBetterActivityCode =
-  (activityCode: string) => (a: { activityCode: string; name: string }) => {
-    if (activityCode.startsWith('other-misc-')) {
-      return (
-        a.activityCode === 'other-misc' &&
-        a.name.toLowerCase().replace(' ', '-') ===
-          activityCode.replace('other-misc-', '')
-      );
-    }
-    return a.activityCode === activityCode;
-  };
-
-interface ActivityCodeDataObject {
-  activityCode: string;
-  scheduledActivities: WCA.Activity[];
-  liveActivities: Activity[];
-  name: string;
-  startTime: string;
-}
-
-const durationToMinutes = (start: Date, end: Date): number =>
-  Math.round((end.getTime() - start.getTime()) / 1000 / 60);
+import {
+  filterBetterActivityCode,
+  mapToBetterActivityCode,
+} from '../../lib/activities';
+import { ActivityCodeDataObject } from '../../types';
 
 function CompetitionAllRooms() {
   const confirm = useConfirm();
@@ -72,19 +33,10 @@ function CompetitionAllRooms() {
     wcif,
     loading: loadingWcif,
     activities,
-    ongoingActivities,
     activitiesLoading,
     rooms,
     getRoomForActivity,
   } = useCompetition();
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const [startActivities] = useMutation<Activity>(StartActivitiesMutation, {
     refetchQueries: [ActivitiesQuery],
@@ -113,20 +65,6 @@ function CompetitionAllRooms() {
     },
     onError: (error) => {
       console.log('Error resetting activity', error);
-    },
-  });
-
-  const [stopAndStartActivities] = useMutation<{
-    stop: Activity[];
-    start: Activity[];
-  }>(StopStartActivitiesMutation, {
-    refetchQueries: [ActivitiesQuery],
-    onCompleted: (data) => {
-      console.log('Stopped Activity!', data.stop);
-      console.log('Started Activity!', data.start);
-    },
-    onError: (error) => {
-      console.log('Error advancing activities', error);
     },
   });
 
@@ -210,32 +148,6 @@ function CompetitionAllRooms() {
     [nextActivities, allChildActivities]
   );
 
-  const nextActivity = useMemo(() => {
-    return nextActivities?.[0];
-  }, [nextActivities]);
-
-  const ongoingActivitiesByCode = useMemo(() => {
-    if (!ongoingActivities) {
-      return {};
-    }
-
-    return ongoingActivities.reduce<
-      Record<string, (Activity & { startTime: string })[]>
-    >((acc, activity) => {
-      const a = allChildActivities?.find((ca) => ca.id === activity.activityId);
-      if (!a) {
-        return acc;
-      }
-
-      const betterCode = mapToBetterActivityCode(a);
-
-      return {
-        ...acc,
-        [betterCode]: [...(acc[betterCode] || []), activity],
-      };
-    }, {});
-  }, [ongoingActivities, allChildActivities]);
-
   const startOrStopActivities = async ({
     activityCode,
     scheduledActivities,
@@ -244,19 +156,11 @@ function CompetitionAllRooms() {
   }: ActivityCodeDataObject) => {
     console.log('startStopActivity', activityCode);
     // filter out activities that have already started or stopped
-    const startingActivities = scheduledActivities?.filter((a) => {
-      const liveActivity = liveActivities?.find((la) => la.activityId === a.id);
-      return !liveActivity?.startTime || !liveActivity?.endTime;
-    });
-
     const roomsForActivities = scheduledActivities.map((a) =>
       getRoomForActivity(a)
     );
 
-    const stopping = scheduledActivities?.filter((a) => {
-      const liveActivity = liveActivities?.find((la) => la.activityId === a.id);
-      return liveActivity?.startTime || !liveActivity?.endTime;
-    });
+    // const stopping = scheduledActivities?.filter((a) => {
 
     const isCurrent = scheduledActivities.every(
       (a) => liveActivities.find((la) => la.activityId === a.id)?.startTime
@@ -298,118 +202,6 @@ function CompetitionAllRooms() {
     }
   };
 
-  const advanceToNextActivities = useCallback(async () => {
-    // figure out what activities are currently going on
-    if (!Object.keys(ongoingActivitiesByCode) || !nextActivity) {
-      return;
-    }
-
-    const starting = nextActivity.scheduledActivities?.filter((a) => {
-      const liveActivity = activities?.find((la) => la.activityId === a.id);
-      return !liveActivity?.startTime || !liveActivity?.endTime;
-    });
-
-    await confirm({
-      content: (
-        <p>
-          This would stop activities:
-          <List dense>
-            {ongoingActivities?.map((activity) => {
-              const activityData = allChildActivities?.find(
-                (ca) => ca.id === activity.activityId
-              );
-
-              if (!activityData) {
-                return null;
-              }
-              const room = getRoomForActivity(activityData);
-
-              return (
-                <ListItem>
-                  <ListItemText
-                    primary={activityData?.name}
-                    secondary={room?.name ?? '???'}
-                  />
-                </ListItem>
-              );
-            })}
-          </List>
-          <br /> and start activities: <br />
-          <List dense>
-            {starting?.map((activityData) => {
-              if (!activityData) {
-                return null;
-              }
-
-              const room = getRoomForActivity(activityData);
-
-              return (
-                <ListItem>
-                  <ListItemText
-                    primary={activityData.name}
-                    secondary={room?.name ?? '???'}
-                  />
-                </ListItem>
-              );
-            })}
-          </List>
-        </p>
-      ),
-      confirmationText: 'Advance',
-    });
-
-    stopAndStartActivities({
-      variables: {
-        competitionId: wcif?.id,
-        stopActivityIds: ongoingActivities?.map((a) => a.activityId),
-        startActivityIds: starting.map((a) => a.id),
-      },
-    });
-  }, [wcif, nextActivity, ongoingActivities]);
-
-  const stopongoingActivities = useCallback(async () => {
-    if (!ongoingActivities) {
-      return;
-    }
-
-    await confirm({
-      content: (
-        <p>
-          This would stop activities:
-          <List dense>
-            {ongoingActivities?.map((activity) => {
-              const activityData = allChildActivities?.find(
-                (ca) => ca.id === activity.activityId
-              );
-
-              if (!activityData) {
-                return null;
-              }
-              const room = getRoomForActivity(activityData);
-
-              return (
-                <ListItem>
-                  <ListItemText
-                    primary={activityData?.name}
-                    secondary={room?.name ?? '???'}
-                  />
-                </ListItem>
-              );
-            })}
-          </List>
-        </p>
-      ),
-      confirmationText: 'Stop',
-    });
-
-    stopActivities({
-      variables: {
-        competitionId: wcif?.id,
-        activityIds: ongoingActivities.map((a) => a.activityId),
-      },
-    });
-  }, [ongoingActivities, stopActivities, wcif?.id]);
-
   const handleResetActivities = useCallback(
     async ({ name, scheduledActivities }: ActivityCodeDataObject) => {
       const roomsForActivities = scheduledActivities.map((a) =>
@@ -444,21 +236,6 @@ function CompetitionAllRooms() {
     [wcif, allChildActivities]
   );
 
-  const minutesTillNextActivity: number = useMemo(() => {
-    if (!nextActivity) {
-      return 0;
-    }
-
-    return Math.round(
-      (new Date(nextActivity.scheduledActivities[0].startTime).getTime() -
-        time.getTime()) /
-        1000 /
-        60
-    );
-  }, [nextActivity, time]);
-
-  console.log(minutesTillNextActivity);
-
   return (
     <div
       style={{
@@ -475,9 +252,12 @@ function CompetitionAllRooms() {
           padding: 0,
         }}>
         {loadingWcif || activitiesLoading ? <LinearProgress /> : null}
-        <Typography variant="h4" sx={{ p: 1 }}>
-          All Rooms
-        </Typography>
+        <Box p={1}>
+          <Typography variant="h4" sx={{ p: 1 }}>
+            All Rooms
+          </Typography>
+          <Button variant="contained">Configure Auto-advance</Button>
+        </Box>
         <Divider />
         <List dense>
           {nextActivities?.length ? (
@@ -527,151 +307,6 @@ function CompetitionAllRooms() {
             </>
           ) : null}
         </List>
-        <Paper
-          elevation={7}
-          style={{
-            position: 'sticky',
-            width: '100%',
-            left: 0,
-            bottom: 0,
-          }}>
-          <div
-            style={{
-              padding: '0.5em',
-              transition: 'background-color 5s',
-              backgroundColor: 'white',
-            }}>
-            <Typography variant="h6">
-              Current {pluralize('Activity', ongoingActivities?.length)}
-            </Typography>
-            {ongoingActivities?.length === 0 ? (
-              <b>None</b>
-            ) : (
-              <List dense>
-                {Object.keys(ongoingActivitiesByCode || {} || {}).map(
-                  (activityCode) => {
-                    const liveActivities =
-                      ongoingActivitiesByCode[activityCode];
-                    const { scheduledActivities, name } =
-                      activitiesByActivityCodeMap[activityCode];
-
-                    const startTime = new Date(liveActivities[0].startTime);
-
-                    const duration = formatDuration(
-                      intervalToDuration({
-                        start: startTime,
-                        end: time,
-                      })
-                    );
-
-                    return (
-                      <ListItemButton
-                        key={activityCode}
-                        onClick={() =>
-                          startOrStopActivities(
-                            activitiesByActivityCodeMap[
-                              activityCode
-                            ] as ActivityCodeDataObject
-                          )
-                        }>
-                        <ListItemText
-                          primary={name}
-                          secondary={
-                            <>
-                              Duration: {duration}
-                              {scheduledActivities[0] ? (
-                                <>
-                                  <br />
-                                  Ends in:{' '}
-                                  {formatDuration({
-                                    minutes: durationToMinutes(
-                                      time,
-                                      new Date(scheduledActivities[0].endTime)
-                                    ),
-                                  })}
-                                </>
-                              ) : null}
-                            </>
-                          }
-                        />
-                      </ListItemButton>
-                    );
-                  }
-                )}
-              </List>
-            )}
-
-            <Divider sx={{ my: 1 }} />
-            {nextActivity ? (
-              <Typography>
-                Next Activity: <b>{nextActivity.name}</b> scheduled to start{' '}
-                <b>
-                  {minutesTillNextActivity === 0 && 'now'}
-                  {minutesTillNextActivity > 0 &&
-                    `in ${formatDuration(
-                      {
-                        ...(minutesTillNextActivity > 60 && {
-                          hours: Math.floor(minutesTillNextActivity / 60),
-                        }),
-                        minutes: Math.floor(minutesTillNextActivity % 60),
-                        ...(minutesTillNextActivity < 1 && {
-                          seconds: Math.floor(minutesTillNextActivity * 60),
-                        }),
-                      },
-                      {
-                        format: ['days', 'hours', 'minutes', 'seconds'],
-                      }
-                    )}`}
-                  {minutesTillNextActivity < 0 &&
-                    `${formatDuration(
-                      {
-                        ...(Math.abs(minutesTillNextActivity) > 60 && {
-                          hours: Math.floor(
-                            Math.abs(minutesTillNextActivity) / 60
-                          ),
-                        }),
-                        minutes: Math.floor(
-                          Math.abs(minutesTillNextActivity) % 60
-                        ),
-                      },
-                      {
-                        format: ['days', 'hours', 'minutes', 'seconds'],
-                      }
-                    )} ago`}
-                </b>
-              </Typography>
-            ) : (
-              <Typography>No more upcoming activities!</Typography>
-            )}
-          </div>
-          <Divider />
-          <ButtonGroup fullWidth>
-            {ongoingActivities?.length && nextActivity ? (
-              <Button
-                variant="contained"
-                onClick={advanceToNextActivities}
-                disabled={!ongoingActivities?.length || !nextActivity}>
-                Advance to Next Activity
-              </Button>
-            ) : null}
-            {!ongoingActivities?.length && nextActivity ? (
-              <Button
-                variant="contained"
-                onClick={() => startOrStopActivities(nextActivity)}>
-                Start Next Activity
-              </Button>
-            ) : null}
-
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={stopongoingActivities}
-              disabled={!ongoingActivities?.length}>
-              Stop Current{' '}
-              {pluralize('activity', allChildActivities?.length || 0)}
-            </Button>
-          </ButtonGroup>
-        </Paper>
       </Container>
     </div>
   );

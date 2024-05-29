@@ -8,6 +8,7 @@ import logger from '../../../lib/logger';
 const authRouter = Router();
 
 authRouter.get('/session', (req: Request, res) => {
+  console.log(39, req.session);
   if (req.session) {
     res.json({
       success: true,
@@ -38,7 +39,8 @@ authRouter.post('/number', async (req, res) => {
         expires: Date.now() + 1000 * 60 * 15, // 15 minutes
       },
     };
-    // session.save();
+    /* @ts-expect-error ehh */
+    session.save();
 
     await sendMessage({
       to: number,
@@ -50,9 +52,11 @@ authRouter.post('/number', async (req, res) => {
     logger.error(e);
     res.status(500).json({ success: false, message: (e as Error).message });
   }
+  console.log(session);
 });
 
 authRouter.post('/number/code', async (req, res) => {
+  console.log(57, req.session);
   if (!req.session.auth?.number) {
     res
       .status(400)

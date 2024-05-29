@@ -19,6 +19,10 @@ class WcaApi extends RESTDataSource {
     }
   }
 
+  async getSchedule(competitionId: string): Promise<Competition['schedule']> {
+    return this.get(`competitions/${competitionId}/schedule`);
+  }
+
   async getWcif(competitionId: string): Promise<Competition> {
     return this.get(`competitions/${competitionId}/wcif`);
   }

@@ -28,12 +28,15 @@ export type Activity = {
 export type Competition = {
   __typename?: 'Competition';
   activities?: Maybe<Array<Activity>>;
+  autoAdvance: Scalars['Boolean'];
+  autoAdvanceDelay: Scalars['Int'];
   competitionAccess?: Maybe<Array<CompetitionAccess>>;
   country: Scalars['String'];
   endDate: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
   startDate: Scalars['String'];
+  status: Status;
   webhooks?: Maybe<Array<Webhook>>;
 };
 
@@ -184,6 +187,12 @@ export type QueryCompetitionsArgs = {
   competitionIds?: InputMaybe<Array<Scalars['String']>>;
 };
 
+export enum Status {
+  Finished = 'FINISHED',
+  InProgress = 'IN_PROGRESS',
+  NotStarted = 'NOT_STARTED'
+}
+
 export type Subscription = {
   __typename?: 'Subscription';
   activities?: Maybe<Array<Maybe<Activity>>>;
@@ -325,6 +334,7 @@ export type ResolversTypes = {
   JSON: ResolverTypeWrapper<Scalars['JSON']>;
   Mutation: ResolverTypeWrapper<{}>;
   Query: ResolverTypeWrapper<{}>;
+  Status: Status;
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
   User: ResolverTypeWrapper<User>;
@@ -366,12 +376,15 @@ export type ActivityResolvers<ContextType = any, ParentType extends ResolversPar
 
 export type CompetitionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Competition'] = ResolversParentTypes['Competition']> = {
   activities?: Resolver<Maybe<Array<ResolversTypes['Activity']>>, ParentType, ContextType, Partial<CompetitionActivitiesArgs>>;
+  autoAdvance?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  autoAdvanceDelay?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   competitionAccess?: Resolver<Maybe<Array<ResolversTypes['CompetitionAccess']>>, ParentType, ContextType>;
   country?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   endDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   startDate?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['Status'], ParentType, ContextType>;
   webhooks?: Resolver<Maybe<Array<ResolversTypes['Webhook']>>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

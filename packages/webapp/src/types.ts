@@ -1,3 +1,6 @@
+import WCA from '@wca/helpers';
+import { Activity } from './generated/graphql';
+
 export interface ApiCompetition {
   id: string;
   name: string;
@@ -28,4 +31,12 @@ export interface User {
   };
 
   exp: number;
+}
+
+export interface ActivityCodeDataObject {
+  activityCode: string;
+  scheduledActivities: WCA.Activity[];
+  liveActivities: Activity[];
+  name: string;
+  startTime: string;
 }

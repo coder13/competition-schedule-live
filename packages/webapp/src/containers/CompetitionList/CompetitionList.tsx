@@ -26,17 +26,26 @@ export function CompetitionList() {
   const [importCompetitionDialogOpen, setImportCompetitionDialogOpen] =
     useState(false);
 
-  const competitions = useMemo(
+  const upcomingCompetitions = useMemo(() => {
+    return data?.currentUser?.competitions
+      ? [...data.currentUser.competitions]
+          .filter((comp) => {
+            return comp.startDate > new Date().toISOString();
+          })
+          .sort(
+            (a, b) =>
+              new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+          )
+      : [];
+  }, [data]);
+
+  const pastCompetitions = useMemo(
     () =>
       data?.currentUser?.competitions
         ? [...data.currentUser.competitions]
-            .filter(
-              (comp) =>
-                comp.startDate >
-                new Date(
-                  Date.now() - 1000 * 60 * 60 * 24 * 7 * 2
-                ).toLocaleString()
-            )
+            .filter((comp) => {
+              return comp.startDate < new Date().toISOString();
+            })
             .sort(
               (a, b) =>
                 new Date(b.startDate).getTime() -
@@ -49,10 +58,29 @@ export function CompetitionList() {
   return (
     <>
       {loading ? <LinearProgress /> : null}
-      {competitions.length ? (
+      {upcomingCompetitions.length ? (
         <List>
           <ListSubheader>My Upcoming Competitions</ListSubheader>
-          {competitions.map((competition) => (
+          {upcomingCompetitions.map((competition) => (
+            <ListItemButton
+              component={Link}
+              to={`/competitions/${competition.id}`}
+              key={competition.id}>
+              <ListItemText
+                primary={competition.name}
+                secondary={formatDateRange(
+                  competition.startDate,
+                  competition.endDate
+                )}
+              />
+            </ListItemButton>
+          ))}
+        </List>
+      ) : null}
+      {pastCompetitions.length ? (
+        <List>
+          <ListSubheader>My Past Competitions</ListSubheader>
+          {pastCompetitions.map((competition) => (
             <ListItemButton
               component={Link}
               to={`/competitions/${competition.id}`}

@@ -18,6 +18,11 @@ model Competition {
   country           String
   startDate         String
   endDate           String
+  // if true, the server will automatically advance the competition to the next activity
+  autoAdvance       Boolean             @default(false)
+  // the delay in seconds before the server advances the competition to the next activity
+  autoAdvanceDelay  Int                 @default(0)
+  status            Status              @default(NOT_STARTED)
   competitionAccess CompetitionAccess[]
   activityHistory   ActivityHistory[]
   webhooks          Webhook[]
@@ -62,4 +67,10 @@ model Webhook {
   competition Competition @relation(fields: [competitionId], references: [id])
 
   @@unique([competitionId, url])
+}
+
+enum Status {
+  NOT_STARTED
+  IN_PROGRESS
+  FINISHED
 }

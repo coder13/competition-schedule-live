@@ -4,6 +4,10 @@ type Competition {
   country: String!
   startDate: String!
   endDate: String!
+  autoAdvance: Boolean!
+  autoAdvanceDelay: Int!
+  status: Status!
+
   competitionAccess: [CompetitionAccess!]
   activities(ongoing: Boolean): [Activity!]
   webhooks: [Webhook!]
@@ -42,4 +46,10 @@ type Webhook {
 type Header {
   key: String!
   value: String!
+}
+
+enum Status {
+  NOT_STARTED
+  IN_PROGRESS
+  FINISHED
 }

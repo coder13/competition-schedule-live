@@ -9,6 +9,7 @@ import AuthProvider from './providers/AuthProvider';
 import { StoreProvider } from './providers/BasicStoreProvider';
 import client from './apolloClient';
 import { ConfirmProvider } from 'material-ui-confirm';
+import { SnackbarProvider } from 'notistack';
 const theme = createTheme();
 
 const queryClient = new QueryClient();
@@ -17,18 +18,20 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <>
     <StoreProvider>
       <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <BrowserRouter>
-          <AuthProvider>
-            <ApolloProvider client={client}>
-              <QueryClientProvider client={queryClient}>
-                <ConfirmProvider>
-                  <App />
-                </ConfirmProvider>
-              </QueryClientProvider>
-            </ApolloProvider>
-          </AuthProvider>
-        </BrowserRouter>
+        <SnackbarProvider>
+          <CssBaseline />
+          <BrowserRouter>
+            <AuthProvider>
+              <ApolloProvider client={client}>
+                <QueryClientProvider client={queryClient}>
+                  <ConfirmProvider>
+                    <App />
+                  </ConfirmProvider>
+                </QueryClientProvider>
+              </ApolloProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </SnackbarProvider>
       </ThemeProvider>
     </StoreProvider>
   </>

@@ -1,24 +1,29 @@
 import { AppContext } from '../../../server';
-import { QueryResolvers } from '../../../generated/graphql';
+import { QueryResolvers, Status } from '../../../generated/graphql';
 
 export const competitions: QueryResolvers<AppContext>['competitions'] = async (
   _,
   { competitionIds },
   { db }
 ) => {
-  return db.competition.findMany({
-    include: {
-      activityHistory: true,
-    },
-    where: {
-      ...(competitionIds && {
-        id: {
-          in: competitionIds,
-          mode: 'insensitive',
-        },
-      }),
-    },
-  });
+  return (
+    await db.competition.findMany({
+      include: {
+        activityHistory: true,
+      },
+      where: {
+        ...(competitionIds && {
+          id: {
+            in: competitionIds,
+            mode: 'insensitive',
+          },
+        }),
+      },
+    })
+  ).map((comp) => ({
+    ...comp,
+    status: comp.status as Status,
+  }));
 };
 
 export const competition: QueryResolvers<AppContext>['competition'] = async (
@@ -26,7 +31,7 @@ export const competition: QueryResolvers<AppContext>['competition'] = async (
   { competitionId },
   { db }
 ) => {
-  return db.competition.findFirst({
+  const comp = await db.competition.findFirst({
     include: {
       activityHistory: true,
     },
@@ -37,4 +42,13 @@ export const competition: QueryResolvers<AppContext>['competition'] = async (
       },
     },
   });
+
+  if (!comp) {
+    return null;
+  }
+
+  return {
+    ...comp,
+    status: comp.status as Status,
+  };
 };

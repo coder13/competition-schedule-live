@@ -10,6 +10,7 @@ import {
   ListSubheader,
   MenuItem,
   MenuList,
+  Skeleton,
 } from '@mui/material';
 import { useCompetition } from './Layout';
 import { Link } from '../../components/Link';
@@ -65,6 +66,12 @@ function CompetitionHome() {
   return (
     <Container maxWidth="md">
       <List>
+        <ListItemButton component={Link} to={`rooms/all`} key={'allRooms'}>
+          <ListItemAvatar>
+            <Avatar sx={{ bgcolor: 'black' }} />
+          </ListItemAvatar>
+          <ListItemText primary={'All Rooms'} />
+        </ListItemButton>
         {wcif?.schedule.venues.map((venue) => (
           <React.Fragment key={venue.id}>
             <ListSubheader sx={{ lineHeight: 1, mb: 2 }}>
@@ -96,14 +103,6 @@ function CompetitionHome() {
             })}
           </React.Fragment>
         ))}
-        {wcif && (
-          <ListItemButton component={Link} to={`rooms/all`} key={'allRooms'}>
-            <ListItemAvatar>
-              <Avatar sx={{ bgcolor: 'black' }} />
-            </ListItemAvatar>
-            <ListItemText primary={'All Rooms'} />
-          </ListItemButton>
-        )}
       </List>
       <MenuList>
         <Divider />

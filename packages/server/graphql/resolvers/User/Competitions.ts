@@ -1,5 +1,6 @@
 import { AppContext } from '../../../server';
-import { UserResolvers } from '../../../generated/graphql';
+import { Competition, UserResolvers } from '../../../generated/graphql';
+import { ActivityHistory } from '../../../prisma/generated/client';
 
 export const competitions: UserResolvers<AppContext>['competitions'] = async (
   parent,
@@ -17,4 +18,4 @@ export const competitions: UserResolvers<AppContext>['competitions'] = async (
         },
       },
     },
-  });
+  }) as Promise<Array<Competition & { activityHistory: ActivityHistory[] }>>;

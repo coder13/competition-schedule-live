@@ -31,6 +31,9 @@ import db from './db';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import WcaApi from './graphql/datasources/WcaApi';
 import { authMiddlewareVerify } from './auth/AuthMiddleware';
+import { WCA_ORIGIN } from './env';
+import { initScheduler } from './scheduler';
+import { pubsub } from './graphql/pubsub';
 
 export interface AppContext {
   user?: User;
@@ -40,6 +43,8 @@ export interface AppContext {
 }
 
 export async function init() {
+  await initScheduler();
+
   const app = express();
 
   app.use(cors<cors.CorsRequest>());
@@ -63,8 +68,6 @@ export async function init() {
     server: httpServer,
     path: '/graphql',
   });
-
-  const pubsub = new PubSub();
 
   const getDynamicContext = () => ({
     pubsub,
@@ -101,10 +104,7 @@ export async function init() {
     ],
   });
 
-  app.set(
-    'WCA_ORIGIN',
-    process.env.WCA_ORIGIN ?? 'https://staging.worldcubeassociation.org'
-  );
+  app.set('WCA_ORIGIN', WCA_ORIGIN);
 
   // Ensure we wait for our server to start
   await server.start();

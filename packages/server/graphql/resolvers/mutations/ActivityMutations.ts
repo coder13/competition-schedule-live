@@ -2,6 +2,7 @@ import { AppContext } from '../../../server';
 import { MutationResolvers } from '../../../generated/graphql';
 import { sendWebhooksForCompetition } from '../../../controllers/webhooks';
 import { createNotificationsForActivity } from '../../../lib/notifications';
+import * as activitiesController from '../../../controllers/activities';
 
 const isAuthorized = async (
   db: AppContext['db'],
@@ -32,30 +33,13 @@ const isAuthorized = async (
 };
 
 export const startActivity: MutationResolvers<AppContext>['startActivity'] =
-  async (_, { competitionId, activityId }, { db, user, pubsub, wcaApi }) => {
+  async (_, { competitionId, activityId }, { db, user, wcaApi }) => {
     void isAuthorized(db, competitionId, user);
 
-    const activity = await db.activityHistory.upsert({
-      where: {
-        competitionId_activityId: {
-          competitionId,
-          activityId,
-        },
-      },
-      update: {
-        startTime: new Date(),
-        endTime: null,
-      },
-      create: {
-        competitionId,
-        activityId,
-        startTime: new Date(),
-        endTime: null,
-      },
-    });
-
-    // TODO: Expose room somehow
-    await pubsub.publish('ACTIVITY_UPDATED', { activityUpdated: activity });
+    const activity = activitiesController.startActivity(
+      competitionId,
+      activityId
+    );
 
     const wcif = await wcaApi.getWcif(competitionId);
 
@@ -84,40 +68,12 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
   };
 
 export const startActivities: MutationResolvers<AppContext>['startActivities'] =
-  async (_, { competitionId, activityIds }, { db, user, pubsub, wcaApi }) => {
+  async (_, { competitionId, activityIds }, { db, user, wcaApi }) => {
     void isAuthorized(db, competitionId, user);
 
     const activities = await Promise.all(
-      activityIds.map(async (activityId) => {
-        const activity = await db.activityHistory.upsert({
-          where: {
-            competitionId_activityId: {
-              competitionId,
-              activityId,
-            },
-          },
-          update: {
-            startTime: new Date(),
-            endTime: null,
-          },
-          create: {
-            competitionId,
-            activityId,
-            startTime: new Date(),
-            endTime: null,
-          },
-        });
-
-        return activity;
-      })
-    );
-
-    await Promise.all(
-      activities.map(
-        async (activity) =>
-          await pubsub.publish('ACTIVITY_UPDATED', {
-            activityUpdated: activity,
-          })
+      activityIds.map(async (activityId) =>
+        activitiesController.startActivity(competitionId, activityId)
       )
     );
 
@@ -148,24 +104,10 @@ export const startActivities: MutationResolvers<AppContext>['startActivities'] =
   };
 
 export const stopActivity: MutationResolvers<AppContext>['stopActivity'] =
-  async (_, { competitionId, activityId }, { db, user, pubsub }) => {
+  async (_, { competitionId, activityId }, { db, user }) => {
     void isAuthorized(db, competitionId, user);
 
-    const activity = await db.activityHistory.update({
-      where: {
-        competitionId_activityId: {
-          competitionId,
-          activityId,
-        },
-      },
-      data: {
-        endTime: new Date(),
-      },
-    });
-
-    await pubsub.publish('ACTIVITY_UPDATED', { activityUpdated: activity });
-
-    return activity;
+    return activitiesController.stopActivity(competitionId, activityId);
   };
 
 export const stopActivities: MutationResolvers<AppContext>['stopActivities'] =

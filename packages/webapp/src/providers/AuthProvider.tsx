@@ -162,6 +162,14 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    console.log(165, user);
+
+    if (user.exp * 1000 < Date.now()) {
+      console.log('jwt expired');
+      logout();
+      return;
+    }
+
     if (user?.wca.expiration < Date.now()) {
       refreshToken();
       return;

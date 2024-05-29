@@ -1,5 +1,5 @@
 import { AppContext } from '../../../server';
-import { MutationResolvers } from '../../../generated/graphql';
+import { Competition, MutationResolvers } from '../../../generated/graphql';
 
 export const importCompetition: MutationResolvers<AppContext>['importCompetition'] =
   async (_, { competitionId }, { db, wcaApi, user }) => {
@@ -43,5 +43,5 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
       },
     });
 
-    return newCompetition;
+    return newCompetition as Competition;
   };

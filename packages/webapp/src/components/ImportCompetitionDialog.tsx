@@ -24,6 +24,7 @@ import { ApiCompetition } from '../types';
 import { useAuth } from '../providers/AuthProvider';
 import { gql, useMutation } from '@apollo/client';
 import { ImportCompetitionMutation } from '../graphql';
+import { useSnackbar } from 'notistack';
 
 const FlagIcon = FlagIconFactory(React, { useCssModules: false });
 
@@ -48,6 +49,7 @@ function ImportCompetitionDialog({
   alreadyImported,
 }: ImportCompetitionDialogProps) {
   const { wcaApiFetch } = useAuth();
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { isLoading, data } = useQuery<ApiCompetition[]>({
@@ -70,6 +72,7 @@ function ImportCompetitionDialog({
       },
       onError: (error) => {
         console.error(error);
+        enqueueSnackbar('Failed to import competition', { variant: 'error' });
       },
       refetchQueries: ['GetCompetitions'],
     }

@@ -4,6 +4,7 @@ import { useQuery as useReactQuery } from '@tanstack/react-query';
 import WCA, { Competition, Room } from '@wca/helpers';
 import { createContext, useContext, useEffect } from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import { CompetitionStatusBar } from '../../components/CompetitionStatusBar';
 import { Activity } from '../../generated/graphql';
 import { ActivitiesQuery, ActivitiesSubscription } from '../../graphql';
 import { useAuth } from '../../providers/AuthProvider';
@@ -125,7 +126,13 @@ function CompetitionLayout() {
         getRoomForActivity,
       }}>
       {isLoading ? <LinearProgress /> : null}
-      <Outlet />
+      <div
+        style={{
+          flex: 1,
+        }}>
+        <Outlet />
+      </div>
+      <CompetitionStatusBar />
     </WCIFContext.Provider>
   );
 }
