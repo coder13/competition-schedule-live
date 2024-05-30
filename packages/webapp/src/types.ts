@@ -39,4 +39,6 @@ export interface ActivityCodeDataObject {
   liveActivities: Activity[];
   name: string;
   startTime: string;
+  scheduledStartTime: string | null;
+  scheduledEndTime: string | null;
 }

@@ -42,6 +42,10 @@ model ActivityHistory {
   activityId    Int
   startTime     DateTime?
   endTime       DateTime?
+  // For autoAdvance competitions, the server will advance to the next activity when the scheduledEnd is reached
+  scheduledStartTime DateTime?
+  scheduledEndTime   DateTime?
+
   competition   Competition @relation(fields: [competitionId], references: [id])
 
   @@unique([competitionId, activityId])

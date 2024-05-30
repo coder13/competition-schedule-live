@@ -5,7 +5,10 @@ import WCA, { Competition, Room } from '@wca/helpers';
 import { createContext, useContext, useEffect } from 'react';
 import { Outlet, useNavigate, useParams } from 'react-router-dom';
 import { CompetitionStatusBar } from '../../components/CompetitionStatusBar';
-import { Activity } from '../../generated/graphql';
+import {
+  Activity,
+  Competition as GraphqlCompetition,
+} from '../../generated/graphql';
 import { ActivitiesQuery, ActivitiesSubscription } from '../../graphql';
 import { useAuth } from '../../providers/AuthProvider';
 import { StoreContext } from '../../providers/BasicStoreProvider';

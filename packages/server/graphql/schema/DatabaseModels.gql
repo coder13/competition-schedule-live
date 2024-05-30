@@ -24,6 +24,10 @@ type Activity {
   activityId: Int!
   startTime: DateTime
   endTime: DateTime
+  # There might exist a job that starts/stops the activity
+  # This data is used to indicate that the job exists
+  scheduledStartTime: DateTime
+  scheduledEndTime: DateTime
 }
 
 enum HTTPMethod {

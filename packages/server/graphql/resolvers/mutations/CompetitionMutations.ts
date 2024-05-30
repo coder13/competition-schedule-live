@@ -1,5 +1,10 @@
 import { AppContext } from '../../../server';
 import { Competition, MutationResolvers } from '../../../generated/graphql';
+import {
+  CompetitionActivitiesJobsMap,
+  determineAndScheduleCompetition,
+} from '../../../scheduler';
+import { fetchCompWithNoScheduledActivities } from '../../../scheduler/utils';
 
 export const importCompetition: MutationResolvers<AppContext>['importCompetition'] =
   async (_, { competitionId }, { db, wcaApi, user }) => {
@@ -44,4 +49,50 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
     });
 
     return newCompetition as Competition;
+  };
+
+export const updateAutoAdvance: MutationResolvers<AppContext>['updateAutoAdvance'] =
+  async (_, { competitionId, autoAdvance }, { db, user }) => {
+    if (!user) {
+      throw new Error('Not Authenticated');
+    }
+
+    if (autoAdvance === false) {
+      console.log('Cancelling all scheduled activities', competitionId);
+
+      await db.activityHistory.updateMany({
+        where: {
+          competitionId,
+          OR: [
+            { scheduledEndTime: { not: null } },
+            { scheduledStartTime: { not: null } },
+          ],
+        },
+        data: {
+          scheduledStartTime: null,
+          scheduledEndTime: null,
+        },
+      });
+
+      for (const key in CompetitionActivitiesJobsMap.keys()) {
+        if (key.includes(competitionId)) {
+          CompetitionActivitiesJobsMap.get(key)?.job?.cancel();
+          CompetitionActivitiesJobsMap.delete(key);
+        }
+      }
+    } else {
+      const comp = await fetchCompWithNoScheduledActivities(competitionId);
+      if (comp) {
+        await determineAndScheduleCompetition(comp);
+      }
+    }
+
+    return (await db.competition.update({
+      where: {
+        id: competitionId,
+      },
+      data: {
+        ...(autoAdvance !== null && { autoAdvance }),
+      },
+    })) as Competition;
   };

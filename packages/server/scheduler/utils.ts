@@ -1,4 +1,5 @@
 import { Schedule } from '@wca/helpers';
+import prisma from '../db';
 
 export const getFlatActivities = (schedule: Schedule) => {
   const rooms = schedule.venues.map((venue) => venue.rooms).flat();
@@ -8,3 +9,21 @@ export const getFlatActivities = (schedule: Schedule) => {
   );
   return allFlatActivities;
 };
+
+export const fetchCompWithNoScheduledActivities = (competitionId: string) =>
+  prisma.competition.findFirst({
+    where: {
+      id: competitionId,
+    },
+    include: {
+      activityHistory: {
+        where: {
+          startTime: {
+            not: null,
+          },
+          scheduledEndTime: null,
+          scheduledStartTime: null,
+        },
+      },
+    },
+  });

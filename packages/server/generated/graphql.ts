@@ -22,6 +22,8 @@ export type Activity = {
   activityId: Scalars['Int'];
   competitionId: Scalars['String'];
   endTime?: Maybe<Scalars['DateTime']>;
+  scheduledEndTime?: Maybe<Scalars['DateTime']>;
+  scheduledStartTime?: Maybe<Scalars['DateTime']>;
   startTime?: Maybe<Scalars['DateTime']>;
 };
 
@@ -85,6 +87,7 @@ export type Mutation = {
   testEditingWebhook?: Maybe<WebhookResponse>;
   testWebhook?: Maybe<WebhookResponse>;
   testWebhooks: Array<Maybe<WebhookResponse>>;
+  updateAutoAdvance?: Maybe<Competition>;
   updateWebhook: Webhook;
 };
 
@@ -153,6 +156,13 @@ export type MutationTestWebhookArgs = {
 
 
 export type MutationTestWebhooksArgs = {
+  competitionId: Scalars['String'];
+};
+
+
+export type MutationUpdateAutoAdvanceArgs = {
+  autoAdvance?: InputMaybe<Scalars['Boolean']>;
+  autoAdvanceDelay?: InputMaybe<Scalars['Int']>;
   competitionId: Scalars['String'];
 };
 
@@ -370,6 +380,8 @@ export type ActivityResolvers<ContextType = any, ParentType extends ResolversPar
   activityId?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   competitionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   endTime?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  scheduledEndTime?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  scheduledStartTime?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   startTime?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -423,6 +435,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   testEditingWebhook?: Resolver<Maybe<ResolversTypes['WebhookResponse']>, ParentType, ContextType, RequireFields<MutationTestEditingWebhookArgs, 'competitionId' | 'webhook'>>;
   testWebhook?: Resolver<Maybe<ResolversTypes['WebhookResponse']>, ParentType, ContextType, RequireFields<MutationTestWebhookArgs, 'id'>>;
   testWebhooks?: Resolver<Array<Maybe<ResolversTypes['WebhookResponse']>>, ParentType, ContextType, RequireFields<MutationTestWebhooksArgs, 'competitionId'>>;
+  updateAutoAdvance?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<MutationUpdateAutoAdvanceArgs, 'competitionId'>>;
   updateWebhook?: Resolver<ResolversTypes['Webhook'], ParentType, ContextType, RequireFields<MutationUpdateWebhookArgs, 'id' | 'webhook'>>;
 };
 

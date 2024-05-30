@@ -115,6 +115,13 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
         liveActivities: liveActivities || [],
         name: childActivities[0].name || '',
         startTime: childActivities[0].startTime,
+
+        scheduledStartTime:
+          liveActivities?.find((i) => i.scheduledStartTime)
+            ?.scheduledStartTime || null,
+        scheduledEndTime:
+          liveActivities?.find((i) => i.scheduledEndTime)?.scheduledEndTime ||
+          null,
       };
     });
     return activitiesByActivityCode;
@@ -333,11 +340,10 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
       return 0;
     }
 
+    const startTime = nextActivity.scheduledStartTime || nextActivity.startTime;
+
     return Math.round(
-      (new Date(nextActivity.scheduledActivities[0].startTime).getTime() -
-        time.getTime()) /
-        1000 /
-        60
+      (new Date(startTime).getTime() - time.getTime()) / 1000 / 60
     );
   }, [nextActivity, time]);
 
@@ -373,7 +379,7 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
             {Object.keys(ongoingActivitiesByCode || {} || {}).map(
               (activityCode) => {
                 const liveActivities = ongoingActivitiesByCode[activityCode];
-                const { scheduledActivities, name } =
+                const { scheduledActivities, name, scheduledEndTime } =
                   activitiesByActivityCodeMap[activityCode];
 
                 const startTime = new Date(liveActivities[0].startTime);
@@ -384,6 +390,9 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
                     end: time,
                   })
                 );
+
+                const endTime =
+                  scheduledEndTime || scheduledActivities[0].endTime;
 
                 return (
                   <ListItemButton
@@ -400,14 +409,17 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
                       secondary={
                         <>
                           Duration: {duration}
-                          {scheduledActivities[0] ? (
+                          {endTime ? (
                             <>
                               <br />
-                              Ends in:{' '}
+                              {scheduledEndTime
+                                ? 'Will stop'
+                                : 'Should end'}{' '}
+                              in:{' '}
                               {formatDuration({
                                 minutes: durationToMinutes(
                                   time,
-                                  new Date(scheduledActivities[0].endTime)
+                                  new Date(endTime)
                                 ),
                               })}
                             </>
@@ -425,7 +437,10 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
         <Divider sx={{ my: 1 }} />
         {nextActivity ? (
           <Typography>
-            Next Activity: <b>{nextActivity.name}</b> scheduled to start{' '}
+            Next Activity: <b>{nextActivity.name}</b>{' '}
+            {nextActivity.scheduledStartTime
+              ? 'queued and starting'
+              : 'scheduled to start'}{' '}
             <b>
               {minutesTillNextActivity === 0 && 'now'}
               {minutesTillNextActivity > 0 &&

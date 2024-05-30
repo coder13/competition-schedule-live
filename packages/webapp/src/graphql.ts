@@ -10,8 +10,21 @@ export const GetCompetitionsQuery = gql`
         startDate
         endDate
         country
+        autoAdvance
+        autoAdvanceDelay
+        status
       }
     }
+  }
+`;
+
+const ActivityFragment = gql`
+  fragment ActivityFragment on Activity {
+    activityId
+    startTime
+    endTime
+    scheduledStartTime
+    scheduledEndTime
   }
 `;
 
@@ -27,71 +40,64 @@ export const ImportCompetitionMutation = gql`
 export const ActivitiesQuery = gql`
   query Activities($competitionId: String!, $roomId: Int) {
     activities(competitionId: $competitionId, roomId: $roomId) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const StartActivityMutation = gql`
   mutation StartActivity($competitionId: String!, $activityId: Int!) {
     startActivity(competitionId: $competitionId, activityId: $activityId) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const StartActivitiesMutation = gql`
   mutation StartActivities($competitionId: String!, $activityIds: [Int!]!) {
     startActivities(competitionId: $competitionId, activityIds: $activityIds) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const StopActivityMutation = gql`
   mutation StopActivity($competitionId: String!, $activityId: Int!) {
     stopActivity(competitionId: $competitionId, activityId: $activityId) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const StopActivitiesMutation = gql`
   mutation StopActivities($competitionId: String!, $activityIds: [Int!]!) {
     stopActivities(competitionId: $competitionId, activityIds: $activityIds) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const ResetActivityMutation = gql`
   mutation ResetActivity($competitionId: String!, $activityId: Int!) {
     resetActivity(competitionId: $competitionId, activityId: $activityId) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const ResetActivitiesMutation = gql`
   mutation ResetActivities($competitionId: String!) {
     resetActivities(competitionId: $competitionId) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const StopStartActivityMutation = gql`
@@ -104,19 +110,16 @@ export const StopStartActivityMutation = gql`
       competitionId: $competitionId
       activityId: $stopActivityId
     ) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
     start: startActivity(
       competitionId: $competitionId
       activityId: $startActivityId
     ) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const StopStartActivitiesMutation = gql`
@@ -129,29 +132,25 @@ export const StopStartActivitiesMutation = gql`
       competitionId: $competitionId
       activityIds: $stopActivityIds
     ) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
     start: startActivities(
       competitionId: $competitionId
       activityIds: $startActivityIds
     ) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const ActivitiesSubscription = gql`
   subscription Activities($competitionId: String!) {
     activity: activityUpdated(competitionIds: [$competitionId]) {
-      activityId
-      startTime
-      endTime
+      ...ActivityFragment
     }
   }
+  ${ActivityFragment}
 `;
 
 export const WebhooksQuery = gql`
@@ -225,6 +224,24 @@ export const TestEditingWebhookMutation = gql`
       status
       statusText
       body
+    }
+  }
+`;
+
+export const UpdateAutoAdvanceMutation = gql`
+  mutation UpdateAutoAdvance(
+    $competitionId: String!
+    $autoAdvance: Boolean
+    $autoAdvanceDelay: Int
+  ) {
+    updateAutoAdvance(
+      competitionId: $competitionId
+      autoAdvance: $autoAdvance
+      autoAdvanceDelay: $autoAdvanceDelay
+    ) {
+      id
+      autoAdvance
+      autoAdvanceDelay
     }
   }
 `;

@@ -31,6 +31,7 @@ export const activityUpdated: SubscriptionResolvers['activityUpdated'] = {
   subscribe: withFilter(
     (_, __, { pubsub }) => pubsub.asyncIterator('ACTIVITY_UPDATED'),
     (payload, args: { roomId?: number; competitionIds: string[] }) => {
+      console.log(34, payload.activityUpdated.competitionId.toLowerCase());
       if (
         !args.competitionIds
           .map((x) => x.toLowerCase())
