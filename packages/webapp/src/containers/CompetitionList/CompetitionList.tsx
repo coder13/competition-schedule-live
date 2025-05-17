@@ -2,12 +2,14 @@ import { formatDateRange } from '@notifycomp/frontend-common/lib';
 import { useState, useMemo } from 'react';
 import { useQuery } from '@apollo/client';
 import {
-  Fab,
+  Box,
+  Button,
   LinearProgress,
   List,
   ListItemButton,
   ListItemText,
   ListSubheader,
+  Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import { User } from '../../generated/graphql';
@@ -57,56 +59,62 @@ export function CompetitionList() {
 
   return (
     <>
-      {loading ? <LinearProgress /> : null}
-      {upcomingCompetitions.length ? (
-        <List>
-          <ListSubheader>My Upcoming Competitions</ListSubheader>
-          {upcomingCompetitions.map((competition) => (
-            <ListItemButton
-              component={Link}
-              to={`/competitions/${competition.id}`}
-              key={competition.id}>
-              <ListItemText
-                primary={competition.name}
-                secondary={formatDateRange(
-                  competition.startDate,
-                  competition.endDate
-                )}
-              />
-            </ListItemButton>
-          ))}
-        </List>
-      ) : null}
-      {pastCompetitions.length ? (
-        <List>
-          <ListSubheader>My Past Competitions</ListSubheader>
-          {pastCompetitions.map((competition) => (
-            <ListItemButton
-              component={Link}
-              to={`/competitions/${competition.id}`}
-              key={competition.id}>
-              <ListItemText
-                primary={competition.name}
-                secondary={formatDateRange(
-                  competition.startDate,
-                  competition.endDate
-                )}
-              />
-            </ListItemButton>
-          ))}
-        </List>
-      ) : null}
-      <Fab
-        color="primary"
-        aria-label="add"
-        style={{
-          position: 'fixed',
-          bottom: '1rem',
-          right: '1rem',
-        }}
-        onClick={() => setImportCompetitionDialogOpen(true)}>
-        <AddIcon />
-      </Fab>
+      <Box flex={1} flexDirection="column" p={2} sx={{ width: '100%' }}>
+        {loading ? <LinearProgress /> : null}
+        <Button
+          color="primary"
+          className="w-full"
+          variant="outlined"
+          onClick={() => setImportCompetitionDialogOpen(true)}>
+          Import Competition
+        </Button>
+        {upcomingCompetitions.length ? (
+          <List>
+            <ListSubheader>My Upcoming Competitions</ListSubheader>
+            {upcomingCompetitions.map((competition) => (
+              <ListItemButton
+                component={Link}
+                to={`/competitions/${competition.id}`}
+                key={competition.id}>
+                <ListItemText
+                  primary={competition.name}
+                  secondary={formatDateRange(
+                    competition.startDate,
+                    competition.endDate
+                  )}
+                />
+              </ListItemButton>
+            ))}
+          </List>
+        ) : (
+          <Typography variant="body2" sx={{ padding: 2 }}>
+            No upcoming competitions
+          </Typography>
+        )}
+        {pastCompetitions.length ? (
+          <List>
+            <ListSubheader>My Past Competitions</ListSubheader>
+            {pastCompetitions.map((competition) => (
+              <ListItemButton
+                component={Link}
+                to={`/competitions/${competition.id}`}
+                key={competition.id}>
+                <ListItemText
+                  primary={competition.name}
+                  secondary={formatDateRange(
+                    competition.startDate,
+                    competition.endDate
+                  )}
+                />
+              </ListItemButton>
+            ))}
+          </List>
+        ) : (
+          <Typography variant="body2" sx={{ padding: 2 }}>
+            No past competitions
+          </Typography>
+        )}
+      </Box>
       <ImportCompetitionDialog
         open={importCompetitionDialogOpen}
         onClose={() => setImportCompetitionDialogOpen(false)}

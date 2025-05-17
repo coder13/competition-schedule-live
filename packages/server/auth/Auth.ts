@@ -9,16 +9,28 @@ import { authMiddlewareDecode } from './AuthMiddleware';
 const PRIVATE_KEY = process.env.PRIVATE_KEY ?? fs.readFileSync('private.key');
 const PUBLIC_KEY = process.env.PUBLIC_KEY ?? fs.readFileSync('public.key');
 
+const { WCA_ORIGIN, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
+
 console.log('Loading values from environment variables', {
-  clientId: process.env.CLIENT_ID,
-  wcaOrigin: process.env.WCA_ORIGIN,
+  WCA_ORIGIN,
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI,
 });
 
-const WCA_ORIGIN =
-  process.env.WCA_ORIGIN ?? 'https://staging.worldcubeassociation.org';
-const CLIENT_ID = process.env.CLIENT_ID ?? 'example-application-id';
-const CLIENT_SECRET = process.env.CLIENT_SECRET ?? 'example-secret';
-const REDIRECT_URI = 'http://localhost:8080/auth/wca/callback';
+if (!WCA_ORIGIN) {
+  throw new Error('WCA_ORIGIN is not defined');
+}
+if (!CLIENT_ID) {
+  throw new Error('CLIENT_ID is not defined');
+}
+if (!CLIENT_SECRET) {
+  throw new Error('CLIENT_SECRET is not defined');
+}
+if (!REDIRECT_URI) {
+  throw new Error('REDIRECT_URI is not defined');
+}
+
 const SCOPE = 'public email manage_competitions';
 
 const router = express.Router();
@@ -53,9 +65,12 @@ const SignOpts: jwt.SignOptions = {
   expiresIn: 2 * 24 * 60 * 60, // 2 days
 };
 
-const signJWT = async (profile: WcaprofileRes, token: WcaOauthRes, code: string) =>
+const signJWT = async (
+  profile: WcaprofileRes,
+  token: WcaOauthRes,
+  code: string
+) =>
   new Promise<string>((resolve, reject) => {
-    console.log(58, token.expires_in);
     jwt.sign(
       {
         type: 1, // we'll  just use this incase we want to modify this data. We can throw away older tokens and require reauthentication

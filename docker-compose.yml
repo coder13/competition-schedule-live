@@ -1,7 +1,3 @@
-# A Docker Compose must always start with the version tag.
-# We use '3' because it's the last version.
-version: '3'
-
 services:
   api:
     image: 'postgres:latest'

@@ -13,6 +13,8 @@ import { User } from '../types';
 const API_URL = import.meta.env.VITE_API_ORIGIN;
 const WCA_URL = import.meta.env.VITE_WCA_API_ORIGIN;
 
+console.log('API_URL', API_URL);
+
 interface AuthContext {
   login: () => void;
   logout: () => void;

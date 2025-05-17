@@ -196,14 +196,14 @@ const config = {
   ],
   "activeProvider": "postgresql",
   "dataProxy": false,
-  "postinstall": true
+  "postinstall": false
 }
 
 const fs = require('fs')
 
 config.dirname = __dirname
 if (!fs.existsSync(path.join(__dirname, 'schema.prisma'))) {
-  config.dirname = path.join(process.cwd(), "packages/notifapi/prisma/generated/client")
+  config.dirname = path.join(process.cwd(), "prisma/generated/client")
   config.isBundled = true
 }
 
@@ -227,6 +227,6 @@ exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
 
 path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
-path.join(process.cwd(), "packages/notifapi/prisma/generated/client/libquery_engine-debian-openssl-3.0.x.so.node")
+path.join(process.cwd(), "prisma/generated/client/libquery_engine-debian-openssl-3.0.x.so.node")
 path.join(__dirname, "schema.prisma");
-path.join(process.cwd(), "packages/notifapi/prisma/generated/client/schema.prisma")
+path.join(process.cwd(), "prisma/generated/client/schema.prisma")
