@@ -1,7 +1,7 @@
 {
   "name": "@notifycomp/frontend-common",
   "version": "0.0.1",
-  "description": "> TODO: description",
+  "description": "Shared utilities for competition schedule frontends",
   "author": "Choover <choover11@gmail.com>",
   "homepage": "https://github.com/coder13/competition-schedule-live#readme",
   "license": "ISC",
