@@ -73,3 +73,59 @@ graph TD
     J --> K[(Their database)]
     end
 ```
+
+## Getting Started
+
+This repository is managed with **Yarn workspaces** and **Lerna**. You will need
+Node.js 16 (see `.nvmrc`) and Yarn 1 installed.
+
+1. Install dependencies and bootstrap all packages:
+   ```bash
+   yarn install
+   ```
+2. Start the databases required by the services:
+   ```bash
+   docker-compose up -d
+   ```
+   This launches `api` on port `5432` and `notifapi` on port `5433`.
+3. Run every package in development mode:
+   ```bash
+   yarn dev
+   ```
+   Individual apps can be started with `yarn dev:webapp`, `yarn dev:www`,
+   `yarn dev:projector` and `yarn dev:admin`.
+4. Copy the sample environment files when present. For example the webapp has
+   `src/.env.development.local.sample` which should be copied to
+   `src/.env.development.local`.
+
+The GraphQL API will be available on port `8080` once the server package starts
+and Vite will launch the frontend apps on their respective ports.
+
+### Generating JWT keys
+
+The API signs tokens using an RSA key pair. You can either expose the keys via
+the `PRIVATE_KEY` and `PUBLIC_KEY` environment variables or place `private.key`
+and `public.key` files in the `packages/server` directory.
+
+```bash
+# create a private key
+openssl genrsa -out packages/server/private.key 2048
+
+# create the matching public key
+openssl rsa -in packages/server/private.key -pubout -out packages/server/public.key
+```
+
+If the environment variables are present they will be used instead of the local
+files when the server starts.
+
+## Contributing
+
+Formatting is handled by **Prettier** and the pre-commit hook runs
+`lerna run lint`. Before opening a pull request run:
+
+```bash
+npx lerna run lint
+```
+
+Feel free to open issues or pull requests against the `main` branch once your
+changes are tested locally.
