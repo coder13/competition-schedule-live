@@ -106,3 +106,5 @@ dist
 *.key
 
 *.local
+
+generated/client

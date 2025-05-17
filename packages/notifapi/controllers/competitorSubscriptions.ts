@@ -1,6 +1,6 @@
 import prisma from '../db';
 
-export const getCompetitorSubscriptions = (
+export const getCompetitorSubscriptions = async (
   userId: number,
   verified?: boolean
 ) =>

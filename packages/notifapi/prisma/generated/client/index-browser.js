@@ -4,7 +4,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const {
   Decimal,
   objectEnumValues,
-  makeStrictEnum
+  makeStrictEnum,
+  Public,
 } = require('./runtime/index-browser')
 
 
@@ -13,12 +14,12 @@ const Prisma = {}
 exports.Prisma = Prisma
 
 /**
- * Prisma Client JS version: 4.8.1
- * Query Engine version: d6e67a83f971b175a593ccc12e15c4a757f93ffe
+ * Prisma Client JS version: 4.16.2
+ * Query Engine version: 4bc8b6e1b66cb932731fb1bdbbc550d1e010de81
  */
 Prisma.prismaVersion = {
-  client: "4.8.1",
-  engine: "d6e67a83f971b175a593ccc12e15c4a757f93ffe"
+  client: "4.16.2",
+  engine: "4bc8b6e1b66cb932731fb1bdbbc550d1e010de81"
 }
 
 Prisma.PrismaClientKnownRequestError = () => {
@@ -66,8 +67,19 @@ Prisma.raw = () => {
   throw new Error(`raw is unable to be run in the browser.
 In case this error is unexpected for you, please report it in https://github.com/prisma/prisma/issues`,
 )}
-Prisma.validator = () => (val) => val
+Prisma.validator = Public.validator
 
+/**
+* Extensions
+*/
+Prisma.getExtensionContext = () => {
+  throw new Error(`Extensions.getExtensionContext is unable to be run in the browser.
+In case this error is unexpected for you, please report it in https://github.com/prisma/prisma/issues`,
+)}
+Prisma.defineExtension = () => {
+  throw new Error(`Extensions.defineExtension is unable to be run in the browser.
+In case this error is unexpected for you, please report it in https://github.com/prisma/prisma/issues`,
+)}
 
 /**
  * Shorthand utilities for JSON filtering
@@ -85,62 +97,6 @@ Prisma.NullTypes = {
 /**
  * Enums
  */
-// Based on
-// https://github.com/microsoft/TypeScript/issues/3192#issuecomment-261720275
-function makeEnum(x) { return x; }
-
-exports.Prisma.AuditLogScalarFieldEnum = makeEnum({
-  id: 'id',
-  action: 'action',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  userId: 'userId',
-  competitionId: 'competitionId'
-});
-
-exports.Prisma.CompetitionSidScalarFieldEnum = makeEnum({
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  competitionId: 'competitionId',
-  sid: 'sid'
-});
-
-exports.Prisma.CompetitionSubscriptionScalarFieldEnum = makeEnum({
-  id: 'id',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  userId: 'userId',
-  competitionId: 'competitionId',
-  type: 'type',
-  value: 'value'
-});
-
-exports.Prisma.CompetitorSubscriptionScalarFieldEnum = makeEnum({
-  id: 'id',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  userId: 'userId',
-  wcaUserId: 'wcaUserId',
-  verified: 'verified',
-  code: 'code'
-});
-
-exports.Prisma.QueryMode = makeEnum({
-  default: 'default',
-  insensitive: 'insensitive'
-});
-
-exports.Prisma.SessionScalarFieldEnum = makeEnum({
-  id: 'id',
-  sid: 'sid',
-  data: 'data',
-  expiresAt: 'expiresAt'
-});
-
-exports.Prisma.SortOrder = makeEnum({
-  asc: 'asc',
-  desc: 'desc'
-});
 
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   ReadUncommitted: 'ReadUncommitted',
@@ -149,23 +105,76 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.UserScalarFieldEnum = makeEnum({
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  action: 'action',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId',
+  competitionId: 'competitionId'
+};
+
+exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   phoneNumber: 'phoneNumber'
-});
-exports.CompetitionSubscriptionType = makeEnum({
+};
+
+exports.Prisma.SessionScalarFieldEnum = {
+  id: 'id',
+  sid: 'sid',
+  data: 'data',
+  expiresAt: 'expiresAt'
+};
+
+exports.Prisma.CompetitionSubscriptionScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId',
+  competitionId: 'competitionId',
+  type: 'type',
+  value: 'value'
+};
+
+exports.Prisma.CompetitorSubscriptionScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId',
+  wcaUserId: 'wcaUserId',
+  verified: 'verified',
+  code: 'code'
+};
+
+exports.Prisma.CompetitionSidScalarFieldEnum = {
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  competitionId: 'competitionId',
+  sid: 'sid'
+};
+
+exports.Prisma.SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+exports.CompetitionSubscriptionType = {
   activity: 'activity',
   competitor: 'competitor'
-});
+};
 
-exports.Prisma.ModelName = makeEnum({
+exports.Prisma.ModelName = {
   AuditLog: 'AuditLog',
   User: 'User',
   Session: 'Session',
   CompetitionSubscription: 'CompetitionSubscription',
   CompetitorSubscription: 'CompetitorSubscription',
   CompetitionSid: 'CompetitionSid'
-});
+};
 
 /**
  * Create the Client

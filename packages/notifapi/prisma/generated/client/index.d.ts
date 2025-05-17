@@ -3,94 +3,137 @@
  * Client
 **/
 
-import * as runtime from './runtime/index';
-declare const prisma: unique symbol
-export type PrismaPromise<A> = Promise<A> & {[prisma]: true}
-type UnwrapPromise<P extends any> = P extends Promise<infer R> ? R : P
-type UnwrapTuple<Tuple extends readonly unknown[]> = {
-  [K in keyof Tuple]: K extends `${number}` ? Tuple[K] extends PrismaPromise<infer X> ? X : UnwrapPromise<Tuple[K]> : UnwrapPromise<Tuple[K]>
-};
+import * as runtime from './runtime/library';
+import $Types = runtime.Types // general types
+import $Public = runtime.Types.Public
+import $Utils = runtime.Types.Utils
+import $Extensions = runtime.Types.Extensions
 
+export type PrismaPromise<T> = $Public.PrismaPromise<T>
+
+
+export type AuditLogPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "AuditLog"
+  objects: {
+    user: UserPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    action: string
+    createdAt: Date
+    updatedAt: Date
+    userId: number
+    competitionId: string
+  }, ExtArgs["result"]["auditLog"]>
+  composites: {}
+}
 
 /**
  * Model AuditLog
  * 
  */
-export type AuditLog = {
-  id: number
-  action: string
-  createdAt: Date
-  updatedAt: Date
-  userId: number
-  competitionId: string
+export type AuditLog = runtime.Types.DefaultSelection<AuditLogPayload>
+export type UserPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "User"
+  objects: {
+    AuditLog: AuditLogPayload<ExtArgs>[]
+    CompetitionSubscription: CompetitionSubscriptionPayload<ExtArgs>[]
+    CompetitorSubscription: CompetitorSubscriptionPayload<ExtArgs>[]
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    phoneNumber: string
+  }, ExtArgs["result"]["user"]>
+  composites: {}
 }
 
 /**
  * Model User
  * 
  */
-export type User = {
-  id: number
-  phoneNumber: string
+export type User = runtime.Types.DefaultSelection<UserPayload>
+export type SessionPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "Session"
+  objects: {}
+  scalars: $Extensions.GetResult<{
+    id: string
+    sid: string
+    data: string
+    expiresAt: Date
+  }, ExtArgs["result"]["session"]>
+  composites: {}
 }
 
 /**
  * Model Session
  * 
  */
-export type Session = {
-  id: string
-  sid: string
-  data: string
-  expiresAt: Date
+export type Session = runtime.Types.DefaultSelection<SessionPayload>
+export type CompetitionSubscriptionPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "CompetitionSubscription"
+  objects: {
+    user: UserPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    userId: number
+    competitionId: string
+    type: CompetitionSubscriptionType
+    value: string
+  }, ExtArgs["result"]["competitionSubscription"]>
+  composites: {}
 }
 
 /**
  * Model CompetitionSubscription
  * 
  */
-export type CompetitionSubscription = {
-  id: number
-  createdAt: Date
-  updatedAt: Date
-  userId: number
-  competitionId: string
-  type: CompetitionSubscriptionType
-  value: string
+export type CompetitionSubscription = runtime.Types.DefaultSelection<CompetitionSubscriptionPayload>
+export type CompetitorSubscriptionPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "CompetitorSubscription"
+  objects: {
+    user: UserPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    userId: number
+    wcaUserId: number
+    verified: boolean
+    code: string
+  }, ExtArgs["result"]["competitorSubscription"]>
+  composites: {}
 }
 
 /**
  * Model CompetitorSubscription
  * 
  */
-export type CompetitorSubscription = {
-  id: number
-  createdAt: Date
-  updatedAt: Date
-  userId: number
-  wcaUserId: number
-  verified: boolean
-  code: string
+export type CompetitorSubscription = runtime.Types.DefaultSelection<CompetitorSubscriptionPayload>
+export type CompetitionSidPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "CompetitionSid"
+  objects: {}
+  scalars: $Extensions.GetResult<{
+    createdAt: Date
+    updatedAt: Date
+    competitionId: string
+    sid: string
+  }, ExtArgs["result"]["competitionSid"]>
+  composites: {}
 }
 
 /**
  * Model CompetitionSid
  * 
  */
-export type CompetitionSid = {
-  createdAt: Date
-  updatedAt: Date
-  competitionId: string
-  sid: string
-}
-
+export type CompetitionSid = runtime.Types.DefaultSelection<CompetitionSidPayload>
 
 /**
  * Enums
  */
-
-// Based on
-// https://github.com/microsoft/TypeScript/issues/3192#issuecomment-261720275
 
 export const CompetitionSubscriptionType: {
   activity: 'activity',
@@ -119,8 +162,11 @@ export class PrismaClient<
   U = 'log' extends keyof T ? T['log'] extends Array<Prisma.LogLevel | Prisma.LogDefinition> ? Prisma.GetEvents<T['log']> : never : never,
   GlobalReject extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined = 'rejectOnNotFound' extends keyof T
     ? T['rejectOnNotFound']
-    : false
-      > {
+    : false,
+  ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs
+> {
+  [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['other'] }
+
     /**
    * ##  Prisma Client ʲˢ
    * 
@@ -151,6 +197,8 @@ export class PrismaClient<
 
   /**
    * Add a middleware
+   * @deprecated since 4.16.0. For new code, prefer client extensions instead.
+   * @see https://pris.ly/d/extensions
    */
   $use(cb: Prisma.Middleware): void
 
@@ -163,7 +211,7 @@ export class PrismaClient<
    * 
    * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
    */
-  $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): PrismaPromise<number>;
+  $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<number>;
 
   /**
    * Executes a raw query and returns the number of affected rows.
@@ -175,7 +223,7 @@ export class PrismaClient<
    * 
    * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
    */
-  $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): PrismaPromise<number>;
+  $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
 
   /**
    * Performs a prepared raw query and returns the `SELECT` data.
@@ -186,7 +234,7 @@ export class PrismaClient<
    * 
    * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
    */
-  $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): PrismaPromise<T>;
+  $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<T>;
 
   /**
    * Performs a raw query and returns the `SELECT` data.
@@ -198,7 +246,7 @@ export class PrismaClient<
    * 
    * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
    */
-  $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): PrismaPromise<T>;
+  $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
 
   /**
    * Allows the running of a sequence of read/write operations that are guaranteed to either succeed or fail as a whole.
@@ -213,9 +261,12 @@ export class PrismaClient<
    * 
    * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/transactions).
    */
-  $transaction<P extends PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): Promise<UnwrapTuple<P>>;
+  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): Promise<runtime.Types.Utils.UnwrapTuple<P>>
 
-  $transaction<R>(fn: (prisma: Prisma.TransactionClient) => Promise<R>, options?: {maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel}): Promise<R>;
+  $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => Promise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): Promise<R>
+
+
+  $extends: $Extensions.ExtendsHook<'extends', Prisma.TypeMapCb, ExtArgs>
 
       /**
    * `prisma.auditLog`: Exposes CRUD operations for the **AuditLog** model.
@@ -225,7 +276,7 @@ export class PrismaClient<
     * const auditLogs = await prisma.auditLog.findMany()
     * ```
     */
-  get auditLog(): Prisma.AuditLogDelegate<GlobalReject>;
+  get auditLog(): Prisma.AuditLogDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.user`: Exposes CRUD operations for the **User** model.
@@ -235,7 +286,7 @@ export class PrismaClient<
     * const users = await prisma.user.findMany()
     * ```
     */
-  get user(): Prisma.UserDelegate<GlobalReject>;
+  get user(): Prisma.UserDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.session`: Exposes CRUD operations for the **Session** model.
@@ -245,7 +296,7 @@ export class PrismaClient<
     * const sessions = await prisma.session.findMany()
     * ```
     */
-  get session(): Prisma.SessionDelegate<GlobalReject>;
+  get session(): Prisma.SessionDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.competitionSubscription`: Exposes CRUD operations for the **CompetitionSubscription** model.
@@ -255,7 +306,7 @@ export class PrismaClient<
     * const competitionSubscriptions = await prisma.competitionSubscription.findMany()
     * ```
     */
-  get competitionSubscription(): Prisma.CompetitionSubscriptionDelegate<GlobalReject>;
+  get competitionSubscription(): Prisma.CompetitionSubscriptionDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.competitorSubscription`: Exposes CRUD operations for the **CompetitorSubscription** model.
@@ -265,7 +316,7 @@ export class PrismaClient<
     * const competitorSubscriptions = await prisma.competitorSubscription.findMany()
     * ```
     */
-  get competitorSubscription(): Prisma.CompetitorSubscriptionDelegate<GlobalReject>;
+  get competitorSubscription(): Prisma.CompetitorSubscriptionDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.competitionSid`: Exposes CRUD operations for the **CompetitionSid** model.
@@ -275,11 +326,18 @@ export class PrismaClient<
     * const competitionSids = await prisma.competitionSid.findMany()
     * ```
     */
-  get competitionSid(): Prisma.CompetitionSidDelegate<GlobalReject>;
+  get competitionSid(): Prisma.CompetitionSidDelegate<GlobalReject, ExtArgs>;
 }
 
 export namespace Prisma {
   export import DMMF = runtime.DMMF
+
+  export type PrismaPromise<T> = $Public.PrismaPromise<T>
+
+  /**
+   * Validator
+   */
+  export import validator = runtime.Public.validator
 
   /**
    * Prisma Errors
@@ -315,10 +373,19 @@ export namespace Prisma {
   export type MetricHistogram = runtime.MetricHistogram
   export type MetricHistogramBucket = runtime.MetricHistogramBucket
 
+  /**
+  * Extensions
+  */
+  export type Extension = $Extensions.UserArgs
+  export import getExtensionContext = runtime.Extensions.getExtensionContext
+  export type Args<T, F extends $Public.Operation> = $Public.Args<T, F>
+  export type Payload<T, F extends $Public.Operation> = $Public.Payload<T, F>
+  export type Result<T, A, F extends $Public.Operation> = $Public.Result<T, A, F>
+  export type Exact<T, W> = $Public.Exact<T, W>
 
   /**
-   * Prisma Client JS version: 4.8.1
-   * Query Engine version: d6e67a83f971b175a593ccc12e15c4a757f93ffe
+   * Prisma Client JS version: 4.16.2
+   * Query Engine version: 4bc8b6e1b66cb932731fb1bdbbc550d1e010de81
    */
   export type PrismaVersion = {
     client: string
@@ -682,19 +749,11 @@ export namespace Prisma {
 
   export type Keys<U extends Union> = U extends unknown ? keyof U : never
 
-  type Exact<A, W = unknown> = 
-  W extends unknown ? A extends Narrowable ? Cast<A, W> : Cast<
-  {[K in keyof A]: K extends keyof W ? Exact<A[K], W[K]> : never},
-  {[K in keyof W]: K extends keyof A ? Exact<A[K], W[K]> : W[K]}>
-  : never;
-
-  type Narrowable = string | number | boolean | bigint;
-
   type Cast<A, B> = A extends B ? A : B;
 
   export const type: unique symbol;
 
-  export function validator<V>(): <S>(select: Exact<S, V>) => S;
+
 
   /**
    * Used by group by
@@ -749,15 +808,6 @@ export namespace Prisma {
 
   type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRef<Model, FieldType>
 
-  class PrismaClientFetcher {
-    private readonly prisma;
-    private readonly debug;
-    private readonly hooks?;
-    constructor(prisma: PrismaClient<any, any>, debug?: boolean, hooks?: Hooks | undefined);
-    request<T>(document: any, dataPath?: string[], rootField?: string, typeName?: string, isList?: boolean, callsite?: string): Promise<T>;
-    sanitizeMessage(message: string): string;
-    protected unpack(document: any, data: any, path: string[], rootField?: string, isList?: boolean): any;
-  }
 
   export const ModelName: {
     AuditLog: 'AuditLog',
@@ -775,6 +825,432 @@ export namespace Prisma {
     db?: Datasource
   }
 
+
+  interface TypeMapCb extends $Utils.Fn<{extArgs: $Extensions.Args}, $Utils.Record<string, any>> {
+    returns: Prisma.TypeMap<this['params']['extArgs']>
+  }
+
+  export type TypeMap<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    meta: {
+      modelProps: 'auditLog' | 'user' | 'session' | 'competitionSubscription' | 'competitorSubscription' | 'competitionSid'
+      txIsolationLevel: Prisma.TransactionIsolationLevel
+    },
+    model: {
+      AuditLog: {
+        payload: AuditLogPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.AuditLogFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AuditLogFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload>
+          }
+          findFirst: {
+            args: Prisma.AuditLogFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AuditLogFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload>
+          }
+          findMany: {
+            args: Prisma.AuditLogFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload>[]
+          }
+          create: {
+            args: Prisma.AuditLogCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload>
+          }
+          createMany: {
+            args: Prisma.AuditLogCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.AuditLogDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload>
+          }
+          update: {
+            args: Prisma.AuditLogUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.AuditLogDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AuditLogUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.AuditLogUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AuditLogPayload>
+          }
+          aggregate: {
+            args: Prisma.AuditLogAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateAuditLog>
+          }
+          groupBy: {
+            args: Prisma.AuditLogGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<AuditLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AuditLogCountArgs<ExtArgs>,
+            result: $Utils.Optional<AuditLogCountAggregateOutputType> | number
+          }
+        }
+      }
+      User: {
+        payload: UserPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.UserFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload>
+          }
+          findFirst: {
+            args: Prisma.UserFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload>
+          }
+          findMany: {
+            args: Prisma.UserFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload>[]
+          }
+          create: {
+            args: Prisma.UserCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload>
+          }
+          createMany: {
+            args: Prisma.UserCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.UserDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload>
+          }
+          update: {
+            args: Prisma.UserUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.UserUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<UserPayload>
+          }
+          aggregate: {
+            args: Prisma.UserAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateUser>
+          }
+          groupBy: {
+            args: Prisma.UserGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<UserGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserCountArgs<ExtArgs>,
+            result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      Session: {
+        payload: SessionPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.SessionFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SessionFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload>
+          }
+          findFirst: {
+            args: Prisma.SessionFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SessionFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload>
+          }
+          findMany: {
+            args: Prisma.SessionFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload>[]
+          }
+          create: {
+            args: Prisma.SessionCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload>
+          }
+          createMany: {
+            args: Prisma.SessionCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.SessionDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload>
+          }
+          update: {
+            args: Prisma.SessionUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload>
+          }
+          deleteMany: {
+            args: Prisma.SessionDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SessionUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.SessionUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<SessionPayload>
+          }
+          aggregate: {
+            args: Prisma.SessionAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateSession>
+          }
+          groupBy: {
+            args: Prisma.SessionGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<SessionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SessionCountArgs<ExtArgs>,
+            result: $Utils.Optional<SessionCountAggregateOutputType> | number
+          }
+        }
+      }
+      CompetitionSubscription: {
+        payload: CompetitionSubscriptionPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.CompetitionSubscriptionFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CompetitionSubscriptionFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload>
+          }
+          findFirst: {
+            args: Prisma.CompetitionSubscriptionFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CompetitionSubscriptionFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload>
+          }
+          findMany: {
+            args: Prisma.CompetitionSubscriptionFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload>[]
+          }
+          create: {
+            args: Prisma.CompetitionSubscriptionCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload>
+          }
+          createMany: {
+            args: Prisma.CompetitionSubscriptionCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.CompetitionSubscriptionDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload>
+          }
+          update: {
+            args: Prisma.CompetitionSubscriptionUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload>
+          }
+          deleteMany: {
+            args: Prisma.CompetitionSubscriptionDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CompetitionSubscriptionUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.CompetitionSubscriptionUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSubscriptionPayload>
+          }
+          aggregate: {
+            args: Prisma.CompetitionSubscriptionAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateCompetitionSubscription>
+          }
+          groupBy: {
+            args: Prisma.CompetitionSubscriptionGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<CompetitionSubscriptionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CompetitionSubscriptionCountArgs<ExtArgs>,
+            result: $Utils.Optional<CompetitionSubscriptionCountAggregateOutputType> | number
+          }
+        }
+      }
+      CompetitorSubscription: {
+        payload: CompetitorSubscriptionPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.CompetitorSubscriptionFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CompetitorSubscriptionFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload>
+          }
+          findFirst: {
+            args: Prisma.CompetitorSubscriptionFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CompetitorSubscriptionFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload>
+          }
+          findMany: {
+            args: Prisma.CompetitorSubscriptionFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload>[]
+          }
+          create: {
+            args: Prisma.CompetitorSubscriptionCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload>
+          }
+          createMany: {
+            args: Prisma.CompetitorSubscriptionCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.CompetitorSubscriptionDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload>
+          }
+          update: {
+            args: Prisma.CompetitorSubscriptionUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload>
+          }
+          deleteMany: {
+            args: Prisma.CompetitorSubscriptionDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CompetitorSubscriptionUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.CompetitorSubscriptionUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitorSubscriptionPayload>
+          }
+          aggregate: {
+            args: Prisma.CompetitorSubscriptionAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateCompetitorSubscription>
+          }
+          groupBy: {
+            args: Prisma.CompetitorSubscriptionGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<CompetitorSubscriptionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CompetitorSubscriptionCountArgs<ExtArgs>,
+            result: $Utils.Optional<CompetitorSubscriptionCountAggregateOutputType> | number
+          }
+        }
+      }
+      CompetitionSid: {
+        payload: CompetitionSidPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.CompetitionSidFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CompetitionSidFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload>
+          }
+          findFirst: {
+            args: Prisma.CompetitionSidFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CompetitionSidFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload>
+          }
+          findMany: {
+            args: Prisma.CompetitionSidFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload>[]
+          }
+          create: {
+            args: Prisma.CompetitionSidCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload>
+          }
+          createMany: {
+            args: Prisma.CompetitionSidCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.CompetitionSidDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload>
+          }
+          update: {
+            args: Prisma.CompetitionSidUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload>
+          }
+          deleteMany: {
+            args: Prisma.CompetitionSidDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CompetitionSidUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.CompetitionSidUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<CompetitionSidPayload>
+          }
+          aggregate: {
+            args: Prisma.CompetitionSidAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateCompetitionSid>
+          }
+          groupBy: {
+            args: Prisma.CompetitionSidGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<CompetitionSidGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CompetitionSidCountArgs<ExtArgs>,
+            result: $Utils.Optional<CompetitionSidCountAggregateOutputType> | number
+          }
+        }
+      }
+    }
+  } & {
+    other: {
+      payload: any
+      operations: {
+        $executeRawUnsafe: {
+          args: [query: string, ...values: any[]],
+          result: any
+        }
+        $executeRaw: {
+          args: [query: TemplateStringsArray | Prisma.Sql, ...values: any[]],
+          result: any
+        }
+        $queryRawUnsafe: {
+          args: [query: string, ...values: any[]],
+          result: any
+        }
+        $queryRaw: {
+          args: [query: TemplateStringsArray | Prisma.Sql, ...values: any[]],
+          result: any
+        }
+      }
+    }
+  }
+  export const defineExtension: $Extensions.ExtendsHook<'define', Prisma.TypeMapCb, $Extensions.DefaultArgs>
   export type DefaultPrismaClient = PrismaClient
   export type RejectOnNotFound = boolean | ((error: Error) => Error)
   export type RejectPerModel = { [P in ModelName]?: RejectOnNotFound }
@@ -842,10 +1318,6 @@ export namespace Prisma {
      * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/logging#the-log-option).
      */
     log?: Array<LogLevel | LogDefinition>
-  }
-
-  export type Hooks = {
-    beforeRequest?: (options: { query: string, path: string[], rootField?: string, typeName?: string, document: any }) => any
   }
 
   /* Types for Logging */
@@ -919,7 +1391,7 @@ export namespace Prisma {
   /**
    * `PrismaClient` proxy available in interactive transactions.
    */
-  export type TransactionClient = Omit<Prisma.DefaultPrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>
+  export type TransactionClient = Omit<Prisma.DefaultPrismaClient, runtime.ITXClientDenyList>
 
   export type Datasource = {
     url?: string
@@ -941,39 +1413,46 @@ export namespace Prisma {
     CompetitorSubscription: number
   }
 
-  export type UserCountOutputTypeSelect = {
-    AuditLog?: boolean
-    CompetitionSubscription?: boolean
-    CompetitorSubscription?: boolean
+  export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    AuditLog?: boolean | UserCountOutputTypeCountAuditLogArgs
+    CompetitionSubscription?: boolean | UserCountOutputTypeCountCompetitionSubscriptionArgs
+    CompetitorSubscription?: boolean | UserCountOutputTypeCountCompetitorSubscriptionArgs
   }
-
-  export type UserCountOutputTypeGetPayload<S extends boolean | null | undefined | UserCountOutputTypeArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? UserCountOutputType :
-    S extends undefined ? never :
-    S extends { include: any } & (UserCountOutputTypeArgs)
-    ? UserCountOutputType 
-    : S extends { select: any } & (UserCountOutputTypeArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-    P extends keyof UserCountOutputType ? UserCountOutputType[P] : never
-  } 
-      : UserCountOutputType
-
-
-
 
   // Custom InputTypes
 
   /**
    * UserCountOutputType without action
    */
-  export type UserCountOutputTypeArgs = {
+  export type UserCountOutputTypeArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the UserCountOutputType
-     * 
-    **/
-    select?: UserCountOutputTypeSelect | null
+     */
+    select?: UserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountAuditLogArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: AuditLogWhereInput
+  }
+
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCompetitionSubscriptionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: CompetitionSubscriptionWhereInput
+  }
+
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCompetitorSubscriptionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: CompetitorSubscriptionWhereInput
   }
 
 
@@ -1072,39 +1551,34 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type AuditLogAggregateArgs = {
+  export type AuditLogAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which AuditLog to aggregate.
-     * 
-    **/
+     */
     where?: AuditLogWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of AuditLogs to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<AuditLogOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
-     * 
-    **/
+     */
     cursor?: AuditLogWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` AuditLogs from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` AuditLogs.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
@@ -1149,10 +1623,10 @@ export namespace Prisma {
 
 
 
-  export type AuditLogGroupByArgs = {
+  export type AuditLogGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: AuditLogWhereInput
     orderBy?: Enumerable<AuditLogOrderByWithAggregationInput>
-    by: Array<AuditLogScalarFieldEnum>
+    by: AuditLogScalarFieldEnum[]
     having?: AuditLogScalarWhereWithAggregatesInput
     take?: number
     skip?: number
@@ -1178,7 +1652,7 @@ export namespace Prisma {
     _max: AuditLogMaxAggregateOutputType | null
   }
 
-  type GetAuditLogGroupByPayload<T extends AuditLogGroupByArgs> = PrismaPromise<
+  type GetAuditLogGroupByPayload<T extends AuditLogGroupByArgs> = Prisma.PrismaPromise<
     Array<
       PickArray<AuditLogGroupByOutputType, T['by']> &
         {
@@ -1192,45 +1666,39 @@ export namespace Prisma {
     >
 
 
-  export type AuditLogSelect = {
+  export type AuditLogSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     action?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     userId?: boolean
     competitionId?: boolean
-    user?: boolean | UserArgs
+    user?: boolean | UserArgs<ExtArgs>
+  }, ExtArgs["result"]["auditLog"]>
+
+  export type AuditLogSelectScalar = {
+    id?: boolean
+    action?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    userId?: boolean
+    competitionId?: boolean
+  }
+
+  export type AuditLogInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    user?: boolean | UserArgs<ExtArgs>
   }
 
 
-  export type AuditLogInclude = {
-    user?: boolean | UserArgs
-  } 
+  type AuditLogGetPayload<S extends boolean | null | undefined | AuditLogArgs> = $Types.GetResult<AuditLogPayload, S>
 
-  export type AuditLogGetPayload<S extends boolean | null | undefined | AuditLogArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? AuditLog :
-    S extends undefined ? never :
-    S extends { include: any } & (AuditLogArgs | AuditLogFindManyArgs)
-    ? AuditLog  & {
-    [P in TruthyKeys<S['include']>]:
-        P extends 'user' ? UserGetPayload<S['include'][P]> :  never
-  } 
-    : S extends { select: any } & (AuditLogArgs | AuditLogFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-        P extends 'user' ? UserGetPayload<S['select'][P]> :  P extends keyof AuditLog ? AuditLog[P] : never
-  } 
-      : AuditLog
-
-
-  type AuditLogCountArgs = Merge<
+  type AuditLogCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<AuditLogFindManyArgs, 'select' | 'include'> & {
       select?: AuditLogCountAggregateInputType | true
     }
-  >
 
-  export interface AuditLogDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+  export interface AuditLogDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AuditLog'], meta: { name: 'AuditLog' } }
     /**
      * Find zero or one AuditLog that matches the filter.
      * @param {AuditLogFindUniqueArgs} args - Arguments to find a AuditLog
@@ -1242,9 +1710,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends AuditLogFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, AuditLogFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'AuditLog'> extends True ? Prisma__AuditLogClient<AuditLogGetPayload<T>> : Prisma__AuditLogClient<AuditLogGetPayload<T> | null, null>
+    findUnique<T extends AuditLogFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, AuditLogFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'AuditLog'> extends True ? Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one AuditLog that matches the filter or throw an error  with `error.code='P2025'` 
@@ -1258,9 +1726,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends AuditLogFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, AuditLogFindUniqueOrThrowArgs>
-    ): Prisma__AuditLogClient<AuditLogGetPayload<T>>
+    findUniqueOrThrow<T extends AuditLogFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, AuditLogFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first AuditLog that matches the filter.
@@ -1275,9 +1743,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends AuditLogFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, AuditLogFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'AuditLog'> extends True ? Prisma__AuditLogClient<AuditLogGetPayload<T>> : Prisma__AuditLogClient<AuditLogGetPayload<T> | null, null>
+    findFirst<T extends AuditLogFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, AuditLogFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'AuditLog'> extends True ? Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first AuditLog that matches the filter or
@@ -1293,9 +1761,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends AuditLogFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, AuditLogFindFirstOrThrowArgs>
-    ): Prisma__AuditLogClient<AuditLogGetPayload<T>>
+    findFirstOrThrow<T extends AuditLogFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, AuditLogFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more AuditLogs that matches the filter.
@@ -1313,9 +1781,9 @@ export namespace Prisma {
      * const auditLogWithIdOnly = await prisma.auditLog.findMany({ select: { id: true } })
      * 
     **/
-    findMany<T extends AuditLogFindManyArgs>(
-      args?: SelectSubset<T, AuditLogFindManyArgs>
-    ): PrismaPromise<Array<AuditLogGetPayload<T>>>
+    findMany<T extends AuditLogFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AuditLogFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a AuditLog.
@@ -1329,9 +1797,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends AuditLogCreateArgs>(
-      args: SelectSubset<T, AuditLogCreateArgs>
-    ): Prisma__AuditLogClient<AuditLogGetPayload<T>>
+    create<T extends AuditLogCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, AuditLogCreateArgs<ExtArgs>>
+    ): Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many AuditLogs.
@@ -1345,9 +1813,9 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends AuditLogCreateManyArgs>(
-      args?: SelectSubset<T, AuditLogCreateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    createMany<T extends AuditLogCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AuditLogCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Delete a AuditLog.
@@ -1361,9 +1829,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends AuditLogDeleteArgs>(
-      args: SelectSubset<T, AuditLogDeleteArgs>
-    ): Prisma__AuditLogClient<AuditLogGetPayload<T>>
+    delete<T extends AuditLogDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, AuditLogDeleteArgs<ExtArgs>>
+    ): Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one AuditLog.
@@ -1380,9 +1848,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends AuditLogUpdateArgs>(
-      args: SelectSubset<T, AuditLogUpdateArgs>
-    ): Prisma__AuditLogClient<AuditLogGetPayload<T>>
+    update<T extends AuditLogUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, AuditLogUpdateArgs<ExtArgs>>
+    ): Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more AuditLogs.
@@ -1396,9 +1864,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends AuditLogDeleteManyArgs>(
-      args?: SelectSubset<T, AuditLogDeleteManyArgs>
-    ): PrismaPromise<BatchPayload>
+    deleteMany<T extends AuditLogDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AuditLogDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more AuditLogs.
@@ -1417,9 +1885,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends AuditLogUpdateManyArgs>(
-      args: SelectSubset<T, AuditLogUpdateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    updateMany<T extends AuditLogUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, AuditLogUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Create or update one AuditLog.
@@ -1438,9 +1906,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends AuditLogUpsertArgs>(
-      args: SelectSubset<T, AuditLogUpsertArgs>
-    ): Prisma__AuditLogClient<AuditLogGetPayload<T>>
+    upsert<T extends AuditLogUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, AuditLogUpsertArgs<ExtArgs>>
+    ): Prisma__AuditLogClient<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of AuditLogs.
@@ -1457,8 +1925,8 @@ export namespace Prisma {
     **/
     count<T extends AuditLogCountArgs>(
       args?: Subset<T, AuditLogCountArgs>,
-    ): PrismaPromise<
-      T extends _Record<'select', any>
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], AuditLogCountAggregateOutputType>
@@ -1489,7 +1957,7 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends AuditLogAggregateArgs>(args: Subset<T, AuditLogAggregateArgs>): PrismaPromise<GetAuditLogAggregateType<T>>
+    aggregate<T extends AuditLogAggregateArgs>(args: Subset<T, AuditLogAggregateArgs>): Prisma.PrismaPromise<GetAuditLogAggregateType<T>>
 
     /**
      * Group by AuditLog.
@@ -1566,7 +2034,7 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, AuditLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAuditLogGroupByPayload<T> : PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, AuditLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAuditLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
 
   }
 
@@ -1576,10 +2044,8 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__AuditLogClient<T, Null = never> implements PrismaPromise<T> {
-    [prisma]: true;
+  export class Prisma__AuditLogClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
-    private readonly _fetcher;
     private readonly _queryType;
     private readonly _rootField;
     private readonly _clientMethod;
@@ -1590,10 +2056,10 @@ export namespace Prisma {
     private _isList;
     private _callsite;
     private _requestPromise?;
-    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
-    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    user<T extends UserArgs= {}>(args?: Subset<T, UserArgs>): Prisma__UserClient<UserGetPayload<T> | Null>;
+    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
     private get _document();
     /**
@@ -1625,28 +2091,25 @@ export namespace Prisma {
   /**
    * AuditLog base type for findUnique actions
    */
-  export type AuditLogFindUniqueArgsBase = {
+  export type AuditLogFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * Filter, which AuditLog to fetch.
-     * 
-    **/
+     */
     where: AuditLogWhereUniqueInput
   }
 
   /**
    * AuditLog findUnique
    */
-  export interface AuditLogFindUniqueArgs extends AuditLogFindUniqueArgsBase {
+  export interface AuditLogFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends AuditLogFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -1658,21 +2121,18 @@ export namespace Prisma {
   /**
    * AuditLog findUniqueOrThrow
    */
-  export type AuditLogFindUniqueOrThrowArgs = {
+  export type AuditLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * Filter, which AuditLog to fetch.
-     * 
-    **/
+     */
     where: AuditLogWhereUniqueInput
   }
 
@@ -1680,63 +2140,55 @@ export namespace Prisma {
   /**
    * AuditLog base type for findFirst actions
    */
-  export type AuditLogFindFirstArgsBase = {
+  export type AuditLogFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * Filter, which AuditLog to fetch.
-     * 
-    **/
+     */
     where?: AuditLogWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of AuditLogs to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<AuditLogOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for AuditLogs.
-     * 
-    **/
+     */
     cursor?: AuditLogWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` AuditLogs from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` AuditLogs.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of AuditLogs.
-     * 
-    **/
+     */
     distinct?: Enumerable<AuditLogScalarFieldEnum>
   }
 
   /**
    * AuditLog findFirst
    */
-  export interface AuditLogFindFirstArgs extends AuditLogFindFirstArgsBase {
+  export interface AuditLogFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends AuditLogFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -1748,56 +2200,48 @@ export namespace Prisma {
   /**
    * AuditLog findFirstOrThrow
    */
-  export type AuditLogFindFirstOrThrowArgs = {
+  export type AuditLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * Filter, which AuditLog to fetch.
-     * 
-    **/
+     */
     where?: AuditLogWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of AuditLogs to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<AuditLogOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for AuditLogs.
-     * 
-    **/
+     */
     cursor?: AuditLogWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` AuditLogs from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` AuditLogs.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of AuditLogs.
-     * 
-    **/
+     */
     distinct?: Enumerable<AuditLogScalarFieldEnum>
   }
 
@@ -1805,49 +2249,42 @@ export namespace Prisma {
   /**
    * AuditLog findMany
    */
-  export type AuditLogFindManyArgs = {
+  export type AuditLogFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * Filter, which AuditLogs to fetch.
-     * 
-    **/
+     */
     where?: AuditLogWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of AuditLogs to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<AuditLogOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for listing AuditLogs.
-     * 
-    **/
+     */
     cursor?: AuditLogWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` AuditLogs from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` AuditLogs.
-     * 
-    **/
+     */
     skip?: number
     distinct?: Enumerable<AuditLogScalarFieldEnum>
   }
@@ -1856,21 +2293,18 @@ export namespace Prisma {
   /**
    * AuditLog create
    */
-  export type AuditLogCreateArgs = {
+  export type AuditLogCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * The data needed to create a AuditLog.
-     * 
-    **/
+     */
     data: XOR<AuditLogCreateInput, AuditLogUncheckedCreateInput>
   }
 
@@ -1878,11 +2312,10 @@ export namespace Prisma {
   /**
    * AuditLog createMany
    */
-  export type AuditLogCreateManyArgs = {
+  export type AuditLogCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many AuditLogs.
-     * 
-    **/
+     */
     data: Enumerable<AuditLogCreateManyInput>
     skipDuplicates?: boolean
   }
@@ -1891,26 +2324,22 @@ export namespace Prisma {
   /**
    * AuditLog update
    */
-  export type AuditLogUpdateArgs = {
+  export type AuditLogUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * The data needed to update a AuditLog.
-     * 
-    **/
+     */
     data: XOR<AuditLogUpdateInput, AuditLogUncheckedUpdateInput>
     /**
      * Choose, which AuditLog to update.
-     * 
-    **/
+     */
     where: AuditLogWhereUniqueInput
   }
 
@@ -1918,16 +2347,14 @@ export namespace Prisma {
   /**
    * AuditLog updateMany
    */
-  export type AuditLogUpdateManyArgs = {
+  export type AuditLogUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update AuditLogs.
-     * 
-    **/
+     */
     data: XOR<AuditLogUpdateManyMutationInput, AuditLogUncheckedUpdateManyInput>
     /**
      * Filter which AuditLogs to update
-     * 
-    **/
+     */
     where?: AuditLogWhereInput
   }
 
@@ -1935,31 +2362,26 @@ export namespace Prisma {
   /**
    * AuditLog upsert
    */
-  export type AuditLogUpsertArgs = {
+  export type AuditLogUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * The filter to search for the AuditLog to update in case it exists.
-     * 
-    **/
+     */
     where: AuditLogWhereUniqueInput
     /**
      * In case the AuditLog found by the `where` argument doesn't exist, create a new AuditLog with this data.
-     * 
-    **/
+     */
     create: XOR<AuditLogCreateInput, AuditLogUncheckedCreateInput>
     /**
      * In case the AuditLog was found with the provided `where` argument, update it with this data.
-     * 
-    **/
+     */
     update: XOR<AuditLogUpdateInput, AuditLogUncheckedUpdateInput>
   }
 
@@ -1967,21 +2389,18 @@ export namespace Prisma {
   /**
    * AuditLog delete
    */
-  export type AuditLogDeleteArgs = {
+  export type AuditLogDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     /**
      * Filter which AuditLog to delete.
-     * 
-    **/
+     */
     where: AuditLogWhereUniqueInput
   }
 
@@ -1989,11 +2408,10 @@ export namespace Prisma {
   /**
    * AuditLog deleteMany
    */
-  export type AuditLogDeleteManyArgs = {
+  export type AuditLogDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which AuditLogs to delete
-     * 
-    **/
+     */
     where?: AuditLogWhereInput
   }
 
@@ -2001,17 +2419,15 @@ export namespace Prisma {
   /**
    * AuditLog without action
    */
-  export type AuditLogArgs = {
+  export type AuditLogArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
   }
 
 
@@ -2078,39 +2494,34 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type UserAggregateArgs = {
+  export type UserAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which User to aggregate.
-     * 
-    **/
+     */
     where?: UserWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Users to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<UserOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
-     * 
-    **/
+     */
     cursor?: UserWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` Users from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` Users.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
@@ -2155,10 +2566,10 @@ export namespace Prisma {
 
 
 
-  export type UserGroupByArgs = {
+  export type UserGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: UserWhereInput
     orderBy?: Enumerable<UserOrderByWithAggregationInput>
-    by: Array<UserScalarFieldEnum>
+    by: UserScalarFieldEnum[]
     having?: UserScalarWhereWithAggregatesInput
     take?: number
     skip?: number
@@ -2180,7 +2591,7 @@ export namespace Prisma {
     _max: UserMaxAggregateOutputType | null
   }
 
-  type GetUserGroupByPayload<T extends UserGroupByArgs> = PrismaPromise<
+  type GetUserGroupByPayload<T extends UserGroupByArgs> = Prisma.PrismaPromise<
     Array<
       PickArray<UserGroupByOutputType, T['by']> &
         {
@@ -2194,53 +2605,37 @@ export namespace Prisma {
     >
 
 
-  export type UserSelect = {
+  export type UserSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     phoneNumber?: boolean
-    AuditLog?: boolean | User$AuditLogArgs
-    CompetitionSubscription?: boolean | User$CompetitionSubscriptionArgs
-    CompetitorSubscription?: boolean | User$CompetitorSubscriptionArgs
-    _count?: boolean | UserCountOutputTypeArgs
+    AuditLog?: boolean | User$AuditLogArgs<ExtArgs>
+    CompetitionSubscription?: boolean | User$CompetitionSubscriptionArgs<ExtArgs>
+    CompetitorSubscription?: boolean | User$CompetitorSubscriptionArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeArgs<ExtArgs>
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectScalar = {
+    id?: boolean
+    phoneNumber?: boolean
+  }
+
+  export type UserInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    AuditLog?: boolean | User$AuditLogArgs<ExtArgs>
+    CompetitionSubscription?: boolean | User$CompetitionSubscriptionArgs<ExtArgs>
+    CompetitorSubscription?: boolean | User$CompetitorSubscriptionArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeArgs<ExtArgs>
   }
 
 
-  export type UserInclude = {
-    AuditLog?: boolean | User$AuditLogArgs
-    CompetitionSubscription?: boolean | User$CompetitionSubscriptionArgs
-    CompetitorSubscription?: boolean | User$CompetitorSubscriptionArgs
-    _count?: boolean | UserCountOutputTypeArgs
-  } 
+  type UserGetPayload<S extends boolean | null | undefined | UserArgs> = $Types.GetResult<UserPayload, S>
 
-  export type UserGetPayload<S extends boolean | null | undefined | UserArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? User :
-    S extends undefined ? never :
-    S extends { include: any } & (UserArgs | UserFindManyArgs)
-    ? User  & {
-    [P in TruthyKeys<S['include']>]:
-        P extends 'AuditLog' ? Array < AuditLogGetPayload<S['include'][P]>>  :
-        P extends 'CompetitionSubscription' ? Array < CompetitionSubscriptionGetPayload<S['include'][P]>>  :
-        P extends 'CompetitorSubscription' ? Array < CompetitorSubscriptionGetPayload<S['include'][P]>>  :
-        P extends '_count' ? UserCountOutputTypeGetPayload<S['include'][P]> :  never
-  } 
-    : S extends { select: any } & (UserArgs | UserFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-        P extends 'AuditLog' ? Array < AuditLogGetPayload<S['select'][P]>>  :
-        P extends 'CompetitionSubscription' ? Array < CompetitionSubscriptionGetPayload<S['select'][P]>>  :
-        P extends 'CompetitorSubscription' ? Array < CompetitorSubscriptionGetPayload<S['select'][P]>>  :
-        P extends '_count' ? UserCountOutputTypeGetPayload<S['select'][P]> :  P extends keyof User ? User[P] : never
-  } 
-      : User
-
-
-  type UserCountArgs = Merge<
+  type UserCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<UserFindManyArgs, 'select' | 'include'> & {
       select?: UserCountAggregateInputType | true
     }
-  >
 
-  export interface UserDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+  export interface UserDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['User'], meta: { name: 'User' } }
     /**
      * Find zero or one User that matches the filter.
      * @param {UserFindUniqueArgs} args - Arguments to find a User
@@ -2252,9 +2647,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends UserFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, UserFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'User'> extends True ? Prisma__UserClient<UserGetPayload<T>> : Prisma__UserClient<UserGetPayload<T> | null, null>
+    findUnique<T extends UserFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, UserFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'User'> extends True ? Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one User that matches the filter or throw an error  with `error.code='P2025'` 
@@ -2268,9 +2663,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends UserFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, UserFindUniqueOrThrowArgs>
-    ): Prisma__UserClient<UserGetPayload<T>>
+    findUniqueOrThrow<T extends UserFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, UserFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first User that matches the filter.
@@ -2285,9 +2680,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends UserFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, UserFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'User'> extends True ? Prisma__UserClient<UserGetPayload<T>> : Prisma__UserClient<UserGetPayload<T> | null, null>
+    findFirst<T extends UserFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, UserFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'User'> extends True ? Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first User that matches the filter or
@@ -2303,9 +2698,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends UserFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, UserFindFirstOrThrowArgs>
-    ): Prisma__UserClient<UserGetPayload<T>>
+    findFirstOrThrow<T extends UserFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, UserFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more Users that matches the filter.
@@ -2323,9 +2718,9 @@ export namespace Prisma {
      * const userWithIdOnly = await prisma.user.findMany({ select: { id: true } })
      * 
     **/
-    findMany<T extends UserFindManyArgs>(
-      args?: SelectSubset<T, UserFindManyArgs>
-    ): PrismaPromise<Array<UserGetPayload<T>>>
+    findMany<T extends UserFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, UserFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<UserPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a User.
@@ -2339,9 +2734,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends UserCreateArgs>(
-      args: SelectSubset<T, UserCreateArgs>
-    ): Prisma__UserClient<UserGetPayload<T>>
+    create<T extends UserCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, UserCreateArgs<ExtArgs>>
+    ): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many Users.
@@ -2355,9 +2750,9 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends UserCreateManyArgs>(
-      args?: SelectSubset<T, UserCreateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    createMany<T extends UserCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, UserCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Delete a User.
@@ -2371,9 +2766,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends UserDeleteArgs>(
-      args: SelectSubset<T, UserDeleteArgs>
-    ): Prisma__UserClient<UserGetPayload<T>>
+    delete<T extends UserDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, UserDeleteArgs<ExtArgs>>
+    ): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one User.
@@ -2390,9 +2785,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends UserUpdateArgs>(
-      args: SelectSubset<T, UserUpdateArgs>
-    ): Prisma__UserClient<UserGetPayload<T>>
+    update<T extends UserUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, UserUpdateArgs<ExtArgs>>
+    ): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more Users.
@@ -2406,9 +2801,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends UserDeleteManyArgs>(
-      args?: SelectSubset<T, UserDeleteManyArgs>
-    ): PrismaPromise<BatchPayload>
+    deleteMany<T extends UserDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, UserDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more Users.
@@ -2427,9 +2822,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends UserUpdateManyArgs>(
-      args: SelectSubset<T, UserUpdateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    updateMany<T extends UserUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, UserUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Create or update one User.
@@ -2448,9 +2843,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends UserUpsertArgs>(
-      args: SelectSubset<T, UserUpsertArgs>
-    ): Prisma__UserClient<UserGetPayload<T>>
+    upsert<T extends UserUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, UserUpsertArgs<ExtArgs>>
+    ): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of Users.
@@ -2467,8 +2862,8 @@ export namespace Prisma {
     **/
     count<T extends UserCountArgs>(
       args?: Subset<T, UserCountArgs>,
-    ): PrismaPromise<
-      T extends _Record<'select', any>
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], UserCountAggregateOutputType>
@@ -2499,7 +2894,7 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends UserAggregateArgs>(args: Subset<T, UserAggregateArgs>): PrismaPromise<GetUserAggregateType<T>>
+    aggregate<T extends UserAggregateArgs>(args: Subset<T, UserAggregateArgs>): Prisma.PrismaPromise<GetUserAggregateType<T>>
 
     /**
      * Group by User.
@@ -2576,7 +2971,7 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, UserGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserGroupByPayload<T> : PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, UserGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
 
   }
 
@@ -2586,10 +2981,8 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__UserClient<T, Null = never> implements PrismaPromise<T> {
-    [prisma]: true;
+  export class Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
-    private readonly _fetcher;
     private readonly _queryType;
     private readonly _rootField;
     private readonly _clientMethod;
@@ -2600,14 +2993,14 @@ export namespace Prisma {
     private _isList;
     private _callsite;
     private _requestPromise?;
-    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
-    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    AuditLog<T extends User$AuditLogArgs= {}>(args?: Subset<T, User$AuditLogArgs>): PrismaPromise<Array<AuditLogGetPayload<T>>| Null>;
+    AuditLog<T extends User$AuditLogArgs<ExtArgs> = {}>(args?: Subset<T, User$AuditLogArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<AuditLogPayload<ExtArgs>, T, 'findMany', never>| Null>;
 
-    CompetitionSubscription<T extends User$CompetitionSubscriptionArgs= {}>(args?: Subset<T, User$CompetitionSubscriptionArgs>): PrismaPromise<Array<CompetitionSubscriptionGetPayload<T>>| Null>;
+    CompetitionSubscription<T extends User$CompetitionSubscriptionArgs<ExtArgs> = {}>(args?: Subset<T, User$CompetitionSubscriptionArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'findMany', never>| Null>;
 
-    CompetitorSubscription<T extends User$CompetitorSubscriptionArgs= {}>(args?: Subset<T, User$CompetitorSubscriptionArgs>): PrismaPromise<Array<CompetitorSubscriptionGetPayload<T>>| Null>;
+    CompetitorSubscription<T extends User$CompetitorSubscriptionArgs<ExtArgs> = {}>(args?: Subset<T, User$CompetitorSubscriptionArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'findMany', never>| Null>;
 
     private get _document();
     /**
@@ -2639,28 +3032,25 @@ export namespace Prisma {
   /**
    * User base type for findUnique actions
    */
-  export type UserFindUniqueArgsBase = {
+  export type UserFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter, which User to fetch.
-     * 
-    **/
+     */
     where: UserWhereUniqueInput
   }
 
   /**
    * User findUnique
    */
-  export interface UserFindUniqueArgs extends UserFindUniqueArgsBase {
+  export interface UserFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends UserFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -2672,21 +3062,18 @@ export namespace Prisma {
   /**
    * User findUniqueOrThrow
    */
-  export type UserFindUniqueOrThrowArgs = {
+  export type UserFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter, which User to fetch.
-     * 
-    **/
+     */
     where: UserWhereUniqueInput
   }
 
@@ -2694,63 +3081,55 @@ export namespace Prisma {
   /**
    * User base type for findFirst actions
    */
-  export type UserFindFirstArgsBase = {
+  export type UserFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter, which User to fetch.
-     * 
-    **/
+     */
     where?: UserWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Users to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<UserOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for Users.
-     * 
-    **/
+     */
     cursor?: UserWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` Users from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` Users.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of Users.
-     * 
-    **/
+     */
     distinct?: Enumerable<UserScalarFieldEnum>
   }
 
   /**
    * User findFirst
    */
-  export interface UserFindFirstArgs extends UserFindFirstArgsBase {
+  export interface UserFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends UserFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -2762,56 +3141,48 @@ export namespace Prisma {
   /**
    * User findFirstOrThrow
    */
-  export type UserFindFirstOrThrowArgs = {
+  export type UserFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter, which User to fetch.
-     * 
-    **/
+     */
     where?: UserWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Users to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<UserOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for Users.
-     * 
-    **/
+     */
     cursor?: UserWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` Users from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` Users.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of Users.
-     * 
-    **/
+     */
     distinct?: Enumerable<UserScalarFieldEnum>
   }
 
@@ -2819,49 +3190,42 @@ export namespace Prisma {
   /**
    * User findMany
    */
-  export type UserFindManyArgs = {
+  export type UserFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter, which Users to fetch.
-     * 
-    **/
+     */
     where?: UserWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Users to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<UserOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for listing Users.
-     * 
-    **/
+     */
     cursor?: UserWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` Users from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` Users.
-     * 
-    **/
+     */
     skip?: number
     distinct?: Enumerable<UserScalarFieldEnum>
   }
@@ -2870,21 +3234,18 @@ export namespace Prisma {
   /**
    * User create
    */
-  export type UserCreateArgs = {
+  export type UserCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * The data needed to create a User.
-     * 
-    **/
+     */
     data: XOR<UserCreateInput, UserUncheckedCreateInput>
   }
 
@@ -2892,11 +3253,10 @@ export namespace Prisma {
   /**
    * User createMany
    */
-  export type UserCreateManyArgs = {
+  export type UserCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many Users.
-     * 
-    **/
+     */
     data: Enumerable<UserCreateManyInput>
     skipDuplicates?: boolean
   }
@@ -2905,26 +3265,22 @@ export namespace Prisma {
   /**
    * User update
    */
-  export type UserUpdateArgs = {
+  export type UserUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * The data needed to update a User.
-     * 
-    **/
+     */
     data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
     /**
      * Choose, which User to update.
-     * 
-    **/
+     */
     where: UserWhereUniqueInput
   }
 
@@ -2932,16 +3288,14 @@ export namespace Prisma {
   /**
    * User updateMany
    */
-  export type UserUpdateManyArgs = {
+  export type UserUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update Users.
-     * 
-    **/
+     */
     data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
     /**
      * Filter which Users to update
-     * 
-    **/
+     */
     where?: UserWhereInput
   }
 
@@ -2949,31 +3303,26 @@ export namespace Prisma {
   /**
    * User upsert
    */
-  export type UserUpsertArgs = {
+  export type UserUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * The filter to search for the User to update in case it exists.
-     * 
-    **/
+     */
     where: UserWhereUniqueInput
     /**
      * In case the User found by the `where` argument doesn't exist, create a new User with this data.
-     * 
-    **/
+     */
     create: XOR<UserCreateInput, UserUncheckedCreateInput>
     /**
      * In case the User was found with the provided `where` argument, update it with this data.
-     * 
-    **/
+     */
     update: XOR<UserUpdateInput, UserUncheckedUpdateInput>
   }
 
@@ -2981,21 +3330,18 @@ export namespace Prisma {
   /**
    * User delete
    */
-  export type UserDeleteArgs = {
+  export type UserDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter which User to delete.
-     * 
-    **/
+     */
     where: UserWhereUniqueInput
   }
 
@@ -3003,11 +3349,10 @@ export namespace Prisma {
   /**
    * User deleteMany
    */
-  export type UserDeleteManyArgs = {
+  export type UserDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Users to delete
-     * 
-    **/
+     */
     where?: UserWhereInput
   }
 
@@ -3015,17 +3360,15 @@ export namespace Prisma {
   /**
    * User.AuditLog
    */
-  export type User$AuditLogArgs = {
+  export type User$AuditLogArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the AuditLog
-     * 
-    **/
-    select?: AuditLogSelect | null
+     */
+    select?: AuditLogSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: AuditLogInclude | null
+     */
+    include?: AuditLogInclude<ExtArgs> | null
     where?: AuditLogWhereInput
     orderBy?: Enumerable<AuditLogOrderByWithRelationInput>
     cursor?: AuditLogWhereUniqueInput
@@ -3038,17 +3381,15 @@ export namespace Prisma {
   /**
    * User.CompetitionSubscription
    */
-  export type User$CompetitionSubscriptionArgs = {
+  export type User$CompetitionSubscriptionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     where?: CompetitionSubscriptionWhereInput
     orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     cursor?: CompetitionSubscriptionWhereUniqueInput
@@ -3061,17 +3402,15 @@ export namespace Prisma {
   /**
    * User.CompetitorSubscription
    */
-  export type User$CompetitorSubscriptionArgs = {
+  export type User$CompetitorSubscriptionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     where?: CompetitorSubscriptionWhereInput
     orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
     cursor?: CompetitorSubscriptionWhereUniqueInput
@@ -3084,17 +3423,15 @@ export namespace Prisma {
   /**
    * User without action
    */
-  export type UserArgs = {
+  export type UserArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the User
-     * 
-    **/
-    select?: UserSelect | null
+     */
+    select?: UserSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: UserInclude | null
+     */
+    include?: UserInclude<ExtArgs> | null
   }
 
 
@@ -3155,39 +3492,34 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type SessionAggregateArgs = {
+  export type SessionAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Session to aggregate.
-     * 
-    **/
+     */
     where?: SessionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Sessions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<SessionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
-     * 
-    **/
+     */
     cursor?: SessionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` Sessions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` Sessions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
@@ -3220,10 +3552,10 @@ export namespace Prisma {
 
 
 
-  export type SessionGroupByArgs = {
+  export type SessionGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: SessionWhereInput
     orderBy?: Enumerable<SessionOrderByWithAggregationInput>
-    by: Array<SessionScalarFieldEnum>
+    by: SessionScalarFieldEnum[]
     having?: SessionScalarWhereWithAggregatesInput
     take?: number
     skip?: number
@@ -3243,7 +3575,7 @@ export namespace Prisma {
     _max: SessionMaxAggregateOutputType | null
   }
 
-  type GetSessionGroupByPayload<T extends SessionGroupByArgs> = PrismaPromise<
+  type GetSessionGroupByPayload<T extends SessionGroupByArgs> = Prisma.PrismaPromise<
     Array<
       PickArray<SessionGroupByOutputType, T['by']> &
         {
@@ -3257,7 +3589,14 @@ export namespace Prisma {
     >
 
 
-  export type SessionSelect = {
+  export type SessionSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    sid?: boolean
+    data?: boolean
+    expiresAt?: boolean
+  }, ExtArgs["result"]["session"]>
+
+  export type SessionSelectScalar = {
     id?: boolean
     sid?: boolean
     data?: boolean
@@ -3265,27 +3604,15 @@ export namespace Prisma {
   }
 
 
-  export type SessionGetPayload<S extends boolean | null | undefined | SessionArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? Session :
-    S extends undefined ? never :
-    S extends { include: any } & (SessionArgs | SessionFindManyArgs)
-    ? Session 
-    : S extends { select: any } & (SessionArgs | SessionFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-    P extends keyof Session ? Session[P] : never
-  } 
-      : Session
+  type SessionGetPayload<S extends boolean | null | undefined | SessionArgs> = $Types.GetResult<SessionPayload, S>
 
-
-  type SessionCountArgs = Merge<
+  type SessionCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<SessionFindManyArgs, 'select' | 'include'> & {
       select?: SessionCountAggregateInputType | true
     }
-  >
 
-  export interface SessionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+  export interface SessionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Session'], meta: { name: 'Session' } }
     /**
      * Find zero or one Session that matches the filter.
      * @param {SessionFindUniqueArgs} args - Arguments to find a Session
@@ -3297,9 +3624,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends SessionFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, SessionFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Session'> extends True ? Prisma__SessionClient<SessionGetPayload<T>> : Prisma__SessionClient<SessionGetPayload<T> | null, null>
+    findUnique<T extends SessionFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, SessionFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'Session'> extends True ? Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one Session that matches the filter or throw an error  with `error.code='P2025'` 
@@ -3313,9 +3640,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends SessionFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, SessionFindUniqueOrThrowArgs>
-    ): Prisma__SessionClient<SessionGetPayload<T>>
+    findUniqueOrThrow<T extends SessionFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, SessionFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first Session that matches the filter.
@@ -3330,9 +3657,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends SessionFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, SessionFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Session'> extends True ? Prisma__SessionClient<SessionGetPayload<T>> : Prisma__SessionClient<SessionGetPayload<T> | null, null>
+    findFirst<T extends SessionFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, SessionFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'Session'> extends True ? Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first Session that matches the filter or
@@ -3348,9 +3675,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends SessionFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, SessionFindFirstOrThrowArgs>
-    ): Prisma__SessionClient<SessionGetPayload<T>>
+    findFirstOrThrow<T extends SessionFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, SessionFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more Sessions that matches the filter.
@@ -3368,9 +3695,9 @@ export namespace Prisma {
      * const sessionWithIdOnly = await prisma.session.findMany({ select: { id: true } })
      * 
     **/
-    findMany<T extends SessionFindManyArgs>(
-      args?: SelectSubset<T, SessionFindManyArgs>
-    ): PrismaPromise<Array<SessionGetPayload<T>>>
+    findMany<T extends SessionFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, SessionFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<SessionPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a Session.
@@ -3384,9 +3711,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends SessionCreateArgs>(
-      args: SelectSubset<T, SessionCreateArgs>
-    ): Prisma__SessionClient<SessionGetPayload<T>>
+    create<T extends SessionCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, SessionCreateArgs<ExtArgs>>
+    ): Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many Sessions.
@@ -3400,9 +3727,9 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends SessionCreateManyArgs>(
-      args?: SelectSubset<T, SessionCreateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    createMany<T extends SessionCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, SessionCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Delete a Session.
@@ -3416,9 +3743,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends SessionDeleteArgs>(
-      args: SelectSubset<T, SessionDeleteArgs>
-    ): Prisma__SessionClient<SessionGetPayload<T>>
+    delete<T extends SessionDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, SessionDeleteArgs<ExtArgs>>
+    ): Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one Session.
@@ -3435,9 +3762,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends SessionUpdateArgs>(
-      args: SelectSubset<T, SessionUpdateArgs>
-    ): Prisma__SessionClient<SessionGetPayload<T>>
+    update<T extends SessionUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, SessionUpdateArgs<ExtArgs>>
+    ): Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more Sessions.
@@ -3451,9 +3778,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends SessionDeleteManyArgs>(
-      args?: SelectSubset<T, SessionDeleteManyArgs>
-    ): PrismaPromise<BatchPayload>
+    deleteMany<T extends SessionDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, SessionDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more Sessions.
@@ -3472,9 +3799,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends SessionUpdateManyArgs>(
-      args: SelectSubset<T, SessionUpdateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    updateMany<T extends SessionUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, SessionUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Create or update one Session.
@@ -3493,9 +3820,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends SessionUpsertArgs>(
-      args: SelectSubset<T, SessionUpsertArgs>
-    ): Prisma__SessionClient<SessionGetPayload<T>>
+    upsert<T extends SessionUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, SessionUpsertArgs<ExtArgs>>
+    ): Prisma__SessionClient<$Types.GetResult<SessionPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of Sessions.
@@ -3512,8 +3839,8 @@ export namespace Prisma {
     **/
     count<T extends SessionCountArgs>(
       args?: Subset<T, SessionCountArgs>,
-    ): PrismaPromise<
-      T extends _Record<'select', any>
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], SessionCountAggregateOutputType>
@@ -3544,7 +3871,7 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends SessionAggregateArgs>(args: Subset<T, SessionAggregateArgs>): PrismaPromise<GetSessionAggregateType<T>>
+    aggregate<T extends SessionAggregateArgs>(args: Subset<T, SessionAggregateArgs>): Prisma.PrismaPromise<GetSessionAggregateType<T>>
 
     /**
      * Group by Session.
@@ -3621,7 +3948,7 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, SessionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSessionGroupByPayload<T> : PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, SessionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSessionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
 
   }
 
@@ -3631,10 +3958,8 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__SessionClient<T, Null = never> implements PrismaPromise<T> {
-    [prisma]: true;
+  export class Prisma__SessionClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
-    private readonly _fetcher;
     private readonly _queryType;
     private readonly _rootField;
     private readonly _clientMethod;
@@ -3645,8 +3970,8 @@ export namespace Prisma {
     private _isList;
     private _callsite;
     private _requestPromise?;
-    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
-    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
 
     private get _document();
@@ -3679,23 +4004,21 @@ export namespace Prisma {
   /**
    * Session base type for findUnique actions
    */
-  export type SessionFindUniqueArgsBase = {
+  export type SessionFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * Filter, which Session to fetch.
-     * 
-    **/
+     */
     where: SessionWhereUniqueInput
   }
 
   /**
    * Session findUnique
    */
-  export interface SessionFindUniqueArgs extends SessionFindUniqueArgsBase {
+  export interface SessionFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends SessionFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -3707,16 +4030,14 @@ export namespace Prisma {
   /**
    * Session findUniqueOrThrow
    */
-  export type SessionFindUniqueOrThrowArgs = {
+  export type SessionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * Filter, which Session to fetch.
-     * 
-    **/
+     */
     where: SessionWhereUniqueInput
   }
 
@@ -3724,58 +4045,51 @@ export namespace Prisma {
   /**
    * Session base type for findFirst actions
    */
-  export type SessionFindFirstArgsBase = {
+  export type SessionFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * Filter, which Session to fetch.
-     * 
-    **/
+     */
     where?: SessionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Sessions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<SessionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for Sessions.
-     * 
-    **/
+     */
     cursor?: SessionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` Sessions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` Sessions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of Sessions.
-     * 
-    **/
+     */
     distinct?: Enumerable<SessionScalarFieldEnum>
   }
 
   /**
    * Session findFirst
    */
-  export interface SessionFindFirstArgs extends SessionFindFirstArgsBase {
+  export interface SessionFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends SessionFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -3787,51 +4101,44 @@ export namespace Prisma {
   /**
    * Session findFirstOrThrow
    */
-  export type SessionFindFirstOrThrowArgs = {
+  export type SessionFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * Filter, which Session to fetch.
-     * 
-    **/
+     */
     where?: SessionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Sessions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<SessionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for Sessions.
-     * 
-    **/
+     */
     cursor?: SessionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` Sessions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` Sessions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of Sessions.
-     * 
-    **/
+     */
     distinct?: Enumerable<SessionScalarFieldEnum>
   }
 
@@ -3839,44 +4146,38 @@ export namespace Prisma {
   /**
    * Session findMany
    */
-  export type SessionFindManyArgs = {
+  export type SessionFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * Filter, which Sessions to fetch.
-     * 
-    **/
+     */
     where?: SessionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of Sessions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<SessionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for listing Sessions.
-     * 
-    **/
+     */
     cursor?: SessionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` Sessions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` Sessions.
-     * 
-    **/
+     */
     skip?: number
     distinct?: Enumerable<SessionScalarFieldEnum>
   }
@@ -3885,16 +4186,14 @@ export namespace Prisma {
   /**
    * Session create
    */
-  export type SessionCreateArgs = {
+  export type SessionCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * The data needed to create a Session.
-     * 
-    **/
+     */
     data: XOR<SessionCreateInput, SessionUncheckedCreateInput>
   }
 
@@ -3902,11 +4201,10 @@ export namespace Prisma {
   /**
    * Session createMany
    */
-  export type SessionCreateManyArgs = {
+  export type SessionCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many Sessions.
-     * 
-    **/
+     */
     data: Enumerable<SessionCreateManyInput>
     skipDuplicates?: boolean
   }
@@ -3915,21 +4213,18 @@ export namespace Prisma {
   /**
    * Session update
    */
-  export type SessionUpdateArgs = {
+  export type SessionUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * The data needed to update a Session.
-     * 
-    **/
+     */
     data: XOR<SessionUpdateInput, SessionUncheckedUpdateInput>
     /**
      * Choose, which Session to update.
-     * 
-    **/
+     */
     where: SessionWhereUniqueInput
   }
 
@@ -3937,16 +4232,14 @@ export namespace Prisma {
   /**
    * Session updateMany
    */
-  export type SessionUpdateManyArgs = {
+  export type SessionUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update Sessions.
-     * 
-    **/
+     */
     data: XOR<SessionUpdateManyMutationInput, SessionUncheckedUpdateManyInput>
     /**
      * Filter which Sessions to update
-     * 
-    **/
+     */
     where?: SessionWhereInput
   }
 
@@ -3954,26 +4247,22 @@ export namespace Prisma {
   /**
    * Session upsert
    */
-  export type SessionUpsertArgs = {
+  export type SessionUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * The filter to search for the Session to update in case it exists.
-     * 
-    **/
+     */
     where: SessionWhereUniqueInput
     /**
      * In case the Session found by the `where` argument doesn't exist, create a new Session with this data.
-     * 
-    **/
+     */
     create: XOR<SessionCreateInput, SessionUncheckedCreateInput>
     /**
      * In case the Session was found with the provided `where` argument, update it with this data.
-     * 
-    **/
+     */
     update: XOR<SessionUpdateInput, SessionUncheckedUpdateInput>
   }
 
@@ -3981,16 +4270,14 @@ export namespace Prisma {
   /**
    * Session delete
    */
-  export type SessionDeleteArgs = {
+  export type SessionDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
     /**
      * Filter which Session to delete.
-     * 
-    **/
+     */
     where: SessionWhereUniqueInput
   }
 
@@ -3998,11 +4285,10 @@ export namespace Prisma {
   /**
    * Session deleteMany
    */
-  export type SessionDeleteManyArgs = {
+  export type SessionDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which Sessions to delete
-     * 
-    **/
+     */
     where?: SessionWhereInput
   }
 
@@ -4010,12 +4296,11 @@ export namespace Prisma {
   /**
    * Session without action
    */
-  export type SessionArgs = {
+  export type SessionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the Session
-     * 
-    **/
-    select?: SessionSelect | null
+     */
+    select?: SessionSelect<ExtArgs> | null
   }
 
 
@@ -4116,39 +4401,34 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type CompetitionSubscriptionAggregateArgs = {
+  export type CompetitionSubscriptionAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which CompetitionSubscription to aggregate.
-     * 
-    **/
+     */
     where?: CompetitionSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitionSubscriptions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
-     * 
-    **/
+     */
     cursor?: CompetitionSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitionSubscriptions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitionSubscriptions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
@@ -4193,10 +4473,10 @@ export namespace Prisma {
 
 
 
-  export type CompetitionSubscriptionGroupByArgs = {
+  export type CompetitionSubscriptionGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: CompetitionSubscriptionWhereInput
     orderBy?: Enumerable<CompetitionSubscriptionOrderByWithAggregationInput>
-    by: Array<CompetitionSubscriptionScalarFieldEnum>
+    by: CompetitionSubscriptionScalarFieldEnum[]
     having?: CompetitionSubscriptionScalarWhereWithAggregatesInput
     take?: number
     skip?: number
@@ -4223,7 +4503,7 @@ export namespace Prisma {
     _max: CompetitionSubscriptionMaxAggregateOutputType | null
   }
 
-  type GetCompetitionSubscriptionGroupByPayload<T extends CompetitionSubscriptionGroupByArgs> = PrismaPromise<
+  type GetCompetitionSubscriptionGroupByPayload<T extends CompetitionSubscriptionGroupByArgs> = Prisma.PrismaPromise<
     Array<
       PickArray<CompetitionSubscriptionGroupByOutputType, T['by']> &
         {
@@ -4237,7 +4517,7 @@ export namespace Prisma {
     >
 
 
-  export type CompetitionSubscriptionSelect = {
+  export type CompetitionSubscriptionSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -4245,38 +4525,33 @@ export namespace Prisma {
     competitionId?: boolean
     type?: boolean
     value?: boolean
-    user?: boolean | UserArgs
+    user?: boolean | UserArgs<ExtArgs>
+  }, ExtArgs["result"]["competitionSubscription"]>
+
+  export type CompetitionSubscriptionSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    userId?: boolean
+    competitionId?: boolean
+    type?: boolean
+    value?: boolean
+  }
+
+  export type CompetitionSubscriptionInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    user?: boolean | UserArgs<ExtArgs>
   }
 
 
-  export type CompetitionSubscriptionInclude = {
-    user?: boolean | UserArgs
-  } 
+  type CompetitionSubscriptionGetPayload<S extends boolean | null | undefined | CompetitionSubscriptionArgs> = $Types.GetResult<CompetitionSubscriptionPayload, S>
 
-  export type CompetitionSubscriptionGetPayload<S extends boolean | null | undefined | CompetitionSubscriptionArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? CompetitionSubscription :
-    S extends undefined ? never :
-    S extends { include: any } & (CompetitionSubscriptionArgs | CompetitionSubscriptionFindManyArgs)
-    ? CompetitionSubscription  & {
-    [P in TruthyKeys<S['include']>]:
-        P extends 'user' ? UserGetPayload<S['include'][P]> :  never
-  } 
-    : S extends { select: any } & (CompetitionSubscriptionArgs | CompetitionSubscriptionFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-        P extends 'user' ? UserGetPayload<S['select'][P]> :  P extends keyof CompetitionSubscription ? CompetitionSubscription[P] : never
-  } 
-      : CompetitionSubscription
-
-
-  type CompetitionSubscriptionCountArgs = Merge<
+  type CompetitionSubscriptionCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<CompetitionSubscriptionFindManyArgs, 'select' | 'include'> & {
       select?: CompetitionSubscriptionCountAggregateInputType | true
     }
-  >
 
-  export interface CompetitionSubscriptionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+  export interface CompetitionSubscriptionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CompetitionSubscription'], meta: { name: 'CompetitionSubscription' } }
     /**
      * Find zero or one CompetitionSubscription that matches the filter.
      * @param {CompetitionSubscriptionFindUniqueArgs} args - Arguments to find a CompetitionSubscription
@@ -4288,9 +4563,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends CompetitionSubscriptionFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, CompetitionSubscriptionFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitionSubscription'> extends True ? Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>> : Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T> | null, null>
+    findUnique<T extends CompetitionSubscriptionFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, CompetitionSubscriptionFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitionSubscription'> extends True ? Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one CompetitionSubscription that matches the filter or throw an error  with `error.code='P2025'` 
@@ -4304,9 +4579,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends CompetitionSubscriptionFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, CompetitionSubscriptionFindUniqueOrThrowArgs>
-    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
+    findUniqueOrThrow<T extends CompetitionSubscriptionFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSubscriptionFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first CompetitionSubscription that matches the filter.
@@ -4321,9 +4596,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends CompetitionSubscriptionFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, CompetitionSubscriptionFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitionSubscription'> extends True ? Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>> : Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T> | null, null>
+    findFirst<T extends CompetitionSubscriptionFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, CompetitionSubscriptionFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitionSubscription'> extends True ? Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first CompetitionSubscription that matches the filter or
@@ -4339,9 +4614,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends CompetitionSubscriptionFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, CompetitionSubscriptionFindFirstOrThrowArgs>
-    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
+    findFirstOrThrow<T extends CompetitionSubscriptionFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSubscriptionFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more CompetitionSubscriptions that matches the filter.
@@ -4359,9 +4634,9 @@ export namespace Prisma {
      * const competitionSubscriptionWithIdOnly = await prisma.competitionSubscription.findMany({ select: { id: true } })
      * 
     **/
-    findMany<T extends CompetitionSubscriptionFindManyArgs>(
-      args?: SelectSubset<T, CompetitionSubscriptionFindManyArgs>
-    ): PrismaPromise<Array<CompetitionSubscriptionGetPayload<T>>>
+    findMany<T extends CompetitionSubscriptionFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSubscriptionFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a CompetitionSubscription.
@@ -4375,9 +4650,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends CompetitionSubscriptionCreateArgs>(
-      args: SelectSubset<T, CompetitionSubscriptionCreateArgs>
-    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
+    create<T extends CompetitionSubscriptionCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSubscriptionCreateArgs<ExtArgs>>
+    ): Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many CompetitionSubscriptions.
@@ -4391,9 +4666,9 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends CompetitionSubscriptionCreateManyArgs>(
-      args?: SelectSubset<T, CompetitionSubscriptionCreateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    createMany<T extends CompetitionSubscriptionCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSubscriptionCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Delete a CompetitionSubscription.
@@ -4407,9 +4682,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends CompetitionSubscriptionDeleteArgs>(
-      args: SelectSubset<T, CompetitionSubscriptionDeleteArgs>
-    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
+    delete<T extends CompetitionSubscriptionDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSubscriptionDeleteArgs<ExtArgs>>
+    ): Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one CompetitionSubscription.
@@ -4426,9 +4701,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends CompetitionSubscriptionUpdateArgs>(
-      args: SelectSubset<T, CompetitionSubscriptionUpdateArgs>
-    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
+    update<T extends CompetitionSubscriptionUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSubscriptionUpdateArgs<ExtArgs>>
+    ): Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more CompetitionSubscriptions.
@@ -4442,9 +4717,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends CompetitionSubscriptionDeleteManyArgs>(
-      args?: SelectSubset<T, CompetitionSubscriptionDeleteManyArgs>
-    ): PrismaPromise<BatchPayload>
+    deleteMany<T extends CompetitionSubscriptionDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSubscriptionDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more CompetitionSubscriptions.
@@ -4463,9 +4738,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends CompetitionSubscriptionUpdateManyArgs>(
-      args: SelectSubset<T, CompetitionSubscriptionUpdateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    updateMany<T extends CompetitionSubscriptionUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSubscriptionUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Create or update one CompetitionSubscription.
@@ -4484,9 +4759,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends CompetitionSubscriptionUpsertArgs>(
-      args: SelectSubset<T, CompetitionSubscriptionUpsertArgs>
-    ): Prisma__CompetitionSubscriptionClient<CompetitionSubscriptionGetPayload<T>>
+    upsert<T extends CompetitionSubscriptionUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSubscriptionUpsertArgs<ExtArgs>>
+    ): Prisma__CompetitionSubscriptionClient<$Types.GetResult<CompetitionSubscriptionPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of CompetitionSubscriptions.
@@ -4503,8 +4778,8 @@ export namespace Prisma {
     **/
     count<T extends CompetitionSubscriptionCountArgs>(
       args?: Subset<T, CompetitionSubscriptionCountArgs>,
-    ): PrismaPromise<
-      T extends _Record<'select', any>
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], CompetitionSubscriptionCountAggregateOutputType>
@@ -4535,7 +4810,7 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends CompetitionSubscriptionAggregateArgs>(args: Subset<T, CompetitionSubscriptionAggregateArgs>): PrismaPromise<GetCompetitionSubscriptionAggregateType<T>>
+    aggregate<T extends CompetitionSubscriptionAggregateArgs>(args: Subset<T, CompetitionSubscriptionAggregateArgs>): Prisma.PrismaPromise<GetCompetitionSubscriptionAggregateType<T>>
 
     /**
      * Group by CompetitionSubscription.
@@ -4612,7 +4887,7 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, CompetitionSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitionSubscriptionGroupByPayload<T> : PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, CompetitionSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitionSubscriptionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
 
   }
 
@@ -4622,10 +4897,8 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__CompetitionSubscriptionClient<T, Null = never> implements PrismaPromise<T> {
-    [prisma]: true;
+  export class Prisma__CompetitionSubscriptionClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
-    private readonly _fetcher;
     private readonly _queryType;
     private readonly _rootField;
     private readonly _clientMethod;
@@ -4636,10 +4909,10 @@ export namespace Prisma {
     private _isList;
     private _callsite;
     private _requestPromise?;
-    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
-    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    user<T extends UserArgs= {}>(args?: Subset<T, UserArgs>): Prisma__UserClient<UserGetPayload<T> | Null>;
+    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
     private get _document();
     /**
@@ -4671,28 +4944,25 @@ export namespace Prisma {
   /**
    * CompetitionSubscription base type for findUnique actions
    */
-  export type CompetitionSubscriptionFindUniqueArgsBase = {
+  export type CompetitionSubscriptionFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitionSubscription to fetch.
-     * 
-    **/
+     */
     where: CompetitionSubscriptionWhereUniqueInput
   }
 
   /**
    * CompetitionSubscription findUnique
    */
-  export interface CompetitionSubscriptionFindUniqueArgs extends CompetitionSubscriptionFindUniqueArgsBase {
+  export interface CompetitionSubscriptionFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends CompetitionSubscriptionFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -4704,21 +4974,18 @@ export namespace Prisma {
   /**
    * CompetitionSubscription findUniqueOrThrow
    */
-  export type CompetitionSubscriptionFindUniqueOrThrowArgs = {
+  export type CompetitionSubscriptionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitionSubscription to fetch.
-     * 
-    **/
+     */
     where: CompetitionSubscriptionWhereUniqueInput
   }
 
@@ -4726,63 +4993,55 @@ export namespace Prisma {
   /**
    * CompetitionSubscription base type for findFirst actions
    */
-  export type CompetitionSubscriptionFindFirstArgsBase = {
+  export type CompetitionSubscriptionFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitionSubscription to fetch.
-     * 
-    **/
+     */
     where?: CompetitionSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitionSubscriptions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for CompetitionSubscriptions.
-     * 
-    **/
+     */
     cursor?: CompetitionSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitionSubscriptions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitionSubscriptions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of CompetitionSubscriptions.
-     * 
-    **/
+     */
     distinct?: Enumerable<CompetitionSubscriptionScalarFieldEnum>
   }
 
   /**
    * CompetitionSubscription findFirst
    */
-  export interface CompetitionSubscriptionFindFirstArgs extends CompetitionSubscriptionFindFirstArgsBase {
+  export interface CompetitionSubscriptionFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends CompetitionSubscriptionFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -4794,56 +5053,48 @@ export namespace Prisma {
   /**
    * CompetitionSubscription findFirstOrThrow
    */
-  export type CompetitionSubscriptionFindFirstOrThrowArgs = {
+  export type CompetitionSubscriptionFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitionSubscription to fetch.
-     * 
-    **/
+     */
     where?: CompetitionSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitionSubscriptions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for CompetitionSubscriptions.
-     * 
-    **/
+     */
     cursor?: CompetitionSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitionSubscriptions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitionSubscriptions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of CompetitionSubscriptions.
-     * 
-    **/
+     */
     distinct?: Enumerable<CompetitionSubscriptionScalarFieldEnum>
   }
 
@@ -4851,49 +5102,42 @@ export namespace Prisma {
   /**
    * CompetitionSubscription findMany
    */
-  export type CompetitionSubscriptionFindManyArgs = {
+  export type CompetitionSubscriptionFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitionSubscriptions to fetch.
-     * 
-    **/
+     */
     where?: CompetitionSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitionSubscriptions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitionSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for listing CompetitionSubscriptions.
-     * 
-    **/
+     */
     cursor?: CompetitionSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitionSubscriptions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitionSubscriptions.
-     * 
-    **/
+     */
     skip?: number
     distinct?: Enumerable<CompetitionSubscriptionScalarFieldEnum>
   }
@@ -4902,21 +5146,18 @@ export namespace Prisma {
   /**
    * CompetitionSubscription create
    */
-  export type CompetitionSubscriptionCreateArgs = {
+  export type CompetitionSubscriptionCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * The data needed to create a CompetitionSubscription.
-     * 
-    **/
+     */
     data: XOR<CompetitionSubscriptionCreateInput, CompetitionSubscriptionUncheckedCreateInput>
   }
 
@@ -4924,11 +5165,10 @@ export namespace Prisma {
   /**
    * CompetitionSubscription createMany
    */
-  export type CompetitionSubscriptionCreateManyArgs = {
+  export type CompetitionSubscriptionCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many CompetitionSubscriptions.
-     * 
-    **/
+     */
     data: Enumerable<CompetitionSubscriptionCreateManyInput>
     skipDuplicates?: boolean
   }
@@ -4937,26 +5177,22 @@ export namespace Prisma {
   /**
    * CompetitionSubscription update
    */
-  export type CompetitionSubscriptionUpdateArgs = {
+  export type CompetitionSubscriptionUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * The data needed to update a CompetitionSubscription.
-     * 
-    **/
+     */
     data: XOR<CompetitionSubscriptionUpdateInput, CompetitionSubscriptionUncheckedUpdateInput>
     /**
      * Choose, which CompetitionSubscription to update.
-     * 
-    **/
+     */
     where: CompetitionSubscriptionWhereUniqueInput
   }
 
@@ -4964,16 +5200,14 @@ export namespace Prisma {
   /**
    * CompetitionSubscription updateMany
    */
-  export type CompetitionSubscriptionUpdateManyArgs = {
+  export type CompetitionSubscriptionUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update CompetitionSubscriptions.
-     * 
-    **/
+     */
     data: XOR<CompetitionSubscriptionUpdateManyMutationInput, CompetitionSubscriptionUncheckedUpdateManyInput>
     /**
      * Filter which CompetitionSubscriptions to update
-     * 
-    **/
+     */
     where?: CompetitionSubscriptionWhereInput
   }
 
@@ -4981,31 +5215,26 @@ export namespace Prisma {
   /**
    * CompetitionSubscription upsert
    */
-  export type CompetitionSubscriptionUpsertArgs = {
+  export type CompetitionSubscriptionUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * The filter to search for the CompetitionSubscription to update in case it exists.
-     * 
-    **/
+     */
     where: CompetitionSubscriptionWhereUniqueInput
     /**
      * In case the CompetitionSubscription found by the `where` argument doesn't exist, create a new CompetitionSubscription with this data.
-     * 
-    **/
+     */
     create: XOR<CompetitionSubscriptionCreateInput, CompetitionSubscriptionUncheckedCreateInput>
     /**
      * In case the CompetitionSubscription was found with the provided `where` argument, update it with this data.
-     * 
-    **/
+     */
     update: XOR<CompetitionSubscriptionUpdateInput, CompetitionSubscriptionUncheckedUpdateInput>
   }
 
@@ -5013,21 +5242,18 @@ export namespace Prisma {
   /**
    * CompetitionSubscription delete
    */
-  export type CompetitionSubscriptionDeleteArgs = {
+  export type CompetitionSubscriptionDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
     /**
      * Filter which CompetitionSubscription to delete.
-     * 
-    **/
+     */
     where: CompetitionSubscriptionWhereUniqueInput
   }
 
@@ -5035,11 +5261,10 @@ export namespace Prisma {
   /**
    * CompetitionSubscription deleteMany
    */
-  export type CompetitionSubscriptionDeleteManyArgs = {
+  export type CompetitionSubscriptionDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which CompetitionSubscriptions to delete
-     * 
-    **/
+     */
     where?: CompetitionSubscriptionWhereInput
   }
 
@@ -5047,17 +5272,15 @@ export namespace Prisma {
   /**
    * CompetitionSubscription without action
    */
-  export type CompetitionSubscriptionArgs = {
+  export type CompetitionSubscriptionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSubscription
-     * 
-    **/
-    select?: CompetitionSubscriptionSelect | null
+     */
+    select?: CompetitionSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitionSubscriptionInclude | null
+     */
+    include?: CompetitionSubscriptionInclude<ExtArgs> | null
   }
 
 
@@ -5162,39 +5385,34 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type CompetitorSubscriptionAggregateArgs = {
+  export type CompetitorSubscriptionAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which CompetitorSubscription to aggregate.
-     * 
-    **/
+     */
     where?: CompetitorSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitorSubscriptions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
-     * 
-    **/
+     */
     cursor?: CompetitorSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitorSubscriptions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitorSubscriptions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
@@ -5239,10 +5457,10 @@ export namespace Prisma {
 
 
 
-  export type CompetitorSubscriptionGroupByArgs = {
+  export type CompetitorSubscriptionGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: CompetitorSubscriptionWhereInput
     orderBy?: Enumerable<CompetitorSubscriptionOrderByWithAggregationInput>
-    by: Array<CompetitorSubscriptionScalarFieldEnum>
+    by: CompetitorSubscriptionScalarFieldEnum[]
     having?: CompetitorSubscriptionScalarWhereWithAggregatesInput
     take?: number
     skip?: number
@@ -5269,7 +5487,7 @@ export namespace Prisma {
     _max: CompetitorSubscriptionMaxAggregateOutputType | null
   }
 
-  type GetCompetitorSubscriptionGroupByPayload<T extends CompetitorSubscriptionGroupByArgs> = PrismaPromise<
+  type GetCompetitorSubscriptionGroupByPayload<T extends CompetitorSubscriptionGroupByArgs> = Prisma.PrismaPromise<
     Array<
       PickArray<CompetitorSubscriptionGroupByOutputType, T['by']> &
         {
@@ -5283,7 +5501,7 @@ export namespace Prisma {
     >
 
 
-  export type CompetitorSubscriptionSelect = {
+  export type CompetitorSubscriptionSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -5291,38 +5509,33 @@ export namespace Prisma {
     wcaUserId?: boolean
     verified?: boolean
     code?: boolean
-    user?: boolean | UserArgs
+    user?: boolean | UserArgs<ExtArgs>
+  }, ExtArgs["result"]["competitorSubscription"]>
+
+  export type CompetitorSubscriptionSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    userId?: boolean
+    wcaUserId?: boolean
+    verified?: boolean
+    code?: boolean
+  }
+
+  export type CompetitorSubscriptionInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    user?: boolean | UserArgs<ExtArgs>
   }
 
 
-  export type CompetitorSubscriptionInclude = {
-    user?: boolean | UserArgs
-  } 
+  type CompetitorSubscriptionGetPayload<S extends boolean | null | undefined | CompetitorSubscriptionArgs> = $Types.GetResult<CompetitorSubscriptionPayload, S>
 
-  export type CompetitorSubscriptionGetPayload<S extends boolean | null | undefined | CompetitorSubscriptionArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? CompetitorSubscription :
-    S extends undefined ? never :
-    S extends { include: any } & (CompetitorSubscriptionArgs | CompetitorSubscriptionFindManyArgs)
-    ? CompetitorSubscription  & {
-    [P in TruthyKeys<S['include']>]:
-        P extends 'user' ? UserGetPayload<S['include'][P]> :  never
-  } 
-    : S extends { select: any } & (CompetitorSubscriptionArgs | CompetitorSubscriptionFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-        P extends 'user' ? UserGetPayload<S['select'][P]> :  P extends keyof CompetitorSubscription ? CompetitorSubscription[P] : never
-  } 
-      : CompetitorSubscription
-
-
-  type CompetitorSubscriptionCountArgs = Merge<
+  type CompetitorSubscriptionCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<CompetitorSubscriptionFindManyArgs, 'select' | 'include'> & {
       select?: CompetitorSubscriptionCountAggregateInputType | true
     }
-  >
 
-  export interface CompetitorSubscriptionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+  export interface CompetitorSubscriptionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CompetitorSubscription'], meta: { name: 'CompetitorSubscription' } }
     /**
      * Find zero or one CompetitorSubscription that matches the filter.
      * @param {CompetitorSubscriptionFindUniqueArgs} args - Arguments to find a CompetitorSubscription
@@ -5334,9 +5547,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends CompetitorSubscriptionFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, CompetitorSubscriptionFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitorSubscription'> extends True ? Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>> : Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T> | null, null>
+    findUnique<T extends CompetitorSubscriptionFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, CompetitorSubscriptionFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitorSubscription'> extends True ? Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one CompetitorSubscription that matches the filter or throw an error  with `error.code='P2025'` 
@@ -5350,9 +5563,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends CompetitorSubscriptionFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, CompetitorSubscriptionFindUniqueOrThrowArgs>
-    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+    findUniqueOrThrow<T extends CompetitorSubscriptionFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitorSubscriptionFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first CompetitorSubscription that matches the filter.
@@ -5367,9 +5580,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends CompetitorSubscriptionFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, CompetitorSubscriptionFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitorSubscription'> extends True ? Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>> : Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T> | null, null>
+    findFirst<T extends CompetitorSubscriptionFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, CompetitorSubscriptionFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitorSubscription'> extends True ? Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first CompetitorSubscription that matches the filter or
@@ -5385,9 +5598,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends CompetitorSubscriptionFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, CompetitorSubscriptionFindFirstOrThrowArgs>
-    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+    findFirstOrThrow<T extends CompetitorSubscriptionFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitorSubscriptionFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more CompetitorSubscriptions that matches the filter.
@@ -5405,9 +5618,9 @@ export namespace Prisma {
      * const competitorSubscriptionWithIdOnly = await prisma.competitorSubscription.findMany({ select: { id: true } })
      * 
     **/
-    findMany<T extends CompetitorSubscriptionFindManyArgs>(
-      args?: SelectSubset<T, CompetitorSubscriptionFindManyArgs>
-    ): PrismaPromise<Array<CompetitorSubscriptionGetPayload<T>>>
+    findMany<T extends CompetitorSubscriptionFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitorSubscriptionFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a CompetitorSubscription.
@@ -5421,9 +5634,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends CompetitorSubscriptionCreateArgs>(
-      args: SelectSubset<T, CompetitorSubscriptionCreateArgs>
-    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+    create<T extends CompetitorSubscriptionCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitorSubscriptionCreateArgs<ExtArgs>>
+    ): Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many CompetitorSubscriptions.
@@ -5437,9 +5650,9 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends CompetitorSubscriptionCreateManyArgs>(
-      args?: SelectSubset<T, CompetitorSubscriptionCreateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    createMany<T extends CompetitorSubscriptionCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitorSubscriptionCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Delete a CompetitorSubscription.
@@ -5453,9 +5666,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends CompetitorSubscriptionDeleteArgs>(
-      args: SelectSubset<T, CompetitorSubscriptionDeleteArgs>
-    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+    delete<T extends CompetitorSubscriptionDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitorSubscriptionDeleteArgs<ExtArgs>>
+    ): Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one CompetitorSubscription.
@@ -5472,9 +5685,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends CompetitorSubscriptionUpdateArgs>(
-      args: SelectSubset<T, CompetitorSubscriptionUpdateArgs>
-    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+    update<T extends CompetitorSubscriptionUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitorSubscriptionUpdateArgs<ExtArgs>>
+    ): Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more CompetitorSubscriptions.
@@ -5488,9 +5701,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends CompetitorSubscriptionDeleteManyArgs>(
-      args?: SelectSubset<T, CompetitorSubscriptionDeleteManyArgs>
-    ): PrismaPromise<BatchPayload>
+    deleteMany<T extends CompetitorSubscriptionDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitorSubscriptionDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more CompetitorSubscriptions.
@@ -5509,9 +5722,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends CompetitorSubscriptionUpdateManyArgs>(
-      args: SelectSubset<T, CompetitorSubscriptionUpdateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    updateMany<T extends CompetitorSubscriptionUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitorSubscriptionUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Create or update one CompetitorSubscription.
@@ -5530,9 +5743,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends CompetitorSubscriptionUpsertArgs>(
-      args: SelectSubset<T, CompetitorSubscriptionUpsertArgs>
-    ): Prisma__CompetitorSubscriptionClient<CompetitorSubscriptionGetPayload<T>>
+    upsert<T extends CompetitorSubscriptionUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitorSubscriptionUpsertArgs<ExtArgs>>
+    ): Prisma__CompetitorSubscriptionClient<$Types.GetResult<CompetitorSubscriptionPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of CompetitorSubscriptions.
@@ -5549,8 +5762,8 @@ export namespace Prisma {
     **/
     count<T extends CompetitorSubscriptionCountArgs>(
       args?: Subset<T, CompetitorSubscriptionCountArgs>,
-    ): PrismaPromise<
-      T extends _Record<'select', any>
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], CompetitorSubscriptionCountAggregateOutputType>
@@ -5581,7 +5794,7 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends CompetitorSubscriptionAggregateArgs>(args: Subset<T, CompetitorSubscriptionAggregateArgs>): PrismaPromise<GetCompetitorSubscriptionAggregateType<T>>
+    aggregate<T extends CompetitorSubscriptionAggregateArgs>(args: Subset<T, CompetitorSubscriptionAggregateArgs>): Prisma.PrismaPromise<GetCompetitorSubscriptionAggregateType<T>>
 
     /**
      * Group by CompetitorSubscription.
@@ -5658,7 +5871,7 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, CompetitorSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitorSubscriptionGroupByPayload<T> : PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, CompetitorSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitorSubscriptionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
 
   }
 
@@ -5668,10 +5881,8 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__CompetitorSubscriptionClient<T, Null = never> implements PrismaPromise<T> {
-    [prisma]: true;
+  export class Prisma__CompetitorSubscriptionClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
-    private readonly _fetcher;
     private readonly _queryType;
     private readonly _rootField;
     private readonly _clientMethod;
@@ -5682,10 +5893,10 @@ export namespace Prisma {
     private _isList;
     private _callsite;
     private _requestPromise?;
-    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
-    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
-    user<T extends UserArgs= {}>(args?: Subset<T, UserArgs>): Prisma__UserClient<UserGetPayload<T> | Null>;
+    user<T extends UserArgs<ExtArgs> = {}>(args?: Subset<T, UserArgs<ExtArgs>>): Prisma__UserClient<$Types.GetResult<UserPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
 
     private get _document();
     /**
@@ -5717,28 +5928,25 @@ export namespace Prisma {
   /**
    * CompetitorSubscription base type for findUnique actions
    */
-  export type CompetitorSubscriptionFindUniqueArgsBase = {
+  export type CompetitorSubscriptionFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitorSubscription to fetch.
-     * 
-    **/
+     */
     where: CompetitorSubscriptionWhereUniqueInput
   }
 
   /**
    * CompetitorSubscription findUnique
    */
-  export interface CompetitorSubscriptionFindUniqueArgs extends CompetitorSubscriptionFindUniqueArgsBase {
+  export interface CompetitorSubscriptionFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends CompetitorSubscriptionFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -5750,21 +5958,18 @@ export namespace Prisma {
   /**
    * CompetitorSubscription findUniqueOrThrow
    */
-  export type CompetitorSubscriptionFindUniqueOrThrowArgs = {
+  export type CompetitorSubscriptionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitorSubscription to fetch.
-     * 
-    **/
+     */
     where: CompetitorSubscriptionWhereUniqueInput
   }
 
@@ -5772,63 +5977,55 @@ export namespace Prisma {
   /**
    * CompetitorSubscription base type for findFirst actions
    */
-  export type CompetitorSubscriptionFindFirstArgsBase = {
+  export type CompetitorSubscriptionFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitorSubscription to fetch.
-     * 
-    **/
+     */
     where?: CompetitorSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitorSubscriptions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for CompetitorSubscriptions.
-     * 
-    **/
+     */
     cursor?: CompetitorSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitorSubscriptions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitorSubscriptions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of CompetitorSubscriptions.
-     * 
-    **/
+     */
     distinct?: Enumerable<CompetitorSubscriptionScalarFieldEnum>
   }
 
   /**
    * CompetitorSubscription findFirst
    */
-  export interface CompetitorSubscriptionFindFirstArgs extends CompetitorSubscriptionFindFirstArgsBase {
+  export interface CompetitorSubscriptionFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends CompetitorSubscriptionFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -5840,56 +6037,48 @@ export namespace Prisma {
   /**
    * CompetitorSubscription findFirstOrThrow
    */
-  export type CompetitorSubscriptionFindFirstOrThrowArgs = {
+  export type CompetitorSubscriptionFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitorSubscription to fetch.
-     * 
-    **/
+     */
     where?: CompetitorSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitorSubscriptions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for CompetitorSubscriptions.
-     * 
-    **/
+     */
     cursor?: CompetitorSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitorSubscriptions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitorSubscriptions.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of CompetitorSubscriptions.
-     * 
-    **/
+     */
     distinct?: Enumerable<CompetitorSubscriptionScalarFieldEnum>
   }
 
@@ -5897,49 +6086,42 @@ export namespace Prisma {
   /**
    * CompetitorSubscription findMany
    */
-  export type CompetitorSubscriptionFindManyArgs = {
+  export type CompetitorSubscriptionFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which CompetitorSubscriptions to fetch.
-     * 
-    **/
+     */
     where?: CompetitorSubscriptionWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitorSubscriptions to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitorSubscriptionOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for listing CompetitorSubscriptions.
-     * 
-    **/
+     */
     cursor?: CompetitorSubscriptionWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitorSubscriptions from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitorSubscriptions.
-     * 
-    **/
+     */
     skip?: number
     distinct?: Enumerable<CompetitorSubscriptionScalarFieldEnum>
   }
@@ -5948,21 +6130,18 @@ export namespace Prisma {
   /**
    * CompetitorSubscription create
    */
-  export type CompetitorSubscriptionCreateArgs = {
+  export type CompetitorSubscriptionCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * The data needed to create a CompetitorSubscription.
-     * 
-    **/
+     */
     data: XOR<CompetitorSubscriptionCreateInput, CompetitorSubscriptionUncheckedCreateInput>
   }
 
@@ -5970,11 +6149,10 @@ export namespace Prisma {
   /**
    * CompetitorSubscription createMany
    */
-  export type CompetitorSubscriptionCreateManyArgs = {
+  export type CompetitorSubscriptionCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many CompetitorSubscriptions.
-     * 
-    **/
+     */
     data: Enumerable<CompetitorSubscriptionCreateManyInput>
     skipDuplicates?: boolean
   }
@@ -5983,26 +6161,22 @@ export namespace Prisma {
   /**
    * CompetitorSubscription update
    */
-  export type CompetitorSubscriptionUpdateArgs = {
+  export type CompetitorSubscriptionUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * The data needed to update a CompetitorSubscription.
-     * 
-    **/
+     */
     data: XOR<CompetitorSubscriptionUpdateInput, CompetitorSubscriptionUncheckedUpdateInput>
     /**
      * Choose, which CompetitorSubscription to update.
-     * 
-    **/
+     */
     where: CompetitorSubscriptionWhereUniqueInput
   }
 
@@ -6010,16 +6184,14 @@ export namespace Prisma {
   /**
    * CompetitorSubscription updateMany
    */
-  export type CompetitorSubscriptionUpdateManyArgs = {
+  export type CompetitorSubscriptionUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update CompetitorSubscriptions.
-     * 
-    **/
+     */
     data: XOR<CompetitorSubscriptionUpdateManyMutationInput, CompetitorSubscriptionUncheckedUpdateManyInput>
     /**
      * Filter which CompetitorSubscriptions to update
-     * 
-    **/
+     */
     where?: CompetitorSubscriptionWhereInput
   }
 
@@ -6027,31 +6199,26 @@ export namespace Prisma {
   /**
    * CompetitorSubscription upsert
    */
-  export type CompetitorSubscriptionUpsertArgs = {
+  export type CompetitorSubscriptionUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * The filter to search for the CompetitorSubscription to update in case it exists.
-     * 
-    **/
+     */
     where: CompetitorSubscriptionWhereUniqueInput
     /**
      * In case the CompetitorSubscription found by the `where` argument doesn't exist, create a new CompetitorSubscription with this data.
-     * 
-    **/
+     */
     create: XOR<CompetitorSubscriptionCreateInput, CompetitorSubscriptionUncheckedCreateInput>
     /**
      * In case the CompetitorSubscription was found with the provided `where` argument, update it with this data.
-     * 
-    **/
+     */
     update: XOR<CompetitorSubscriptionUpdateInput, CompetitorSubscriptionUncheckedUpdateInput>
   }
 
@@ -6059,21 +6226,18 @@ export namespace Prisma {
   /**
    * CompetitorSubscription delete
    */
-  export type CompetitorSubscriptionDeleteArgs = {
+  export type CompetitorSubscriptionDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
     /**
      * Filter which CompetitorSubscription to delete.
-     * 
-    **/
+     */
     where: CompetitorSubscriptionWhereUniqueInput
   }
 
@@ -6081,11 +6245,10 @@ export namespace Prisma {
   /**
    * CompetitorSubscription deleteMany
    */
-  export type CompetitorSubscriptionDeleteManyArgs = {
+  export type CompetitorSubscriptionDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which CompetitorSubscriptions to delete
-     * 
-    **/
+     */
     where?: CompetitorSubscriptionWhereInput
   }
 
@@ -6093,17 +6256,15 @@ export namespace Prisma {
   /**
    * CompetitorSubscription without action
    */
-  export type CompetitorSubscriptionArgs = {
+  export type CompetitorSubscriptionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitorSubscription
-     * 
-    **/
-    select?: CompetitorSubscriptionSelect | null
+     */
+    select?: CompetitorSubscriptionSelect<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well.
-     * 
-    **/
-    include?: CompetitorSubscriptionInclude | null
+     */
+    include?: CompetitorSubscriptionInclude<ExtArgs> | null
   }
 
 
@@ -6164,39 +6325,34 @@ export namespace Prisma {
     _all?: true
   }
 
-  export type CompetitionSidAggregateArgs = {
+  export type CompetitionSidAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which CompetitionSid to aggregate.
-     * 
-    **/
+     */
     where?: CompetitionSidWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitionSids to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitionSidOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the start position
-     * 
-    **/
+     */
     cursor?: CompetitionSidWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitionSids from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitionSids.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
@@ -6229,10 +6385,10 @@ export namespace Prisma {
 
 
 
-  export type CompetitionSidGroupByArgs = {
+  export type CompetitionSidGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: CompetitionSidWhereInput
     orderBy?: Enumerable<CompetitionSidOrderByWithAggregationInput>
-    by: Array<CompetitionSidScalarFieldEnum>
+    by: CompetitionSidScalarFieldEnum[]
     having?: CompetitionSidScalarWhereWithAggregatesInput
     take?: number
     skip?: number
@@ -6252,7 +6408,7 @@ export namespace Prisma {
     _max: CompetitionSidMaxAggregateOutputType | null
   }
 
-  type GetCompetitionSidGroupByPayload<T extends CompetitionSidGroupByArgs> = PrismaPromise<
+  type GetCompetitionSidGroupByPayload<T extends CompetitionSidGroupByArgs> = Prisma.PrismaPromise<
     Array<
       PickArray<CompetitionSidGroupByOutputType, T['by']> &
         {
@@ -6266,7 +6422,14 @@ export namespace Prisma {
     >
 
 
-  export type CompetitionSidSelect = {
+  export type CompetitionSidSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    createdAt?: boolean
+    updatedAt?: boolean
+    competitionId?: boolean
+    sid?: boolean
+  }, ExtArgs["result"]["competitionSid"]>
+
+  export type CompetitionSidSelectScalar = {
     createdAt?: boolean
     updatedAt?: boolean
     competitionId?: boolean
@@ -6274,27 +6437,15 @@ export namespace Prisma {
   }
 
 
-  export type CompetitionSidGetPayload<S extends boolean | null | undefined | CompetitionSidArgs> =
-    S extends { select: any, include: any } ? 'Please either choose `select` or `include`' :
-    S extends true ? CompetitionSid :
-    S extends undefined ? never :
-    S extends { include: any } & (CompetitionSidArgs | CompetitionSidFindManyArgs)
-    ? CompetitionSid 
-    : S extends { select: any } & (CompetitionSidArgs | CompetitionSidFindManyArgs)
-      ? {
-    [P in TruthyKeys<S['select']>]:
-    P extends keyof CompetitionSid ? CompetitionSid[P] : never
-  } 
-      : CompetitionSid
+  type CompetitionSidGetPayload<S extends boolean | null | undefined | CompetitionSidArgs> = $Types.GetResult<CompetitionSidPayload, S>
 
-
-  type CompetitionSidCountArgs = Merge<
+  type CompetitionSidCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
     Omit<CompetitionSidFindManyArgs, 'select' | 'include'> & {
       select?: CompetitionSidCountAggregateInputType | true
     }
-  >
 
-  export interface CompetitionSidDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined> {
+  export interface CompetitionSidDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CompetitionSid'], meta: { name: 'CompetitionSid' } }
     /**
      * Find zero or one CompetitionSid that matches the filter.
      * @param {CompetitionSidFindUniqueArgs} args - Arguments to find a CompetitionSid
@@ -6306,9 +6457,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUnique<T extends CompetitionSidFindUniqueArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args: SelectSubset<T, CompetitionSidFindUniqueArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitionSid'> extends True ? Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>> : Prisma__CompetitionSidClient<CompetitionSidGetPayload<T> | null, null>
+    findUnique<T extends CompetitionSidFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, CompetitionSidFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'CompetitionSid'> extends True ? Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
 
     /**
      * Find one CompetitionSid that matches the filter or throw an error  with `error.code='P2025'` 
@@ -6322,9 +6473,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findUniqueOrThrow<T extends CompetitionSidFindUniqueOrThrowArgs>(
-      args?: SelectSubset<T, CompetitionSidFindUniqueOrThrowArgs>
-    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+    findUniqueOrThrow<T extends CompetitionSidFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSidFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
 
     /**
      * Find the first CompetitionSid that matches the filter.
@@ -6339,9 +6490,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirst<T extends CompetitionSidFindFirstArgs,  LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
-      args?: SelectSubset<T, CompetitionSidFindFirstArgs>
-    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitionSid'> extends True ? Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>> : Prisma__CompetitionSidClient<CompetitionSidGetPayload<T> | null, null>
+    findFirst<T extends CompetitionSidFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, CompetitionSidFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'CompetitionSid'> extends True ? Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
 
     /**
      * Find the first CompetitionSid that matches the filter or
@@ -6357,9 +6508,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    findFirstOrThrow<T extends CompetitionSidFindFirstOrThrowArgs>(
-      args?: SelectSubset<T, CompetitionSidFindFirstOrThrowArgs>
-    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+    findFirstOrThrow<T extends CompetitionSidFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSidFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
 
     /**
      * Find zero or more CompetitionSids that matches the filter.
@@ -6377,9 +6528,9 @@ export namespace Prisma {
      * const competitionSidWithCreatedAtOnly = await prisma.competitionSid.findMany({ select: { createdAt: true } })
      * 
     **/
-    findMany<T extends CompetitionSidFindManyArgs>(
-      args?: SelectSubset<T, CompetitionSidFindManyArgs>
-    ): PrismaPromise<Array<CompetitionSidGetPayload<T>>>
+    findMany<T extends CompetitionSidFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSidFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'findMany', never>>
 
     /**
      * Create a CompetitionSid.
@@ -6393,9 +6544,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    create<T extends CompetitionSidCreateArgs>(
-      args: SelectSubset<T, CompetitionSidCreateArgs>
-    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+    create<T extends CompetitionSidCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSidCreateArgs<ExtArgs>>
+    ): Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
 
     /**
      * Create many CompetitionSids.
@@ -6409,9 +6560,9 @@ export namespace Prisma {
      *     })
      *     
     **/
-    createMany<T extends CompetitionSidCreateManyArgs>(
-      args?: SelectSubset<T, CompetitionSidCreateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    createMany<T extends CompetitionSidCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSidCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Delete a CompetitionSid.
@@ -6425,9 +6576,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    delete<T extends CompetitionSidDeleteArgs>(
-      args: SelectSubset<T, CompetitionSidDeleteArgs>
-    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+    delete<T extends CompetitionSidDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSidDeleteArgs<ExtArgs>>
+    ): Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
 
     /**
      * Update one CompetitionSid.
@@ -6444,9 +6595,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    update<T extends CompetitionSidUpdateArgs>(
-      args: SelectSubset<T, CompetitionSidUpdateArgs>
-    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+    update<T extends CompetitionSidUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSidUpdateArgs<ExtArgs>>
+    ): Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
 
     /**
      * Delete zero or more CompetitionSids.
@@ -6460,9 +6611,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    deleteMany<T extends CompetitionSidDeleteManyArgs>(
-      args?: SelectSubset<T, CompetitionSidDeleteManyArgs>
-    ): PrismaPromise<BatchPayload>
+    deleteMany<T extends CompetitionSidDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, CompetitionSidDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Update zero or more CompetitionSids.
@@ -6481,9 +6632,9 @@ export namespace Prisma {
      * })
      * 
     **/
-    updateMany<T extends CompetitionSidUpdateManyArgs>(
-      args: SelectSubset<T, CompetitionSidUpdateManyArgs>
-    ): PrismaPromise<BatchPayload>
+    updateMany<T extends CompetitionSidUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSidUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
 
     /**
      * Create or update one CompetitionSid.
@@ -6502,9 +6653,9 @@ export namespace Prisma {
      *   }
      * })
     **/
-    upsert<T extends CompetitionSidUpsertArgs>(
-      args: SelectSubset<T, CompetitionSidUpsertArgs>
-    ): Prisma__CompetitionSidClient<CompetitionSidGetPayload<T>>
+    upsert<T extends CompetitionSidUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, CompetitionSidUpsertArgs<ExtArgs>>
+    ): Prisma__CompetitionSidClient<$Types.GetResult<CompetitionSidPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
 
     /**
      * Count the number of CompetitionSids.
@@ -6521,8 +6672,8 @@ export namespace Prisma {
     **/
     count<T extends CompetitionSidCountArgs>(
       args?: Subset<T, CompetitionSidCountArgs>,
-    ): PrismaPromise<
-      T extends _Record<'select', any>
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
         ? T['select'] extends true
           ? number
           : GetScalarType<T['select'], CompetitionSidCountAggregateOutputType>
@@ -6553,7 +6704,7 @@ export namespace Prisma {
      *   take: 10,
      * })
     **/
-    aggregate<T extends CompetitionSidAggregateArgs>(args: Subset<T, CompetitionSidAggregateArgs>): PrismaPromise<GetCompetitionSidAggregateType<T>>
+    aggregate<T extends CompetitionSidAggregateArgs>(args: Subset<T, CompetitionSidAggregateArgs>): Prisma.PrismaPromise<GetCompetitionSidAggregateType<T>>
 
     /**
      * Group by CompetitionSid.
@@ -6630,7 +6781,7 @@ export namespace Prisma {
             ? never
             : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
         }[OrderFields]
-    >(args: SubsetIntersection<T, CompetitionSidGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitionSidGroupByPayload<T> : PrismaPromise<InputErrors>
+    >(args: SubsetIntersection<T, CompetitionSidGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompetitionSidGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
 
   }
 
@@ -6640,10 +6791,8 @@ export namespace Prisma {
    * Because we want to prevent naming conflicts as mentioned in
    * https://github.com/prisma/prisma-client-js/issues/707
    */
-  export class Prisma__CompetitionSidClient<T, Null = never> implements PrismaPromise<T> {
-    [prisma]: true;
+  export class Prisma__CompetitionSidClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
     private readonly _dmmf;
-    private readonly _fetcher;
     private readonly _queryType;
     private readonly _rootField;
     private readonly _clientMethod;
@@ -6654,8 +6803,8 @@ export namespace Prisma {
     private _isList;
     private _callsite;
     private _requestPromise?;
-    constructor(_dmmf: runtime.DMMFClass, _fetcher: PrismaClientFetcher, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
-    readonly [Symbol.toStringTag]: 'PrismaClientPromise';
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
 
 
     private get _document();
@@ -6688,23 +6837,21 @@ export namespace Prisma {
   /**
    * CompetitionSid base type for findUnique actions
    */
-  export type CompetitionSidFindUniqueArgsBase = {
+  export type CompetitionSidFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * Filter, which CompetitionSid to fetch.
-     * 
-    **/
+     */
     where: CompetitionSidWhereUniqueInput
   }
 
   /**
    * CompetitionSid findUnique
    */
-  export interface CompetitionSidFindUniqueArgs extends CompetitionSidFindUniqueArgsBase {
+  export interface CompetitionSidFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends CompetitionSidFindUniqueArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
@@ -6716,16 +6863,14 @@ export namespace Prisma {
   /**
    * CompetitionSid findUniqueOrThrow
    */
-  export type CompetitionSidFindUniqueOrThrowArgs = {
+  export type CompetitionSidFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * Filter, which CompetitionSid to fetch.
-     * 
-    **/
+     */
     where: CompetitionSidWhereUniqueInput
   }
 
@@ -6733,58 +6878,51 @@ export namespace Prisma {
   /**
    * CompetitionSid base type for findFirst actions
    */
-  export type CompetitionSidFindFirstArgsBase = {
+  export type CompetitionSidFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * Filter, which CompetitionSid to fetch.
-     * 
-    **/
+     */
     where?: CompetitionSidWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitionSids to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitionSidOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for CompetitionSids.
-     * 
-    **/
+     */
     cursor?: CompetitionSidWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitionSids from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitionSids.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of CompetitionSids.
-     * 
-    **/
+     */
     distinct?: Enumerable<CompetitionSidScalarFieldEnum>
   }
 
   /**
    * CompetitionSid findFirst
    */
-  export interface CompetitionSidFindFirstArgs extends CompetitionSidFindFirstArgsBase {
+  export interface CompetitionSidFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends CompetitionSidFindFirstArgsBase<ExtArgs> {
    /**
     * Throw an Error if query returns no results
     * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
@@ -6796,51 +6934,44 @@ export namespace Prisma {
   /**
    * CompetitionSid findFirstOrThrow
    */
-  export type CompetitionSidFindFirstOrThrowArgs = {
+  export type CompetitionSidFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * Filter, which CompetitionSid to fetch.
-     * 
-    **/
+     */
     where?: CompetitionSidWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitionSids to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitionSidOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for searching for CompetitionSids.
-     * 
-    **/
+     */
     cursor?: CompetitionSidWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitionSids from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitionSids.
-     * 
-    **/
+     */
     skip?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
      * 
      * Filter by unique combinations of CompetitionSids.
-     * 
-    **/
+     */
     distinct?: Enumerable<CompetitionSidScalarFieldEnum>
   }
 
@@ -6848,44 +6979,38 @@ export namespace Prisma {
   /**
    * CompetitionSid findMany
    */
-  export type CompetitionSidFindManyArgs = {
+  export type CompetitionSidFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * Filter, which CompetitionSids to fetch.
-     * 
-    **/
+     */
     where?: CompetitionSidWhereInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
      * 
      * Determine the order of CompetitionSids to fetch.
-     * 
-    **/
+     */
     orderBy?: Enumerable<CompetitionSidOrderByWithRelationInput>
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
      * 
      * Sets the position for listing CompetitionSids.
-     * 
-    **/
+     */
     cursor?: CompetitionSidWhereUniqueInput
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Take `±n` CompetitionSids from the position of the cursor.
-     * 
-    **/
+     */
     take?: number
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
      * 
      * Skip the first `n` CompetitionSids.
-     * 
-    **/
+     */
     skip?: number
     distinct?: Enumerable<CompetitionSidScalarFieldEnum>
   }
@@ -6894,16 +7019,14 @@ export namespace Prisma {
   /**
    * CompetitionSid create
    */
-  export type CompetitionSidCreateArgs = {
+  export type CompetitionSidCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * The data needed to create a CompetitionSid.
-     * 
-    **/
+     */
     data: XOR<CompetitionSidCreateInput, CompetitionSidUncheckedCreateInput>
   }
 
@@ -6911,11 +7034,10 @@ export namespace Prisma {
   /**
    * CompetitionSid createMany
    */
-  export type CompetitionSidCreateManyArgs = {
+  export type CompetitionSidCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to create many CompetitionSids.
-     * 
-    **/
+     */
     data: Enumerable<CompetitionSidCreateManyInput>
     skipDuplicates?: boolean
   }
@@ -6924,21 +7046,18 @@ export namespace Prisma {
   /**
    * CompetitionSid update
    */
-  export type CompetitionSidUpdateArgs = {
+  export type CompetitionSidUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * The data needed to update a CompetitionSid.
-     * 
-    **/
+     */
     data: XOR<CompetitionSidUpdateInput, CompetitionSidUncheckedUpdateInput>
     /**
      * Choose, which CompetitionSid to update.
-     * 
-    **/
+     */
     where: CompetitionSidWhereUniqueInput
   }
 
@@ -6946,16 +7065,14 @@ export namespace Prisma {
   /**
    * CompetitionSid updateMany
    */
-  export type CompetitionSidUpdateManyArgs = {
+  export type CompetitionSidUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * The data used to update CompetitionSids.
-     * 
-    **/
+     */
     data: XOR<CompetitionSidUpdateManyMutationInput, CompetitionSidUncheckedUpdateManyInput>
     /**
      * Filter which CompetitionSids to update
-     * 
-    **/
+     */
     where?: CompetitionSidWhereInput
   }
 
@@ -6963,26 +7080,22 @@ export namespace Prisma {
   /**
    * CompetitionSid upsert
    */
-  export type CompetitionSidUpsertArgs = {
+  export type CompetitionSidUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * The filter to search for the CompetitionSid to update in case it exists.
-     * 
-    **/
+     */
     where: CompetitionSidWhereUniqueInput
     /**
      * In case the CompetitionSid found by the `where` argument doesn't exist, create a new CompetitionSid with this data.
-     * 
-    **/
+     */
     create: XOR<CompetitionSidCreateInput, CompetitionSidUncheckedCreateInput>
     /**
      * In case the CompetitionSid was found with the provided `where` argument, update it with this data.
-     * 
-    **/
+     */
     update: XOR<CompetitionSidUpdateInput, CompetitionSidUncheckedUpdateInput>
   }
 
@@ -6990,16 +7103,14 @@ export namespace Prisma {
   /**
    * CompetitionSid delete
    */
-  export type CompetitionSidDeleteArgs = {
+  export type CompetitionSidDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
     /**
      * Filter which CompetitionSid to delete.
-     * 
-    **/
+     */
     where: CompetitionSidWhereUniqueInput
   }
 
@@ -7007,11 +7118,10 @@ export namespace Prisma {
   /**
    * CompetitionSid deleteMany
    */
-  export type CompetitionSidDeleteManyArgs = {
+  export type CompetitionSidDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Filter which CompetitionSids to delete
-     * 
-    **/
+     */
     where?: CompetitionSidWhereInput
   }
 
@@ -7019,12 +7129,11 @@ export namespace Prisma {
   /**
    * CompetitionSid without action
    */
-  export type CompetitionSidArgs = {
+  export type CompetitionSidArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     /**
      * Select specific fields to fetch from the CompetitionSid
-     * 
-    **/
-    select?: CompetitionSidSelect | null
+     */
+    select?: CompetitionSidSelect<ExtArgs> | null
   }
 
 
@@ -7033,8 +7142,15 @@ export namespace Prisma {
    * Enums
    */
 
-  // Based on
-  // https://github.com/microsoft/TypeScript/issues/3192#issuecomment-261720275
+  export const TransactionIsolationLevel: {
+    ReadUncommitted: 'ReadUncommitted',
+    ReadCommitted: 'ReadCommitted',
+    RepeatableRead: 'RepeatableRead',
+    Serializable: 'Serializable'
+  };
+
+  export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
 
   export const AuditLogScalarFieldEnum: {
     id: 'id',
@@ -7048,14 +7164,22 @@ export namespace Prisma {
   export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
 
 
-  export const CompetitionSidScalarFieldEnum: {
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
-    competitionId: 'competitionId',
-    sid: 'sid'
+  export const UserScalarFieldEnum: {
+    id: 'id',
+    phoneNumber: 'phoneNumber'
   };
 
-  export type CompetitionSidScalarFieldEnum = (typeof CompetitionSidScalarFieldEnum)[keyof typeof CompetitionSidScalarFieldEnum]
+  export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const SessionScalarFieldEnum: {
+    id: 'id',
+    sid: 'sid',
+    data: 'data',
+    expiresAt: 'expiresAt'
+  };
+
+  export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
 
 
   export const CompetitionSubscriptionScalarFieldEnum: {
@@ -7084,22 +7208,14 @@ export namespace Prisma {
   export type CompetitorSubscriptionScalarFieldEnum = (typeof CompetitorSubscriptionScalarFieldEnum)[keyof typeof CompetitorSubscriptionScalarFieldEnum]
 
 
-  export const QueryMode: {
-    default: 'default',
-    insensitive: 'insensitive'
+  export const CompetitionSidScalarFieldEnum: {
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    competitionId: 'competitionId',
+    sid: 'sid'
   };
 
-  export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
-
-
-  export const SessionScalarFieldEnum: {
-    id: 'id',
-    sid: 'sid',
-    data: 'data',
-    expiresAt: 'expiresAt'
-  };
-
-  export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
+  export type CompetitionSidScalarFieldEnum = (typeof CompetitionSidScalarFieldEnum)[keyof typeof CompetitionSidScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -7110,22 +7226,12 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
-  export const TransactionIsolationLevel: {
-    ReadUncommitted: 'ReadUncommitted',
-    ReadCommitted: 'ReadCommitted',
-    RepeatableRead: 'RepeatableRead',
-    Serializable: 'Serializable'
+  export const QueryMode: {
+    default: 'default',
+    insensitive: 'insensitive'
   };
 
-  export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
-
-
-  export const UserScalarFieldEnum: {
-    id: 'id',
-    phoneNumber: 'phoneNumber'
-  };
-
-  export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+  export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
   /**
@@ -7762,8 +7868,8 @@ export namespace Prisma {
 
   export type IntFilter = {
     equals?: number
-    in?: Enumerable<number>
-    notIn?: Enumerable<number>
+    in?: Enumerable<number> | number
+    notIn?: Enumerable<number> | number
     lt?: number
     lte?: number
     gt?: number
@@ -7773,8 +7879,8 @@ export namespace Prisma {
 
   export type StringFilter = {
     equals?: string
-    in?: Enumerable<string>
-    notIn?: Enumerable<string>
+    in?: Enumerable<string> | string
+    notIn?: Enumerable<string> | string
     lt?: string
     lte?: string
     gt?: string
@@ -7788,8 +7894,8 @@ export namespace Prisma {
 
   export type DateTimeFilter = {
     equals?: Date | string
-    in?: Enumerable<Date> | Enumerable<string>
-    notIn?: Enumerable<Date> | Enumerable<string>
+    in?: Enumerable<Date> | Enumerable<string> | Date | string
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string
     lt?: Date | string
     lte?: Date | string
     gt?: Date | string
@@ -7798,8 +7904,8 @@ export namespace Prisma {
   }
 
   export type UserRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
   }
 
   export type AuditLogCountOrderByAggregateInput = {
@@ -7841,8 +7947,8 @@ export namespace Prisma {
 
   export type IntWithAggregatesFilter = {
     equals?: number
-    in?: Enumerable<number>
-    notIn?: Enumerable<number>
+    in?: Enumerable<number> | number
+    notIn?: Enumerable<number> | number
     lt?: number
     lte?: number
     gt?: number
@@ -7857,8 +7963,8 @@ export namespace Prisma {
 
   export type StringWithAggregatesFilter = {
     equals?: string
-    in?: Enumerable<string>
-    notIn?: Enumerable<string>
+    in?: Enumerable<string> | string
+    notIn?: Enumerable<string> | string
     lt?: string
     lte?: string
     gt?: string
@@ -7875,8 +7981,8 @@ export namespace Prisma {
 
   export type DateTimeWithAggregatesFilter = {
     equals?: Date | string
-    in?: Enumerable<Date> | Enumerable<string>
-    notIn?: Enumerable<Date> | Enumerable<string>
+    in?: Enumerable<Date> | Enumerable<string> | Date | string
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string
     lt?: Date | string
     lte?: Date | string
     gt?: Date | string
@@ -8300,8 +8406,8 @@ export namespace Prisma {
 
   export type NestedIntFilter = {
     equals?: number
-    in?: Enumerable<number>
-    notIn?: Enumerable<number>
+    in?: Enumerable<number> | number
+    notIn?: Enumerable<number> | number
     lt?: number
     lte?: number
     gt?: number
@@ -8311,8 +8417,8 @@ export namespace Prisma {
 
   export type NestedStringFilter = {
     equals?: string
-    in?: Enumerable<string>
-    notIn?: Enumerable<string>
+    in?: Enumerable<string> | string
+    notIn?: Enumerable<string> | string
     lt?: string
     lte?: string
     gt?: string
@@ -8325,8 +8431,8 @@ export namespace Prisma {
 
   export type NestedDateTimeFilter = {
     equals?: Date | string
-    in?: Enumerable<Date> | Enumerable<string>
-    notIn?: Enumerable<Date> | Enumerable<string>
+    in?: Enumerable<Date> | Enumerable<string> | Date | string
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string
     lt?: Date | string
     lte?: Date | string
     gt?: Date | string
@@ -8336,8 +8442,8 @@ export namespace Prisma {
 
   export type NestedIntWithAggregatesFilter = {
     equals?: number
-    in?: Enumerable<number>
-    notIn?: Enumerable<number>
+    in?: Enumerable<number> | number
+    notIn?: Enumerable<number> | number
     lt?: number
     lte?: number
     gt?: number
@@ -8352,8 +8458,8 @@ export namespace Prisma {
 
   export type NestedFloatFilter = {
     equals?: number
-    in?: Enumerable<number>
-    notIn?: Enumerable<number>
+    in?: Enumerable<number> | number
+    notIn?: Enumerable<number> | number
     lt?: number
     lte?: number
     gt?: number
@@ -8363,8 +8469,8 @@ export namespace Prisma {
 
   export type NestedStringWithAggregatesFilter = {
     equals?: string
-    in?: Enumerable<string>
-    notIn?: Enumerable<string>
+    in?: Enumerable<string> | string
+    notIn?: Enumerable<string> | string
     lt?: string
     lte?: string
     gt?: string
@@ -8380,8 +8486,8 @@ export namespace Prisma {
 
   export type NestedDateTimeWithAggregatesFilter = {
     equals?: Date | string
-    in?: Enumerable<Date> | Enumerable<string>
-    notIn?: Enumerable<Date> | Enumerable<string>
+    in?: Enumerable<Date> | Enumerable<string> | Date | string
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string
     lt?: Date | string
     lte?: Date | string
     gt?: Date | string

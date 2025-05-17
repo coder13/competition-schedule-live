@@ -1,6 +1,6 @@
 import prisma from '../db';
 
-export const getUserCompetitionSubscriptions = (userId: number) =>
+export const getUserCompetitionSubscriptions = async (userId: number) =>
   prisma.competitionSubscription.findMany({
     where: {
       userId,

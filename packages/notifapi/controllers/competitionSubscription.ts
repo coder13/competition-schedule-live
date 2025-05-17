@@ -1,7 +1,7 @@
 import prisma from '../db';
 import { CompetitionSubscriptionType } from '../prisma/generated/client';
 
-export const getCompetitionSubscriptions = (
+export const getCompetitionSubscriptions = async (
   competitionId: string,
   userId: number,
   type?: CompetitionSubscriptionType
@@ -17,7 +17,7 @@ export const getCompetitionSubscriptions = (
     },
   });
 
-export const getAllUserCompetitionSubscriptions = (
+export const getAllUserCompetitionSubscriptions = async (
   competitionId: string,
   activityCodes: string[]
 ) => {
@@ -53,7 +53,7 @@ export const getAllUserCompetitionSubscriptions = (
   });
 };
 
-export const getAllUserCompetitionCompetitorSubscriptions = (
+export const getAllUserCompetitionCompetitorSubscriptions = async (
   competitionId: string,
   wcaUserIds: number[]
 ) =>
@@ -165,7 +165,9 @@ export const addCompetitionSubscription = async (
     },
   });
 
-export const removeCompetitionSubscriptions = (subscriptionIds: number[]) =>
+export const removeCompetitionSubscriptions = async (
+  subscriptionIds: number[]
+) =>
   prisma.competitionSubscription.deleteMany({
     where: {
       id: {
