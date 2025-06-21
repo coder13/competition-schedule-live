@@ -74,15 +74,15 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
     },
   });
 
-  const childActivitiesForActivityCode = (activityCode: string) =>
-    allChildActivities?.filter(filterBetterActivityCode(activityCode));
-
   const allChildActivities = rooms
     ?.flatMap((room) => room.activities)
     .flatMap((activity) =>
       activity?.childActivities?.length ? activity.childActivities : activity
     )
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  const childActivitiesForActivityCode = (activityCode: string) =>
+    allChildActivities?.filter(filterBetterActivityCode(activityCode));
 
   const uniqueActivityCodes = useMemo(
     () => [...new Set(allChildActivities?.map(mapToBetterActivityCode))],
@@ -92,22 +92,22 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
   const activitiesByActivityCodeMap = useMemo(() => {
     const activitiesByActivityCode: Record<string, ActivityCodeDataObject> = {};
 
+    if (!allChildActivities) {
+      return activitiesByActivityCode;
+    }
+
     uniqueActivityCodes?.forEach((activityCode) => {
       const childActivities = childActivitiesForActivityCode(activityCode);
-      if (!childActivities) {
-        return;
+      if (!childActivities || !childActivities.length) {
+        throw new Error(
+          'No child activities found for activity code ' + activityCode
+        );
       }
 
       const betterCode = mapToBetterActivityCode(childActivities[0]);
       const liveActivities = activities?.filter((a) =>
         childActivities?.some((activity) => a.activityId === activity.id)
       );
-
-      if (!childActivities || !childActivities.length) {
-        throw new Error(
-          'No child activities found for activity code ' + activityCode
-        );
-      }
 
       activitiesByActivityCode[betterCode] = {
         activityCode,
