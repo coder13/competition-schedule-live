@@ -4,17 +4,18 @@
   "workspaces": [
     "packages/*"
   ],
-  "dependencies": {
-    "lerna": "^6.0.1"
-  },
   "devDependencies": {
     "husky": "^8.0.1",
+    "lerna": "^6.0.1",
     "prettier": "^2.7.1"
   },
   "scripts": {
     "prepare": "husky install",
     "bootstrap": "lerna bootstrap",
     "postinstall": "lerna bootstrap",
+    "lint": "yarn workspace api lint && yarn workspace notifapi lint",
+    "typecheck": "yarn workspace admin typecheck && yarn workspace projector typecheck && yarn workspace webapp typecheck && yarn workspace www typecheck && yarn workspace api typecheck && yarn workspace notifapi typecheck",
+    "validate": "yarn lint && yarn typecheck",
     "build": "lerna run build",
     "build:www": "lerna run build --scope www",
     "build:webapp": "lerna run build --scope webapp",

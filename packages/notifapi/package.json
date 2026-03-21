@@ -9,6 +9,7 @@
     "prestart": "yarn prisma:generate && yarn prisma:migrate",
     "start": "ts-node index.ts",
     "lint": "eslint ./",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
@@ -33,7 +34,7 @@
     "prisma": "^4.8.1",
     "ts-node": "^10.9.1",
     "twilio": "^3.84.1",
-    "typescript": "^4.9.4",
+    "typescript": "^5.9.3",
     "winston": "^3.8.2"
   },
   "devDependencies": {

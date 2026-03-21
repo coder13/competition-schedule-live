@@ -26,7 +26,7 @@ function APISection({ name, url }: { name: string; url: string }) {
   }, []);
 
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let timeout: NodeJS.Timeout | undefined;
 
     async function retry() {
       try {
@@ -45,7 +45,7 @@ function APISection({ name, url }: { name: string; url: string }) {
           lastPinged: new Date(),
         });
       }
-      setTimeout(retry, interval.current);
+      timeout = setTimeout(retry, interval.current);
     }
 
     retry();

@@ -219,12 +219,12 @@ router.post(
       const includeRoomName = rooms.length > 1;
 
       const activityNotifications = notifications.filter(
-        (n) => n.type === 'activity'
-      ) as ActivityNotification[];
+        (n): n is ActivityNotification => n.type === 'activity'
+      );
 
       const competitorNotifications = notifications.filter(
-        (n) => n.type === 'competitor'
-      ) as CompetitorNotification[];
+        (n): n is CompetitorNotification => n.type === 'competitor'
+      );
 
       // short lived memory cache of activity data
       const activityData = new Map<number, Activity>();
@@ -253,11 +253,7 @@ router.post(
       );
 
       const wcaUserIdsForSearch = uniqueDefinedSet(
-        (
-          notifications.filter(
-            (n) => n.type === 'competitor'
-          ) as CompetitorNotification[]
-        ).map((n) => n.wcaUserId)
+        competitorNotifications.map((n) => n.wcaUserId)
       );
 
       const userCompetitionSubscriptions =

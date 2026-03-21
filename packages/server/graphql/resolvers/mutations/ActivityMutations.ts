@@ -57,9 +57,11 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
         res.filter((r) => r.status === 'fulfilled').length,
         'webhooks'
       );
-      (
-        res.filter((r) => r.status === 'rejected') as PromiseRejectedResult[]
-      ).forEach((r) => {
+      res
+        .filter(
+          (r): r is PromiseRejectedResult => r.status === 'rejected'
+        )
+        .forEach((r) => {
         console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
       });
     });
@@ -93,9 +95,11 @@ export const startActivities: MutationResolvers<AppContext>['startActivities'] =
         res.filter((r) => r.status === 'fulfilled').length,
         'webhooks'
       );
-      (
-        res.filter((r) => r.status === 'rejected') as PromiseRejectedResult[]
-      ).forEach((r) => {
+      res
+        .filter(
+          (r): r is PromiseRejectedResult => r.status === 'rejected'
+        )
+        .forEach((r) => {
         console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
       });
     });

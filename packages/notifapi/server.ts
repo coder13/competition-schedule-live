@@ -88,7 +88,7 @@ export async function init() {
   app.set('trust proxy', 1); // trust first proxy
 
   app.use(cookieParser(SECRET));
-  app.use(session(sessionOptions));
+  app.use(session(sessionOptions) as unknown as express.RequestHandler);
 
   app.use('/v0/internal', internal);
 
