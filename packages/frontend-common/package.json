@@ -28,6 +28,6 @@
   },
   "private": true,
   "dependencies": {
-    "@wca/helpers": "^1.1.2"
+    "@wca/helpers": "^1.1.7"
   }
 }
