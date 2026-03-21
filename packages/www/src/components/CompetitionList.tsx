@@ -6,7 +6,12 @@ import { Link } from 'react-router-dom';
 import { Competition } from '../generated/graphql';
 import PanelBlockWithHover from './PanelBlockWithHover';
 
-const FlagIcon = FlagIconFactory(React, { useCssModules: false });
+const RawFlagIcon = FlagIconFactory(React, { useCssModules: false });
+const FlagIcon = RawFlagIcon as React.ComponentType<{
+  code: string;
+  size?: string;
+  className?: string;
+}>;
 
 interface CompetitionListProps {
   competitions: Competition[];
