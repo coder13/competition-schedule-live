@@ -3,7 +3,8 @@
 import React from 'react';
 import FlagIconFactory, { FlagIconProps } from 'react-flag-icon-css';
 
-const FlagIcon = FlagIconFactory(React, { useCssModules: false });
+const RawFlagIcon = FlagIconFactory(React, { useCssModules: false });
+const FlagIcon = RawFlagIcon as React.ComponentType<FlagIconProps>;
 
 function Flag({ ...props }: FlagIconProps) {
   return <FlagIcon {...props} />;

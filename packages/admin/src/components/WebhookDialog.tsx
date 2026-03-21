@@ -1,6 +1,6 @@
 import { ApolloError, useMutation } from '@apollo/client';
 import { FormEventHandler, useEffect, useState } from 'react';
-import Modal from 'react-modal';
+import Modal, { Props as ReactModalProps } from 'react-modal';
 import { useParams } from 'react-router-dom';
 
 import {
@@ -26,6 +26,7 @@ interface ModalDialogProps {
 }
 
 Modal.setAppElement('#root');
+const ModalComponent = Modal as unknown as React.ComponentType<ReactModalProps>;
 
 function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
   const { competitionId } = useParams();
@@ -114,7 +115,7 @@ function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
   };
 
   return (
-    <Modal
+    <ModalComponent
       isOpen={open}
       onRequestClose={onRequestClose}
       style={{
@@ -251,7 +252,7 @@ function WebhookDialog({ open, webhook, onRequestClose }: ModalDialogProps) {
           Close
         </Button>
       </div>
-    </Modal>
+    </ModalComponent>
   );
 }
 
