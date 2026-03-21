@@ -74,9 +74,7 @@ function App() {
         ) : (
           <Route index element={<LoginPage />} />
         )}
-        <Route path="*">
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
   );

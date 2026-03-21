@@ -2,7 +2,7 @@ import { Button } from '@mui/material';
 import { useAuth } from '../providers/AuthProvider';
 
 function LoginPage() {
-  const { login, jwt } = useAuth();
+  const { login } = useAuth();
 
   return (
     <div
@@ -13,7 +13,6 @@ function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-      {jwt}
       <Button onClick={login}>Login</Button>
     </div>
   );
