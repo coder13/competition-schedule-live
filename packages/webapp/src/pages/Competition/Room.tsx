@@ -34,6 +34,14 @@ import { allChildActivities } from '@notifycomp/frontend-common/lib';
 const durationToMinutes = (start: Date, end: Date): number =>
   Math.round((end.getTime() - start.getTime()) / 1000 / 60);
 
+const formatScheduleDelta = (scheduledTime: string, actualTime: string) => {
+  const minutes = durationToMinutes(new Date(scheduledTime), new Date(actualTime));
+
+  return `Ended ${formatDuration({ minutes: Math.abs(minutes) })} ${
+    minutes < 0 ? 'early' : 'late'
+  }`;
+};
+
 // import red from '@mui/material/colors/red';
 // import yellow from '@mui/material/colors/yellow';
 
@@ -361,13 +369,10 @@ function CompetitionRoom() {
                   !!liveActivity?.startTime &&
                   !!liveActivity?.endTime
                 ) {
-                  const minutes = durationToMinutes(
-                    new Date(liveActivity.startTime),
-                    new Date(liveActivity.endTime)
+                  secondaryText = formatScheduleDelta(
+                    activity.endTime,
+                    liveActivity.endTime
                   );
-                  secondaryText = `Ended ${formatDuration({ minutes })} ${
-                    minutes < 0 ? 'early' : 'late'
-                  }`;
                 }
 
                 return (
@@ -406,11 +411,9 @@ function CompetitionRoom() {
                   !!liveActivity?.startTime &&
                   !!liveActivity?.endTime
                 ) {
-                  const minutesLate = Math.round(
-                    (new Date(activity.endTime).getTime() -
-                      new Date(liveActivity.startTime).getTime()) /
-                      1000 /
-                      60
+                  const minutesLate = durationToMinutes(
+                    new Date(activity.endTime),
+                    new Date(liveActivity.endTime)
                   );
                   const activityDuration = Math.round(
                     (new Date(liveActivity.endTime).getTime() -
@@ -419,8 +422,7 @@ function CompetitionRoom() {
                   );
                   secondaryText = (
                     <>
-                      Ended {formatDuration({ minutes: Math.abs(minutesLate) })}{' '}
-                      {minutesLate < 0 ? 'late' : 'early'}
+                      {formatScheduleDelta(activity.endTime, liveActivity.endTime)}
                       <br />
                       Ran for{' '}
                       {formatDuration({

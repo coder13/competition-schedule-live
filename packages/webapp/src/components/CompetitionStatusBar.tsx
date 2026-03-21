@@ -172,7 +172,7 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
 
   const advanceToNextActivities = useCallback(async () => {
     // figure out what activities are currently going on
-    if (!Object.keys(ongoingActivitiesByCode) || !nextActivity) {
+    if (!Object.keys(ongoingActivitiesByCode).length || !nextActivity) {
       return;
     }
 
@@ -197,7 +197,7 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
               const room = getRoomForActivity(activityData);
 
               return (
-                <ListItem>
+                <ListItem key={activity.activityId}>
                   <ListItemText
                     primary={activityData?.name}
                     secondary={room?.name ?? '???'}
@@ -216,7 +216,7 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
               const room = getRoomForActivity(activityData);
 
               return (
-                <ListItem>
+                <ListItem key={activityData.id}>
                   <ListItemText
                     primary={activityData.name}
                     secondary={room?.name ?? '???'}
@@ -234,10 +234,10 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
       variables: {
         competitionId: wcif?.id,
         stopActivityIds: ongoingActivities?.map((a) => a.activityId),
-        startActivityIds: starting.map((a) => a.id),
+        startActivityIds: starting?.map((a) => a.id) ?? [],
       },
     });
-  }, [wcif, nextActivity, ongoingActivities]);
+  }, [activities, allChildActivities, confirm, getRoomForActivity, nextActivity, ongoingActivities, ongoingActivitiesByCode, stopAndStartActivities, wcif?.id]);
 
   const startOrStopActivities = async ({
     activityCode,
@@ -313,7 +313,7 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
               const room = getRoomForActivity(activityData);
 
               return (
-                <ListItem>
+                <ListItem key={activity.activityId}>
                   <ListItemText
                     primary={activityData?.name}
                     secondary={room?.name ?? '???'}
@@ -499,7 +499,7 @@ export function CompetitionStatusBar({}: CompetitionStatusBarProps) {
           variant="contained"
           onClick={stopongoingActivities}
           disabled={!ongoingActivities?.length}>
-          Stop Current {pluralize('activity', allChildActivities?.length || 0)}
+          Stop Current {pluralize('activity', ongoingActivities?.length || 0)}
         </Button>
       </ButtonGroup>
     </Paper>
