@@ -2,6 +2,9 @@
   "name": "www",
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",

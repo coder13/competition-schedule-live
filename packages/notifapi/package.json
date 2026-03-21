@@ -4,6 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "description": "Notification backend for notify comp infra",
+  "engines": {
+    "node": ">=20 <21"
+  },
   "scripts": {
     "dev": "concurrently \"yarn prisma:generate:watch\" \"NODE_ENV=development nodemon index.ts\"",
     "prestart": "yarn prisma:generate && yarn prisma:migrate",

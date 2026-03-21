@@ -23,6 +23,11 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Generate Prisma clients
+        run: |
+          yarn workspace api prisma:generate
+          yarn workspace notifapi prisma:generate
+
       - name: Lint
         run: yarn lint
 
