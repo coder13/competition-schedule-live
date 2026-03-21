@@ -68,13 +68,13 @@ function Mainbar() {
           </Box>
 
           <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open user menu">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt={user?.name} src={user?.avatar?.thumb_url} />
-              </IconButton>
-            </Tooltip>
             {user && (
               <>
+                <Tooltip title="Open user menu">
+                  <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                    <Avatar alt={user?.name} src={user?.avatar?.thumb_url} />
+                  </IconButton>
+                </Tooltip>
                 <Menu
                   sx={{ mt: '45px' }}
                   id="menu-appbar-user"

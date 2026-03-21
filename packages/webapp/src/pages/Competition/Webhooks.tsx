@@ -49,6 +49,7 @@ function CompetitionWebhooks() {
       <List>
         {webhooksData?.competition?.webhooks?.map((webhook) => (
           <ListItem
+            key={webhook.id}
             secondaryAction={
               <IconButton
                 edge="end"
