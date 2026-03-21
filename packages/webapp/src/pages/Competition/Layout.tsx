@@ -36,16 +36,16 @@ function CompetitionLayout() {
   const [_, setAppTitle] = useContext(StoreContext).appTitle;
   const { competitionId } = useParams<{ competitionId: string }>();
   const { isLoading, data: wcif } = useReactQuery<Competition>({
-    queryKey: ['public'],
-    queryFn: () =>
-      wcaApiFetch(`/api/v0/competitions/${competitionId || ''}/wcif`),
+    queryKey: ['competition-wcif', competitionId],
+    enabled: Boolean(competitionId),
+    queryFn: () => wcaApiFetch(`/api/v0/competitions/${competitionId}/wcif`),
   });
 
   useEffect(() => {
     if (wcif && wcif?.id !== competitionId) {
       navigate(`/competitions/${wcif?.id}`, { replace: true });
     }
-  }, [competitionId, wcif]);
+  }, [competitionId, navigate, wcif]);
 
   const {
     data: currentActivities,
@@ -85,11 +85,11 @@ function CompetitionLayout() {
     });
 
     return () => unsub();
-  }, [wcif]);
+  }, [subscribeToMore, wcif?.id]);
 
   useEffect(() => {
     setAppTitle(wcif?.name || 'Competition Schedule Live');
-  }, [wcif?.name]);
+  }, [setAppTitle, wcif?.name]);
 
   const ongoingActivities = currentActivities?.activities?.filter(
     (activity) => activity.startTime && !activity.endTime

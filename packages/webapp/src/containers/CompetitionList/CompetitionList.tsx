@@ -36,7 +36,7 @@ export function CompetitionList() {
           })
           .sort(
             (a, b) =>
-              new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+              new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
           )
       : [];
   }, [data]);

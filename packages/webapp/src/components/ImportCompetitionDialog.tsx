@@ -26,7 +26,11 @@ import { gql, useMutation } from '@apollo/client';
 import { ImportCompetitionMutation } from '../graphql';
 import { useSnackbar } from 'notistack';
 
-const FlagIcon = FlagIconFactory(React, { useCssModules: false });
+const RawFlagIcon = FlagIconFactory(React, { useCssModules: false });
+const FlagIcon = RawFlagIcon as React.ComponentType<{
+  code: string;
+  size?: string;
+}>;
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & {
