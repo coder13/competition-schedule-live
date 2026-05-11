@@ -7,6 +7,7 @@ import {
 } from '../../../controllers/pushSubscriptions';
 
 const router = Router();
+const VAPID_PUBLIC_KEY_PATTERN = /^[A-Za-z0-9_-]{40,256}$/;
 
 interface SubscriptionBody {
   endpoint?: string;
@@ -45,7 +46,9 @@ const normalizeWatches = (
 };
 
 router.get('/vapid-public-key', (_, res) => {
-  if (!process.env.VAPID_PUBLIC_KEY) {
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+
+  if (!publicKey) {
     res.status(503).json({
       success: false,
       message: 'VAPID public key is not configured',
@@ -53,9 +56,17 @@ router.get('/vapid-public-key', (_, res) => {
     return;
   }
 
+  if (!VAPID_PUBLIC_KEY_PATTERN.test(publicKey)) {
+    res.status(503).json({
+      success: false,
+      message: 'VAPID public key is not valid',
+    });
+    return;
+  }
+
   res.json({
     success: true,
-    publicKey: process.env.VAPID_PUBLIC_KEY,
+    publicKey,
   });
 });
 
