@@ -1,4 +1,5 @@
 import { User } from './prisma/generated/client';
+import { CompetitionGroupsClaims } from '../lib/competitionGroupsToken';
 
 declare module 'express-session' {
   interface SessionData {
@@ -18,5 +19,6 @@ declare module 'express' {
   interface Request {
     user?: User;
     sid?: string;
+    competitionGroups?: CompetitionGroupsClaims;
   }
 }

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import cors from 'cors';
 import notifyRouter from './notify';
 import admin from './admin';
+import pushRouter from './push';
 import prisma from '../../../db';
 
 const router = Router();
@@ -13,6 +14,7 @@ router.use(
 );
 
 router.use('/admin', admin);
+router.use('/push', pushRouter);
 
 router.use(
   '/competitions/:competitionId/subscribedUsersCount',
