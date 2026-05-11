@@ -13,7 +13,7 @@
     "start": "ts-node index.ts",
     "lint": "eslint ./",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "node --test -r ts-node/register test",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:generate": "prisma generate",
@@ -23,7 +23,6 @@
     "@notifycomp/frontend-common": "^0.0.1",
     "@types/cookie-parser": "^1.4.3",
     "@types/express-session": "^1.17.5",
-    "@types/web-push": "^3.6.4",
     "@wca/helpers": "^1.1.7",
     "body-parser": "^1.20.4",
     "cookie-parser": "^1.4.6",
@@ -39,7 +38,6 @@
     "ts-node": "^10.9.1",
     "twilio": "^3.84.1",
     "typescript": "^5.9.3",
-    "web-push": "^3.6.7",
     "winston": "^3.8.2"
   },
   "devDependencies": {

@@ -27,7 +27,6 @@ import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import { internal, external } from './routes/v0';
 import logger from './lib/logger';
 import morganMiddleware from './middlewares/morgan.middleware';
-import { startAssignmentNotificationWorker } from './services/assignmentNotificationWorker';
 
 const SECRET = process.env.SESSION_SECRET ?? 'compnotifySecret';
 
@@ -52,7 +51,6 @@ const sessionOptions: SessionOptions & {
 
 export async function init() {
   const app = express();
-  startAssignmentNotificationWorker();
 
   app.use(json());
   app.use(morganMiddleware);

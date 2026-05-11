@@ -1,6 +1,5 @@
 import webPush from 'web-push';
 import prisma from '../db';
-import logger from '../lib/logger';
 import { PushSubscription } from '../prisma/generated/client';
 
 export interface AssignmentPushPayload {
@@ -63,7 +62,7 @@ export const sendAssignmentPush = async (
       });
     }
 
-    logger.error(e);
+    console.error(e);
 
     return {
       success: false,

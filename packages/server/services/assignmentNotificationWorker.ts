@@ -1,6 +1,5 @@
 import prisma from '../db';
 import { createAssignmentSnapshot } from '../lib/assignmentSnapshots';
-import logger from '../lib/logger';
 import {
   PushDeliveryStatus,
   PushSubscription,
@@ -196,7 +195,7 @@ export const runAssignmentNotificationPoll = async () => {
 
 export const startAssignmentNotificationWorker = () => {
   if (process.env.ASSIGNMENT_PUSH_ENABLED !== 'true') {
-    logger.info('Assignment push worker disabled');
+    console.info('Assignment push worker disabled');
     return;
   }
 
@@ -212,7 +211,7 @@ export const startAssignmentNotificationWorker = () => {
     try {
       await runAssignmentNotificationPoll();
     } catch (e) {
-      logger.error(e);
+      console.error(e);
     } finally {
       running = false;
     }

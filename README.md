@@ -15,6 +15,31 @@ A spec for the webhooks will be well communicated once finalized so that anyone 
 - [Database schema](./packages/server/prisma/schema.prisma)
 - [Graphql schema](./packages/server/graphql/schema)
 
+This service also exposes the CompetitionGroups push-notification bridge under
+`/v0/external/push`. In production this is routed through
+`https://api.notifycomp.com/api/v0/external/push`. That integration lets
+competitiongroups.com register browser Push API subscriptions and lets the
+server poll WCIF assignment changes for those watched users.
+
+Required push-notification environment variables:
+
+- `VAPID_PUBLIC_KEY`: public VAPID key returned to competitiongroups.com.
+- `VAPID_PRIVATE_KEY`: private VAPID key used to send browser push messages.
+- `COMPETITION_GROUPS_JWT_SECRET`: shared HS256 secret used to authenticate
+  CompetitionGroups subscription requests.
+
+Optional push-notification environment variables:
+
+- `ASSIGNMENT_PUSH_ENABLED`: set to `true` on the single backend instance that
+  should poll WCIF and send assignment-change pushes.
+- `ASSIGNMENT_POLL_INTERVAL_MS`: poll interval in milliseconds. Defaults to
+  `300000`.
+- `VAPID_SUBJECT`: VAPID contact subject. Defaults to
+  `mailto:notifications@example.com`.
+- `COMPETITION_GROUPS_JWT_ISSUER`: expected `iss` claim when configured.
+- `COMPETITION_GROUPS_JWT_AUDIENCE`: expected `aud` claim when configured.
+- `COMPETITION_GROUPS_ORIGIN`: origin used when building notification click URLs.
+
 The question should be asked: How does the server know who is in what group? The main answer to this is through the [WCIF](https://github.com/thewca/wcif/blob/master/specification.md). But the other question is does this data get saved?
 **An argument for saving the data in databases**: potentially faster, could cache, only retreive the data you need.
 **Arguments for not saving it**: If changes are made, removes the need to reimport a competition.
@@ -32,29 +57,6 @@ This is the main app that competition owners will interact with. This is a mater
 This is the service that handles text notifications to individual people. Users sign up via a frontend and it saves the data here.
 
 This service is pinged from the core server to send the notifications.
-
-It also exposes the CompetitionGroups push-notification bridge under `/v0/external/push`.
-That integration lets competitiongroups.com register browser Push API subscriptions
-and lets notifapi poll WCIF assignment changes for those watched users.
-
-Required push-notification environment variables:
-
-- `VAPID_PUBLIC_KEY`: public VAPID key returned to competitiongroups.com.
-- `VAPID_PRIVATE_KEY`: private VAPID key used to send browser push messages.
-- `COMPETITION_GROUPS_JWT_SECRET`: shared HS256 secret used to authenticate
-  CompetitionGroups subscription requests.
-
-Optional push-notification environment variables:
-
-- `ASSIGNMENT_PUSH_ENABLED`: set to `true` on the single notifapi instance that
-  should poll WCIF and send assignment-change pushes.
-- `ASSIGNMENT_POLL_INTERVAL_MS`: poll interval in milliseconds. Defaults to
-  `300000`.
-- `VAPID_SUBJECT`: VAPID contact subject. Defaults to
-  `mailto:notifications@example.com`.
-- `COMPETITION_GROUPS_JWT_ISSUER`: expected `iss` claim when configured.
-- `COMPETITION_GROUPS_JWT_AUDIENCE`: expected `aud` claim when configured.
-- `COMPETITION_GROUPS_ORIGIN`: origin used when building notification click URLs.
 
 ### `packages/www`
 

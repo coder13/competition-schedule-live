@@ -34,6 +34,8 @@ import { authMiddlewareVerify } from './auth/AuthMiddleware';
 import { WCA_ORIGIN } from './env';
 import { initScheduler } from './scheduler';
 import { pubsub } from './graphql/pubsub';
+import pushRouter from './routes/v0/external/push';
+import { startAssignmentNotificationWorker } from './services/assignmentNotificationWorker';
 
 export interface AppContext {
   user?: User;
@@ -46,6 +48,7 @@ export async function init() {
   await initScheduler();
 
   const app = express();
+  startAssignmentNotificationWorker();
 
   app.use(cors<cors.CorsRequest>());
   app.use(json());
@@ -61,6 +64,7 @@ export async function init() {
   });
 
   app.use('/auth', AuthRouter);
+  app.use('/v0/external/push', pushRouter);
 
   const httpServer = http.createServer(app);
 

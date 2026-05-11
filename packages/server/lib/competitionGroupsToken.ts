@@ -43,7 +43,7 @@ export const verifyCompetitionGroupsToken = (
   }
 
   const [encodedHeader, encodedPayload, signature] = parts;
-  const header = parseJsonPart<{ alg?: string; typ?: string }>(encodedHeader);
+  const header = parseJsonPart<{ alg?: string }>(encodedHeader);
   if (header.alg !== 'HS256') {
     throw new Error('Unsupported token algorithm');
   }
