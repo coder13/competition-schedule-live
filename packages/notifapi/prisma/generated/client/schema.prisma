@@ -32,6 +32,65 @@ model User {
   CompetitorSubscription  CompetitorSubscription[]
 }
 
+model PushSubscription {
+  id              Int                    @id @default(autoincrement())
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  endpoint        String                 @unique
+  p256dh          String
+  auth            String
+  source          PushSubscriptionSource
+  externalSubject String
+  disabledAt      DateTime?
+
+  watches    AssignmentWatch[]
+  deliveries PushDelivery[]
+
+  @@index([source, externalSubject])
+}
+
+model AssignmentWatch {
+  id                 Int      @id @default(autoincrement())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  pushSubscriptionId Int
+  competitionId      String
+  wcaUserId          Int
+
+  pushSubscription PushSubscription @relation(fields: [pushSubscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([pushSubscriptionId, competitionId, wcaUserId])
+  @@index([competitionId, wcaUserId])
+}
+
+model AssignmentSnapshot {
+  id              Int      @id @default(autoincrement())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  competitionId   String
+  wcaUserId       Int
+  assignmentsHash String
+
+  @@unique([competitionId, wcaUserId])
+}
+
+model PushDelivery {
+  id                 Int                @id @default(autoincrement())
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  pushSubscriptionId Int
+  competitionId      String
+  wcaUserId          Int
+  dedupeKey          String
+  status             PushDeliveryStatus
+  error              Json?
+
+  pushSubscription PushSubscription @relation(fields: [pushSubscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([pushSubscriptionId, dedupeKey])
+  @@index([competitionId, wcaUserId])
+}
+
 model Session {
   id        String   @id
   sid       String   @unique
@@ -57,6 +116,17 @@ model CompetitionSubscription {
 enum CompetitionSubscriptionType {
   activity
   competitor
+}
+
+enum PushSubscriptionSource {
+  competitiongroups
+}
+
+enum PushDeliveryStatus {
+  pending
+  sent
+  failed
+  skipped
 }
 
 model CompetitorSubscription {

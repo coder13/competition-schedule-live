@@ -52,6 +52,95 @@ export type UserPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultAr
  * 
  */
 export type User = runtime.Types.DefaultSelection<UserPayload>
+export type PushSubscriptionPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "PushSubscription"
+  objects: {
+    watches: AssignmentWatchPayload<ExtArgs>[]
+    deliveries: PushDeliveryPayload<ExtArgs>[]
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt: Date | null
+  }, ExtArgs["result"]["pushSubscription"]>
+  composites: {}
+}
+
+/**
+ * Model PushSubscription
+ * 
+ */
+export type PushSubscription = runtime.Types.DefaultSelection<PushSubscriptionPayload>
+export type AssignmentWatchPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "AssignmentWatch"
+  objects: {
+    pushSubscription: PushSubscriptionPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+  }, ExtArgs["result"]["assignmentWatch"]>
+  composites: {}
+}
+
+/**
+ * Model AssignmentWatch
+ * 
+ */
+export type AssignmentWatch = runtime.Types.DefaultSelection<AssignmentWatchPayload>
+export type AssignmentSnapshotPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "AssignmentSnapshot"
+  objects: {}
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    competitionId: string
+    wcaUserId: number
+    assignmentsHash: string
+  }, ExtArgs["result"]["assignmentSnapshot"]>
+  composites: {}
+}
+
+/**
+ * Model AssignmentSnapshot
+ * 
+ */
+export type AssignmentSnapshot = runtime.Types.DefaultSelection<AssignmentSnapshotPayload>
+export type PushDeliveryPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+  name: "PushDelivery"
+  objects: {
+    pushSubscription: PushSubscriptionPayload<ExtArgs>
+  }
+  scalars: $Extensions.GetResult<{
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+    dedupeKey: string
+    status: PushDeliveryStatus
+    error: Prisma.JsonValue | null
+  }, ExtArgs["result"]["pushDelivery"]>
+  composites: {}
+}
+
+/**
+ * Model PushDelivery
+ * 
+ */
+export type PushDelivery = runtime.Types.DefaultSelection<PushDeliveryPayload>
 export type SessionPayload<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
   name: "Session"
   objects: {}
@@ -134,6 +223,23 @@ export type CompetitionSid = runtime.Types.DefaultSelection<CompetitionSidPayloa
 /**
  * Enums
  */
+
+export const PushSubscriptionSource: {
+  competitiongroups: 'competitiongroups'
+};
+
+export type PushSubscriptionSource = (typeof PushSubscriptionSource)[keyof typeof PushSubscriptionSource]
+
+
+export const PushDeliveryStatus: {
+  pending: 'pending',
+  sent: 'sent',
+  failed: 'failed',
+  skipped: 'skipped'
+};
+
+export type PushDeliveryStatus = (typeof PushDeliveryStatus)[keyof typeof PushDeliveryStatus]
+
 
 export const CompetitionSubscriptionType: {
   activity: 'activity',
@@ -287,6 +393,46 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.pushSubscription`: Exposes CRUD operations for the **PushSubscription** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PushSubscriptions
+    * const pushSubscriptions = await prisma.pushSubscription.findMany()
+    * ```
+    */
+  get pushSubscription(): Prisma.PushSubscriptionDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.assignmentWatch`: Exposes CRUD operations for the **AssignmentWatch** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AssignmentWatches
+    * const assignmentWatches = await prisma.assignmentWatch.findMany()
+    * ```
+    */
+  get assignmentWatch(): Prisma.AssignmentWatchDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.assignmentSnapshot`: Exposes CRUD operations for the **AssignmentSnapshot** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AssignmentSnapshots
+    * const assignmentSnapshots = await prisma.assignmentSnapshot.findMany()
+    * ```
+    */
+  get assignmentSnapshot(): Prisma.AssignmentSnapshotDelegate<GlobalReject, ExtArgs>;
+
+  /**
+   * `prisma.pushDelivery`: Exposes CRUD operations for the **PushDelivery** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PushDeliveries
+    * const pushDeliveries = await prisma.pushDelivery.findMany()
+    * ```
+    */
+  get pushDelivery(): Prisma.PushDeliveryDelegate<GlobalReject, ExtArgs>;
 
   /**
    * `prisma.session`: Exposes CRUD operations for the **Session** model.
@@ -812,6 +958,10 @@ export namespace Prisma {
   export const ModelName: {
     AuditLog: 'AuditLog',
     User: 'User',
+    PushSubscription: 'PushSubscription',
+    AssignmentWatch: 'AssignmentWatch',
+    AssignmentSnapshot: 'AssignmentSnapshot',
+    PushDelivery: 'PushDelivery',
     Session: 'Session',
     CompetitionSubscription: 'CompetitionSubscription',
     CompetitorSubscription: 'CompetitorSubscription',
@@ -832,7 +982,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     meta: {
-      modelProps: 'auditLog' | 'user' | 'session' | 'competitionSubscription' | 'competitorSubscription' | 'competitionSid'
+      modelProps: 'auditLog' | 'user' | 'pushSubscription' | 'assignmentWatch' | 'assignmentSnapshot' | 'pushDelivery' | 'session' | 'competitionSubscription' | 'competitorSubscription' | 'competitionSid'
       txIsolationLevel: Prisma.TransactionIsolationLevel
     },
     model: {
@@ -963,6 +1113,266 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>,
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      PushSubscription: {
+        payload: PushSubscriptionPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.PushSubscriptionFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PushSubscriptionFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload>
+          }
+          findFirst: {
+            args: Prisma.PushSubscriptionFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PushSubscriptionFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload>
+          }
+          findMany: {
+            args: Prisma.PushSubscriptionFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload>[]
+          }
+          create: {
+            args: Prisma.PushSubscriptionCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload>
+          }
+          createMany: {
+            args: Prisma.PushSubscriptionCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.PushSubscriptionDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload>
+          }
+          update: {
+            args: Prisma.PushSubscriptionUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload>
+          }
+          deleteMany: {
+            args: Prisma.PushSubscriptionDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PushSubscriptionUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.PushSubscriptionUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushSubscriptionPayload>
+          }
+          aggregate: {
+            args: Prisma.PushSubscriptionAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregatePushSubscription>
+          }
+          groupBy: {
+            args: Prisma.PushSubscriptionGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<PushSubscriptionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PushSubscriptionCountArgs<ExtArgs>,
+            result: $Utils.Optional<PushSubscriptionCountAggregateOutputType> | number
+          }
+        }
+      }
+      AssignmentWatch: {
+        payload: AssignmentWatchPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.AssignmentWatchFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AssignmentWatchFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload>
+          }
+          findFirst: {
+            args: Prisma.AssignmentWatchFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AssignmentWatchFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload>
+          }
+          findMany: {
+            args: Prisma.AssignmentWatchFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload>[]
+          }
+          create: {
+            args: Prisma.AssignmentWatchCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload>
+          }
+          createMany: {
+            args: Prisma.AssignmentWatchCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.AssignmentWatchDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload>
+          }
+          update: {
+            args: Prisma.AssignmentWatchUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload>
+          }
+          deleteMany: {
+            args: Prisma.AssignmentWatchDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AssignmentWatchUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.AssignmentWatchUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentWatchPayload>
+          }
+          aggregate: {
+            args: Prisma.AssignmentWatchAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateAssignmentWatch>
+          }
+          groupBy: {
+            args: Prisma.AssignmentWatchGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<AssignmentWatchGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AssignmentWatchCountArgs<ExtArgs>,
+            result: $Utils.Optional<AssignmentWatchCountAggregateOutputType> | number
+          }
+        }
+      }
+      AssignmentSnapshot: {
+        payload: AssignmentSnapshotPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.AssignmentSnapshotFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AssignmentSnapshotFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload>
+          }
+          findFirst: {
+            args: Prisma.AssignmentSnapshotFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AssignmentSnapshotFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload>
+          }
+          findMany: {
+            args: Prisma.AssignmentSnapshotFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload>[]
+          }
+          create: {
+            args: Prisma.AssignmentSnapshotCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload>
+          }
+          createMany: {
+            args: Prisma.AssignmentSnapshotCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.AssignmentSnapshotDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload>
+          }
+          update: {
+            args: Prisma.AssignmentSnapshotUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload>
+          }
+          deleteMany: {
+            args: Prisma.AssignmentSnapshotDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AssignmentSnapshotUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.AssignmentSnapshotUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<AssignmentSnapshotPayload>
+          }
+          aggregate: {
+            args: Prisma.AssignmentSnapshotAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregateAssignmentSnapshot>
+          }
+          groupBy: {
+            args: Prisma.AssignmentSnapshotGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<AssignmentSnapshotGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AssignmentSnapshotCountArgs<ExtArgs>,
+            result: $Utils.Optional<AssignmentSnapshotCountAggregateOutputType> | number
+          }
+        }
+      }
+      PushDelivery: {
+        payload: PushDeliveryPayload<ExtArgs>
+        operations: {
+          findUnique: {
+            args: Prisma.PushDeliveryFindUniqueArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PushDeliveryFindUniqueOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload>
+          }
+          findFirst: {
+            args: Prisma.PushDeliveryFindFirstArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PushDeliveryFindFirstOrThrowArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload>
+          }
+          findMany: {
+            args: Prisma.PushDeliveryFindManyArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload>[]
+          }
+          create: {
+            args: Prisma.PushDeliveryCreateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload>
+          }
+          createMany: {
+            args: Prisma.PushDeliveryCreateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          delete: {
+            args: Prisma.PushDeliveryDeleteArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload>
+          }
+          update: {
+            args: Prisma.PushDeliveryUpdateArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload>
+          }
+          deleteMany: {
+            args: Prisma.PushDeliveryDeleteManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PushDeliveryUpdateManyArgs<ExtArgs>,
+            result: Prisma.BatchPayload
+          }
+          upsert: {
+            args: Prisma.PushDeliveryUpsertArgs<ExtArgs>,
+            result: $Utils.PayloadToResult<PushDeliveryPayload>
+          }
+          aggregate: {
+            args: Prisma.PushDeliveryAggregateArgs<ExtArgs>,
+            result: $Utils.Optional<AggregatePushDelivery>
+          }
+          groupBy: {
+            args: Prisma.PushDeliveryGroupByArgs<ExtArgs>,
+            result: $Utils.Optional<PushDeliveryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PushDeliveryCountArgs<ExtArgs>,
+            result: $Utils.Optional<PushDeliveryCountAggregateOutputType> | number
           }
         }
       }
@@ -1453,6 +1863,51 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountCompetitorSubscriptionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
     where?: CompetitorSubscriptionWhereInput
+  }
+
+
+
+  /**
+   * Count Type PushSubscriptionCountOutputType
+   */
+
+
+  export type PushSubscriptionCountOutputType = {
+    watches: number
+    deliveries: number
+  }
+
+  export type PushSubscriptionCountOutputTypeSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    watches?: boolean | PushSubscriptionCountOutputTypeCountWatchesArgs
+    deliveries?: boolean | PushSubscriptionCountOutputTypeCountDeliveriesArgs
+  }
+
+  // Custom InputTypes
+
+  /**
+   * PushSubscriptionCountOutputType without action
+   */
+  export type PushSubscriptionCountOutputTypeArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscriptionCountOutputType
+     */
+    select?: PushSubscriptionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+
+  /**
+   * PushSubscriptionCountOutputType without action
+   */
+  export type PushSubscriptionCountOutputTypeCountWatchesArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: AssignmentWatchWhereInput
+  }
+
+
+  /**
+   * PushSubscriptionCountOutputType without action
+   */
+  export type PushSubscriptionCountOutputTypeCountDeliveriesArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: PushDeliveryWhereInput
   }
 
 
@@ -3432,6 +3887,3946 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well.
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+
+  /**
+   * Model PushSubscription
+   */
+
+
+  export type AggregatePushSubscription = {
+    _count: PushSubscriptionCountAggregateOutputType | null
+    _avg: PushSubscriptionAvgAggregateOutputType | null
+    _sum: PushSubscriptionSumAggregateOutputType | null
+    _min: PushSubscriptionMinAggregateOutputType | null
+    _max: PushSubscriptionMaxAggregateOutputType | null
+  }
+
+  export type PushSubscriptionAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type PushSubscriptionSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type PushSubscriptionMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    endpoint: string | null
+    p256dh: string | null
+    auth: string | null
+    source: PushSubscriptionSource | null
+    externalSubject: string | null
+    disabledAt: Date | null
+  }
+
+  export type PushSubscriptionMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    endpoint: string | null
+    p256dh: string | null
+    auth: string | null
+    source: PushSubscriptionSource | null
+    externalSubject: string | null
+    disabledAt: Date | null
+  }
+
+  export type PushSubscriptionCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    endpoint: number
+    p256dh: number
+    auth: number
+    source: number
+    externalSubject: number
+    disabledAt: number
+    _all: number
+  }
+
+
+  export type PushSubscriptionAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type PushSubscriptionSumAggregateInputType = {
+    id?: true
+  }
+
+  export type PushSubscriptionMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    endpoint?: true
+    p256dh?: true
+    auth?: true
+    source?: true
+    externalSubject?: true
+    disabledAt?: true
+  }
+
+  export type PushSubscriptionMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    endpoint?: true
+    p256dh?: true
+    auth?: true
+    source?: true
+    externalSubject?: true
+    disabledAt?: true
+  }
+
+  export type PushSubscriptionCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    endpoint?: true
+    p256dh?: true
+    auth?: true
+    source?: true
+    externalSubject?: true
+    disabledAt?: true
+    _all?: true
+  }
+
+  export type PushSubscriptionAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PushSubscription to aggregate.
+     */
+    where?: PushSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushSubscriptions to fetch.
+     */
+    orderBy?: Enumerable<PushSubscriptionOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PushSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PushSubscriptions
+    **/
+    _count?: true | PushSubscriptionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PushSubscriptionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PushSubscriptionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PushSubscriptionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PushSubscriptionMaxAggregateInputType
+  }
+
+  export type GetPushSubscriptionAggregateType<T extends PushSubscriptionAggregateArgs> = {
+        [P in keyof T & keyof AggregatePushSubscription]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePushSubscription[P]>
+      : GetScalarType<T[P], AggregatePushSubscription[P]>
+  }
+
+
+
+
+  export type PushSubscriptionGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: PushSubscriptionWhereInput
+    orderBy?: Enumerable<PushSubscriptionOrderByWithAggregationInput>
+    by: PushSubscriptionScalarFieldEnum[]
+    having?: PushSubscriptionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PushSubscriptionCountAggregateInputType | true
+    _avg?: PushSubscriptionAvgAggregateInputType
+    _sum?: PushSubscriptionSumAggregateInputType
+    _min?: PushSubscriptionMinAggregateInputType
+    _max?: PushSubscriptionMaxAggregateInputType
+  }
+
+
+  export type PushSubscriptionGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt: Date | null
+    _count: PushSubscriptionCountAggregateOutputType | null
+    _avg: PushSubscriptionAvgAggregateOutputType | null
+    _sum: PushSubscriptionSumAggregateOutputType | null
+    _min: PushSubscriptionMinAggregateOutputType | null
+    _max: PushSubscriptionMaxAggregateOutputType | null
+  }
+
+  type GetPushSubscriptionGroupByPayload<T extends PushSubscriptionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<PushSubscriptionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PushSubscriptionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PushSubscriptionGroupByOutputType[P]>
+            : GetScalarType<T[P], PushSubscriptionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PushSubscriptionSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    endpoint?: boolean
+    p256dh?: boolean
+    auth?: boolean
+    source?: boolean
+    externalSubject?: boolean
+    disabledAt?: boolean
+    watches?: boolean | PushSubscription$watchesArgs<ExtArgs>
+    deliveries?: boolean | PushSubscription$deliveriesArgs<ExtArgs>
+    _count?: boolean | PushSubscriptionCountOutputTypeArgs<ExtArgs>
+  }, ExtArgs["result"]["pushSubscription"]>
+
+  export type PushSubscriptionSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    endpoint?: boolean
+    p256dh?: boolean
+    auth?: boolean
+    source?: boolean
+    externalSubject?: boolean
+    disabledAt?: boolean
+  }
+
+  export type PushSubscriptionInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    watches?: boolean | PushSubscription$watchesArgs<ExtArgs>
+    deliveries?: boolean | PushSubscription$deliveriesArgs<ExtArgs>
+    _count?: boolean | PushSubscriptionCountOutputTypeArgs<ExtArgs>
+  }
+
+
+  type PushSubscriptionGetPayload<S extends boolean | null | undefined | PushSubscriptionArgs> = $Types.GetResult<PushSubscriptionPayload, S>
+
+  type PushSubscriptionCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<PushSubscriptionFindManyArgs, 'select' | 'include'> & {
+      select?: PushSubscriptionCountAggregateInputType | true
+    }
+
+  export interface PushSubscriptionDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PushSubscription'], meta: { name: 'PushSubscription' } }
+    /**
+     * Find zero or one PushSubscription that matches the filter.
+     * @param {PushSubscriptionFindUniqueArgs} args - Arguments to find a PushSubscription
+     * @example
+     * // Get one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends PushSubscriptionFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, PushSubscriptionFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'PushSubscription'> extends True ? Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one PushSubscription that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {PushSubscriptionFindUniqueOrThrowArgs} args - Arguments to find a PushSubscription
+     * @example
+     * // Get one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends PushSubscriptionFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushSubscriptionFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first PushSubscription that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionFindFirstArgs} args - Arguments to find a PushSubscription
+     * @example
+     * // Get one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends PushSubscriptionFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, PushSubscriptionFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'PushSubscription'> extends True ? Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first PushSubscription that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionFindFirstOrThrowArgs} args - Arguments to find a PushSubscription
+     * @example
+     * // Get one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends PushSubscriptionFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushSubscriptionFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more PushSubscriptions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PushSubscriptions
+     * const pushSubscriptions = await prisma.pushSubscription.findMany()
+     * 
+     * // Get first 10 PushSubscriptions
+     * const pushSubscriptions = await prisma.pushSubscription.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const pushSubscriptionWithIdOnly = await prisma.pushSubscription.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends PushSubscriptionFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushSubscriptionFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a PushSubscription.
+     * @param {PushSubscriptionCreateArgs} args - Arguments to create a PushSubscription.
+     * @example
+     * // Create one PushSubscription
+     * const PushSubscription = await prisma.pushSubscription.create({
+     *   data: {
+     *     // ... data to create a PushSubscription
+     *   }
+     * })
+     * 
+    **/
+    create<T extends PushSubscriptionCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, PushSubscriptionCreateArgs<ExtArgs>>
+    ): Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many PushSubscriptions.
+     *     @param {PushSubscriptionCreateManyArgs} args - Arguments to create many PushSubscriptions.
+     *     @example
+     *     // Create many PushSubscriptions
+     *     const pushSubscription = await prisma.pushSubscription.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends PushSubscriptionCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushSubscriptionCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a PushSubscription.
+     * @param {PushSubscriptionDeleteArgs} args - Arguments to delete one PushSubscription.
+     * @example
+     * // Delete one PushSubscription
+     * const PushSubscription = await prisma.pushSubscription.delete({
+     *   where: {
+     *     // ... filter to delete one PushSubscription
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends PushSubscriptionDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, PushSubscriptionDeleteArgs<ExtArgs>>
+    ): Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one PushSubscription.
+     * @param {PushSubscriptionUpdateArgs} args - Arguments to update one PushSubscription.
+     * @example
+     * // Update one PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends PushSubscriptionUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, PushSubscriptionUpdateArgs<ExtArgs>>
+    ): Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more PushSubscriptions.
+     * @param {PushSubscriptionDeleteManyArgs} args - Arguments to filter PushSubscriptions to delete.
+     * @example
+     * // Delete a few PushSubscriptions
+     * const { count } = await prisma.pushSubscription.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends PushSubscriptionDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushSubscriptionDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PushSubscriptions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PushSubscriptions
+     * const pushSubscription = await prisma.pushSubscription.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends PushSubscriptionUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, PushSubscriptionUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one PushSubscription.
+     * @param {PushSubscriptionUpsertArgs} args - Arguments to update or create a PushSubscription.
+     * @example
+     * // Update or create a PushSubscription
+     * const pushSubscription = await prisma.pushSubscription.upsert({
+     *   create: {
+     *     // ... data to create a PushSubscription
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PushSubscription we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends PushSubscriptionUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, PushSubscriptionUpsertArgs<ExtArgs>>
+    ): Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of PushSubscriptions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionCountArgs} args - Arguments to filter PushSubscriptions to count.
+     * @example
+     * // Count the number of PushSubscriptions
+     * const count = await prisma.pushSubscription.count({
+     *   where: {
+     *     // ... the filter for the PushSubscriptions we want to count
+     *   }
+     * })
+    **/
+    count<T extends PushSubscriptionCountArgs>(
+      args?: Subset<T, PushSubscriptionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PushSubscriptionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PushSubscription.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PushSubscriptionAggregateArgs>(args: Subset<T, PushSubscriptionAggregateArgs>): Prisma.PrismaPromise<GetPushSubscriptionAggregateType<T>>
+
+    /**
+     * Group by PushSubscription.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushSubscriptionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PushSubscriptionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PushSubscriptionGroupByArgs['orderBy'] }
+        : { orderBy?: PushSubscriptionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PushSubscriptionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPushSubscriptionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PushSubscription.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__PushSubscriptionClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+    watches<T extends PushSubscription$watchesArgs<ExtArgs> = {}>(args?: Subset<T, PushSubscription$watchesArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    deliveries<T extends PushSubscription$deliveriesArgs<ExtArgs> = {}>(args?: Subset<T, PushSubscription$deliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'findMany', never>| Null>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * PushSubscription base type for findUnique actions
+   */
+  export type PushSubscriptionFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscription to fetch.
+     */
+    where: PushSubscriptionWhereUniqueInput
+  }
+
+  /**
+   * PushSubscription findUnique
+   */
+  export interface PushSubscriptionFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends PushSubscriptionFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * PushSubscription findUniqueOrThrow
+   */
+  export type PushSubscriptionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscription to fetch.
+     */
+    where: PushSubscriptionWhereUniqueInput
+  }
+
+
+  /**
+   * PushSubscription base type for findFirst actions
+   */
+  export type PushSubscriptionFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscription to fetch.
+     */
+    where?: PushSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushSubscriptions to fetch.
+     */
+    orderBy?: Enumerable<PushSubscriptionOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PushSubscriptions.
+     */
+    cursor?: PushSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PushSubscriptions.
+     */
+    distinct?: Enumerable<PushSubscriptionScalarFieldEnum>
+  }
+
+  /**
+   * PushSubscription findFirst
+   */
+  export interface PushSubscriptionFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends PushSubscriptionFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * PushSubscription findFirstOrThrow
+   */
+  export type PushSubscriptionFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscription to fetch.
+     */
+    where?: PushSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushSubscriptions to fetch.
+     */
+    orderBy?: Enumerable<PushSubscriptionOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PushSubscriptions.
+     */
+    cursor?: PushSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushSubscriptions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PushSubscriptions.
+     */
+    distinct?: Enumerable<PushSubscriptionScalarFieldEnum>
+  }
+
+
+  /**
+   * PushSubscription findMany
+   */
+  export type PushSubscriptionFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter, which PushSubscriptions to fetch.
+     */
+    where?: PushSubscriptionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushSubscriptions to fetch.
+     */
+    orderBy?: Enumerable<PushSubscriptionOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PushSubscriptions.
+     */
+    cursor?: PushSubscriptionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushSubscriptions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushSubscriptions.
+     */
+    skip?: number
+    distinct?: Enumerable<PushSubscriptionScalarFieldEnum>
+  }
+
+
+  /**
+   * PushSubscription create
+   */
+  export type PushSubscriptionCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PushSubscription.
+     */
+    data: XOR<PushSubscriptionCreateInput, PushSubscriptionUncheckedCreateInput>
+  }
+
+
+  /**
+   * PushSubscription createMany
+   */
+  export type PushSubscriptionCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PushSubscriptions.
+     */
+    data: Enumerable<PushSubscriptionCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * PushSubscription update
+   */
+  export type PushSubscriptionUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PushSubscription.
+     */
+    data: XOR<PushSubscriptionUpdateInput, PushSubscriptionUncheckedUpdateInput>
+    /**
+     * Choose, which PushSubscription to update.
+     */
+    where: PushSubscriptionWhereUniqueInput
+  }
+
+
+  /**
+   * PushSubscription updateMany
+   */
+  export type PushSubscriptionUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PushSubscriptions.
+     */
+    data: XOR<PushSubscriptionUpdateManyMutationInput, PushSubscriptionUncheckedUpdateManyInput>
+    /**
+     * Filter which PushSubscriptions to update
+     */
+    where?: PushSubscriptionWhereInput
+  }
+
+
+  /**
+   * PushSubscription upsert
+   */
+  export type PushSubscriptionUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PushSubscription to update in case it exists.
+     */
+    where: PushSubscriptionWhereUniqueInput
+    /**
+     * In case the PushSubscription found by the `where` argument doesn't exist, create a new PushSubscription with this data.
+     */
+    create: XOR<PushSubscriptionCreateInput, PushSubscriptionUncheckedCreateInput>
+    /**
+     * In case the PushSubscription was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PushSubscriptionUpdateInput, PushSubscriptionUncheckedUpdateInput>
+  }
+
+
+  /**
+   * PushSubscription delete
+   */
+  export type PushSubscriptionDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+    /**
+     * Filter which PushSubscription to delete.
+     */
+    where: PushSubscriptionWhereUniqueInput
+  }
+
+
+  /**
+   * PushSubscription deleteMany
+   */
+  export type PushSubscriptionDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PushSubscriptions to delete
+     */
+    where?: PushSubscriptionWhereInput
+  }
+
+
+  /**
+   * PushSubscription.watches
+   */
+  export type PushSubscription$watchesArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    where?: AssignmentWatchWhereInput
+    orderBy?: Enumerable<AssignmentWatchOrderByWithRelationInput>
+    cursor?: AssignmentWatchWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<AssignmentWatchScalarFieldEnum>
+  }
+
+
+  /**
+   * PushSubscription.deliveries
+   */
+  export type PushSubscription$deliveriesArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    where?: PushDeliveryWhereInput
+    orderBy?: Enumerable<PushDeliveryOrderByWithRelationInput>
+    cursor?: PushDeliveryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: Enumerable<PushDeliveryScalarFieldEnum>
+  }
+
+
+  /**
+   * PushSubscription without action
+   */
+  export type PushSubscriptionArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushSubscription
+     */
+    select?: PushSubscriptionSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushSubscriptionInclude<ExtArgs> | null
+  }
+
+
+
+  /**
+   * Model AssignmentWatch
+   */
+
+
+  export type AggregateAssignmentWatch = {
+    _count: AssignmentWatchCountAggregateOutputType | null
+    _avg: AssignmentWatchAvgAggregateOutputType | null
+    _sum: AssignmentWatchSumAggregateOutputType | null
+    _min: AssignmentWatchMinAggregateOutputType | null
+    _max: AssignmentWatchMaxAggregateOutputType | null
+  }
+
+  export type AssignmentWatchAvgAggregateOutputType = {
+    id: number | null
+    pushSubscriptionId: number | null
+    wcaUserId: number | null
+  }
+
+  export type AssignmentWatchSumAggregateOutputType = {
+    id: number | null
+    pushSubscriptionId: number | null
+    wcaUserId: number | null
+  }
+
+  export type AssignmentWatchMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    pushSubscriptionId: number | null
+    competitionId: string | null
+    wcaUserId: number | null
+  }
+
+  export type AssignmentWatchMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    pushSubscriptionId: number | null
+    competitionId: string | null
+    wcaUserId: number | null
+  }
+
+  export type AssignmentWatchCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    pushSubscriptionId: number
+    competitionId: number
+    wcaUserId: number
+    _all: number
+  }
+
+
+  export type AssignmentWatchAvgAggregateInputType = {
+    id?: true
+    pushSubscriptionId?: true
+    wcaUserId?: true
+  }
+
+  export type AssignmentWatchSumAggregateInputType = {
+    id?: true
+    pushSubscriptionId?: true
+    wcaUserId?: true
+  }
+
+  export type AssignmentWatchMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    pushSubscriptionId?: true
+    competitionId?: true
+    wcaUserId?: true
+  }
+
+  export type AssignmentWatchMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    pushSubscriptionId?: true
+    competitionId?: true
+    wcaUserId?: true
+  }
+
+  export type AssignmentWatchCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    pushSubscriptionId?: true
+    competitionId?: true
+    wcaUserId?: true
+    _all?: true
+  }
+
+  export type AssignmentWatchAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssignmentWatch to aggregate.
+     */
+    where?: AssignmentWatchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssignmentWatches to fetch.
+     */
+    orderBy?: Enumerable<AssignmentWatchOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AssignmentWatchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssignmentWatches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssignmentWatches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AssignmentWatches
+    **/
+    _count?: true | AssignmentWatchCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AssignmentWatchAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AssignmentWatchSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AssignmentWatchMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AssignmentWatchMaxAggregateInputType
+  }
+
+  export type GetAssignmentWatchAggregateType<T extends AssignmentWatchAggregateArgs> = {
+        [P in keyof T & keyof AggregateAssignmentWatch]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAssignmentWatch[P]>
+      : GetScalarType<T[P], AggregateAssignmentWatch[P]>
+  }
+
+
+
+
+  export type AssignmentWatchGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: AssignmentWatchWhereInput
+    orderBy?: Enumerable<AssignmentWatchOrderByWithAggregationInput>
+    by: AssignmentWatchScalarFieldEnum[]
+    having?: AssignmentWatchScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AssignmentWatchCountAggregateInputType | true
+    _avg?: AssignmentWatchAvgAggregateInputType
+    _sum?: AssignmentWatchSumAggregateInputType
+    _min?: AssignmentWatchMinAggregateInputType
+    _max?: AssignmentWatchMaxAggregateInputType
+  }
+
+
+  export type AssignmentWatchGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+    _count: AssignmentWatchCountAggregateOutputType | null
+    _avg: AssignmentWatchAvgAggregateOutputType | null
+    _sum: AssignmentWatchSumAggregateOutputType | null
+    _min: AssignmentWatchMinAggregateOutputType | null
+    _max: AssignmentWatchMaxAggregateOutputType | null
+  }
+
+  type GetAssignmentWatchGroupByPayload<T extends AssignmentWatchGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<AssignmentWatchGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AssignmentWatchGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AssignmentWatchGroupByOutputType[P]>
+            : GetScalarType<T[P], AssignmentWatchGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AssignmentWatchSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    pushSubscriptionId?: boolean
+    competitionId?: boolean
+    wcaUserId?: boolean
+    pushSubscription?: boolean | PushSubscriptionArgs<ExtArgs>
+  }, ExtArgs["result"]["assignmentWatch"]>
+
+  export type AssignmentWatchSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    pushSubscriptionId?: boolean
+    competitionId?: boolean
+    wcaUserId?: boolean
+  }
+
+  export type AssignmentWatchInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    pushSubscription?: boolean | PushSubscriptionArgs<ExtArgs>
+  }
+
+
+  type AssignmentWatchGetPayload<S extends boolean | null | undefined | AssignmentWatchArgs> = $Types.GetResult<AssignmentWatchPayload, S>
+
+  type AssignmentWatchCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<AssignmentWatchFindManyArgs, 'select' | 'include'> & {
+      select?: AssignmentWatchCountAggregateInputType | true
+    }
+
+  export interface AssignmentWatchDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AssignmentWatch'], meta: { name: 'AssignmentWatch' } }
+    /**
+     * Find zero or one AssignmentWatch that matches the filter.
+     * @param {AssignmentWatchFindUniqueArgs} args - Arguments to find a AssignmentWatch
+     * @example
+     * // Get one AssignmentWatch
+     * const assignmentWatch = await prisma.assignmentWatch.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends AssignmentWatchFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, AssignmentWatchFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'AssignmentWatch'> extends True ? Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one AssignmentWatch that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {AssignmentWatchFindUniqueOrThrowArgs} args - Arguments to find a AssignmentWatch
+     * @example
+     * // Get one AssignmentWatch
+     * const assignmentWatch = await prisma.assignmentWatch.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends AssignmentWatchFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentWatchFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first AssignmentWatch that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentWatchFindFirstArgs} args - Arguments to find a AssignmentWatch
+     * @example
+     * // Get one AssignmentWatch
+     * const assignmentWatch = await prisma.assignmentWatch.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends AssignmentWatchFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, AssignmentWatchFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'AssignmentWatch'> extends True ? Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first AssignmentWatch that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentWatchFindFirstOrThrowArgs} args - Arguments to find a AssignmentWatch
+     * @example
+     * // Get one AssignmentWatch
+     * const assignmentWatch = await prisma.assignmentWatch.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends AssignmentWatchFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentWatchFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more AssignmentWatches that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentWatchFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AssignmentWatches
+     * const assignmentWatches = await prisma.assignmentWatch.findMany()
+     * 
+     * // Get first 10 AssignmentWatches
+     * const assignmentWatches = await prisma.assignmentWatch.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const assignmentWatchWithIdOnly = await prisma.assignmentWatch.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends AssignmentWatchFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentWatchFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a AssignmentWatch.
+     * @param {AssignmentWatchCreateArgs} args - Arguments to create a AssignmentWatch.
+     * @example
+     * // Create one AssignmentWatch
+     * const AssignmentWatch = await prisma.assignmentWatch.create({
+     *   data: {
+     *     // ... data to create a AssignmentWatch
+     *   }
+     * })
+     * 
+    **/
+    create<T extends AssignmentWatchCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentWatchCreateArgs<ExtArgs>>
+    ): Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many AssignmentWatches.
+     *     @param {AssignmentWatchCreateManyArgs} args - Arguments to create many AssignmentWatches.
+     *     @example
+     *     // Create many AssignmentWatches
+     *     const assignmentWatch = await prisma.assignmentWatch.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends AssignmentWatchCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentWatchCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a AssignmentWatch.
+     * @param {AssignmentWatchDeleteArgs} args - Arguments to delete one AssignmentWatch.
+     * @example
+     * // Delete one AssignmentWatch
+     * const AssignmentWatch = await prisma.assignmentWatch.delete({
+     *   where: {
+     *     // ... filter to delete one AssignmentWatch
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends AssignmentWatchDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentWatchDeleteArgs<ExtArgs>>
+    ): Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one AssignmentWatch.
+     * @param {AssignmentWatchUpdateArgs} args - Arguments to update one AssignmentWatch.
+     * @example
+     * // Update one AssignmentWatch
+     * const assignmentWatch = await prisma.assignmentWatch.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends AssignmentWatchUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentWatchUpdateArgs<ExtArgs>>
+    ): Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more AssignmentWatches.
+     * @param {AssignmentWatchDeleteManyArgs} args - Arguments to filter AssignmentWatches to delete.
+     * @example
+     * // Delete a few AssignmentWatches
+     * const { count } = await prisma.assignmentWatch.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends AssignmentWatchDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentWatchDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AssignmentWatches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentWatchUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AssignmentWatches
+     * const assignmentWatch = await prisma.assignmentWatch.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends AssignmentWatchUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentWatchUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one AssignmentWatch.
+     * @param {AssignmentWatchUpsertArgs} args - Arguments to update or create a AssignmentWatch.
+     * @example
+     * // Update or create a AssignmentWatch
+     * const assignmentWatch = await prisma.assignmentWatch.upsert({
+     *   create: {
+     *     // ... data to create a AssignmentWatch
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AssignmentWatch we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends AssignmentWatchUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentWatchUpsertArgs<ExtArgs>>
+    ): Prisma__AssignmentWatchClient<$Types.GetResult<AssignmentWatchPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of AssignmentWatches.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentWatchCountArgs} args - Arguments to filter AssignmentWatches to count.
+     * @example
+     * // Count the number of AssignmentWatches
+     * const count = await prisma.assignmentWatch.count({
+     *   where: {
+     *     // ... the filter for the AssignmentWatches we want to count
+     *   }
+     * })
+    **/
+    count<T extends AssignmentWatchCountArgs>(
+      args?: Subset<T, AssignmentWatchCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AssignmentWatchCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AssignmentWatch.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentWatchAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AssignmentWatchAggregateArgs>(args: Subset<T, AssignmentWatchAggregateArgs>): Prisma.PrismaPromise<GetAssignmentWatchAggregateType<T>>
+
+    /**
+     * Group by AssignmentWatch.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentWatchGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AssignmentWatchGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AssignmentWatchGroupByArgs['orderBy'] }
+        : { orderBy?: AssignmentWatchGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AssignmentWatchGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAssignmentWatchGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AssignmentWatch.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__AssignmentWatchClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+    pushSubscription<T extends PushSubscriptionArgs<ExtArgs> = {}>(args?: Subset<T, PushSubscriptionArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * AssignmentWatch base type for findUnique actions
+   */
+  export type AssignmentWatchFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * Filter, which AssignmentWatch to fetch.
+     */
+    where: AssignmentWatchWhereUniqueInput
+  }
+
+  /**
+   * AssignmentWatch findUnique
+   */
+  export interface AssignmentWatchFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends AssignmentWatchFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * AssignmentWatch findUniqueOrThrow
+   */
+  export type AssignmentWatchFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * Filter, which AssignmentWatch to fetch.
+     */
+    where: AssignmentWatchWhereUniqueInput
+  }
+
+
+  /**
+   * AssignmentWatch base type for findFirst actions
+   */
+  export type AssignmentWatchFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * Filter, which AssignmentWatch to fetch.
+     */
+    where?: AssignmentWatchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssignmentWatches to fetch.
+     */
+    orderBy?: Enumerable<AssignmentWatchOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssignmentWatches.
+     */
+    cursor?: AssignmentWatchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssignmentWatches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssignmentWatches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssignmentWatches.
+     */
+    distinct?: Enumerable<AssignmentWatchScalarFieldEnum>
+  }
+
+  /**
+   * AssignmentWatch findFirst
+   */
+  export interface AssignmentWatchFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends AssignmentWatchFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * AssignmentWatch findFirstOrThrow
+   */
+  export type AssignmentWatchFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * Filter, which AssignmentWatch to fetch.
+     */
+    where?: AssignmentWatchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssignmentWatches to fetch.
+     */
+    orderBy?: Enumerable<AssignmentWatchOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssignmentWatches.
+     */
+    cursor?: AssignmentWatchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssignmentWatches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssignmentWatches.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssignmentWatches.
+     */
+    distinct?: Enumerable<AssignmentWatchScalarFieldEnum>
+  }
+
+
+  /**
+   * AssignmentWatch findMany
+   */
+  export type AssignmentWatchFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * Filter, which AssignmentWatches to fetch.
+     */
+    where?: AssignmentWatchWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssignmentWatches to fetch.
+     */
+    orderBy?: Enumerable<AssignmentWatchOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AssignmentWatches.
+     */
+    cursor?: AssignmentWatchWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssignmentWatches from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssignmentWatches.
+     */
+    skip?: number
+    distinct?: Enumerable<AssignmentWatchScalarFieldEnum>
+  }
+
+
+  /**
+   * AssignmentWatch create
+   */
+  export type AssignmentWatchCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AssignmentWatch.
+     */
+    data: XOR<AssignmentWatchCreateInput, AssignmentWatchUncheckedCreateInput>
+  }
+
+
+  /**
+   * AssignmentWatch createMany
+   */
+  export type AssignmentWatchCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AssignmentWatches.
+     */
+    data: Enumerable<AssignmentWatchCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * AssignmentWatch update
+   */
+  export type AssignmentWatchUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AssignmentWatch.
+     */
+    data: XOR<AssignmentWatchUpdateInput, AssignmentWatchUncheckedUpdateInput>
+    /**
+     * Choose, which AssignmentWatch to update.
+     */
+    where: AssignmentWatchWhereUniqueInput
+  }
+
+
+  /**
+   * AssignmentWatch updateMany
+   */
+  export type AssignmentWatchUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AssignmentWatches.
+     */
+    data: XOR<AssignmentWatchUpdateManyMutationInput, AssignmentWatchUncheckedUpdateManyInput>
+    /**
+     * Filter which AssignmentWatches to update
+     */
+    where?: AssignmentWatchWhereInput
+  }
+
+
+  /**
+   * AssignmentWatch upsert
+   */
+  export type AssignmentWatchUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AssignmentWatch to update in case it exists.
+     */
+    where: AssignmentWatchWhereUniqueInput
+    /**
+     * In case the AssignmentWatch found by the `where` argument doesn't exist, create a new AssignmentWatch with this data.
+     */
+    create: XOR<AssignmentWatchCreateInput, AssignmentWatchUncheckedCreateInput>
+    /**
+     * In case the AssignmentWatch was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AssignmentWatchUpdateInput, AssignmentWatchUncheckedUpdateInput>
+  }
+
+
+  /**
+   * AssignmentWatch delete
+   */
+  export type AssignmentWatchDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+    /**
+     * Filter which AssignmentWatch to delete.
+     */
+    where: AssignmentWatchWhereUniqueInput
+  }
+
+
+  /**
+   * AssignmentWatch deleteMany
+   */
+  export type AssignmentWatchDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssignmentWatches to delete
+     */
+    where?: AssignmentWatchWhereInput
+  }
+
+
+  /**
+   * AssignmentWatch without action
+   */
+  export type AssignmentWatchArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentWatch
+     */
+    select?: AssignmentWatchSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: AssignmentWatchInclude<ExtArgs> | null
+  }
+
+
+
+  /**
+   * Model AssignmentSnapshot
+   */
+
+
+  export type AggregateAssignmentSnapshot = {
+    _count: AssignmentSnapshotCountAggregateOutputType | null
+    _avg: AssignmentSnapshotAvgAggregateOutputType | null
+    _sum: AssignmentSnapshotSumAggregateOutputType | null
+    _min: AssignmentSnapshotMinAggregateOutputType | null
+    _max: AssignmentSnapshotMaxAggregateOutputType | null
+  }
+
+  export type AssignmentSnapshotAvgAggregateOutputType = {
+    id: number | null
+    wcaUserId: number | null
+  }
+
+  export type AssignmentSnapshotSumAggregateOutputType = {
+    id: number | null
+    wcaUserId: number | null
+  }
+
+  export type AssignmentSnapshotMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    competitionId: string | null
+    wcaUserId: number | null
+    assignmentsHash: string | null
+  }
+
+  export type AssignmentSnapshotMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    competitionId: string | null
+    wcaUserId: number | null
+    assignmentsHash: string | null
+  }
+
+  export type AssignmentSnapshotCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    competitionId: number
+    wcaUserId: number
+    assignmentsHash: number
+    _all: number
+  }
+
+
+  export type AssignmentSnapshotAvgAggregateInputType = {
+    id?: true
+    wcaUserId?: true
+  }
+
+  export type AssignmentSnapshotSumAggregateInputType = {
+    id?: true
+    wcaUserId?: true
+  }
+
+  export type AssignmentSnapshotMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    competitionId?: true
+    wcaUserId?: true
+    assignmentsHash?: true
+  }
+
+  export type AssignmentSnapshotMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    competitionId?: true
+    wcaUserId?: true
+    assignmentsHash?: true
+  }
+
+  export type AssignmentSnapshotCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    competitionId?: true
+    wcaUserId?: true
+    assignmentsHash?: true
+    _all?: true
+  }
+
+  export type AssignmentSnapshotAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssignmentSnapshot to aggregate.
+     */
+    where?: AssignmentSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssignmentSnapshots to fetch.
+     */
+    orderBy?: Enumerable<AssignmentSnapshotOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AssignmentSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssignmentSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssignmentSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AssignmentSnapshots
+    **/
+    _count?: true | AssignmentSnapshotCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AssignmentSnapshotAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AssignmentSnapshotSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AssignmentSnapshotMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AssignmentSnapshotMaxAggregateInputType
+  }
+
+  export type GetAssignmentSnapshotAggregateType<T extends AssignmentSnapshotAggregateArgs> = {
+        [P in keyof T & keyof AggregateAssignmentSnapshot]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAssignmentSnapshot[P]>
+      : GetScalarType<T[P], AggregateAssignmentSnapshot[P]>
+  }
+
+
+
+
+  export type AssignmentSnapshotGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: AssignmentSnapshotWhereInput
+    orderBy?: Enumerable<AssignmentSnapshotOrderByWithAggregationInput>
+    by: AssignmentSnapshotScalarFieldEnum[]
+    having?: AssignmentSnapshotScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AssignmentSnapshotCountAggregateInputType | true
+    _avg?: AssignmentSnapshotAvgAggregateInputType
+    _sum?: AssignmentSnapshotSumAggregateInputType
+    _min?: AssignmentSnapshotMinAggregateInputType
+    _max?: AssignmentSnapshotMaxAggregateInputType
+  }
+
+
+  export type AssignmentSnapshotGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    competitionId: string
+    wcaUserId: number
+    assignmentsHash: string
+    _count: AssignmentSnapshotCountAggregateOutputType | null
+    _avg: AssignmentSnapshotAvgAggregateOutputType | null
+    _sum: AssignmentSnapshotSumAggregateOutputType | null
+    _min: AssignmentSnapshotMinAggregateOutputType | null
+    _max: AssignmentSnapshotMaxAggregateOutputType | null
+  }
+
+  type GetAssignmentSnapshotGroupByPayload<T extends AssignmentSnapshotGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<AssignmentSnapshotGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AssignmentSnapshotGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AssignmentSnapshotGroupByOutputType[P]>
+            : GetScalarType<T[P], AssignmentSnapshotGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AssignmentSnapshotSelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    competitionId?: boolean
+    wcaUserId?: boolean
+    assignmentsHash?: boolean
+  }, ExtArgs["result"]["assignmentSnapshot"]>
+
+  export type AssignmentSnapshotSelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    competitionId?: boolean
+    wcaUserId?: boolean
+    assignmentsHash?: boolean
+  }
+
+
+  type AssignmentSnapshotGetPayload<S extends boolean | null | undefined | AssignmentSnapshotArgs> = $Types.GetResult<AssignmentSnapshotPayload, S>
+
+  type AssignmentSnapshotCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<AssignmentSnapshotFindManyArgs, 'select' | 'include'> & {
+      select?: AssignmentSnapshotCountAggregateInputType | true
+    }
+
+  export interface AssignmentSnapshotDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AssignmentSnapshot'], meta: { name: 'AssignmentSnapshot' } }
+    /**
+     * Find zero or one AssignmentSnapshot that matches the filter.
+     * @param {AssignmentSnapshotFindUniqueArgs} args - Arguments to find a AssignmentSnapshot
+     * @example
+     * // Get one AssignmentSnapshot
+     * const assignmentSnapshot = await prisma.assignmentSnapshot.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends AssignmentSnapshotFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, AssignmentSnapshotFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'AssignmentSnapshot'> extends True ? Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one AssignmentSnapshot that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {AssignmentSnapshotFindUniqueOrThrowArgs} args - Arguments to find a AssignmentSnapshot
+     * @example
+     * // Get one AssignmentSnapshot
+     * const assignmentSnapshot = await prisma.assignmentSnapshot.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends AssignmentSnapshotFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentSnapshotFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first AssignmentSnapshot that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentSnapshotFindFirstArgs} args - Arguments to find a AssignmentSnapshot
+     * @example
+     * // Get one AssignmentSnapshot
+     * const assignmentSnapshot = await prisma.assignmentSnapshot.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends AssignmentSnapshotFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, AssignmentSnapshotFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'AssignmentSnapshot'> extends True ? Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first AssignmentSnapshot that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentSnapshotFindFirstOrThrowArgs} args - Arguments to find a AssignmentSnapshot
+     * @example
+     * // Get one AssignmentSnapshot
+     * const assignmentSnapshot = await prisma.assignmentSnapshot.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends AssignmentSnapshotFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentSnapshotFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more AssignmentSnapshots that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentSnapshotFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AssignmentSnapshots
+     * const assignmentSnapshots = await prisma.assignmentSnapshot.findMany()
+     * 
+     * // Get first 10 AssignmentSnapshots
+     * const assignmentSnapshots = await prisma.assignmentSnapshot.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const assignmentSnapshotWithIdOnly = await prisma.assignmentSnapshot.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends AssignmentSnapshotFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentSnapshotFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a AssignmentSnapshot.
+     * @param {AssignmentSnapshotCreateArgs} args - Arguments to create a AssignmentSnapshot.
+     * @example
+     * // Create one AssignmentSnapshot
+     * const AssignmentSnapshot = await prisma.assignmentSnapshot.create({
+     *   data: {
+     *     // ... data to create a AssignmentSnapshot
+     *   }
+     * })
+     * 
+    **/
+    create<T extends AssignmentSnapshotCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentSnapshotCreateArgs<ExtArgs>>
+    ): Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many AssignmentSnapshots.
+     *     @param {AssignmentSnapshotCreateManyArgs} args - Arguments to create many AssignmentSnapshots.
+     *     @example
+     *     // Create many AssignmentSnapshots
+     *     const assignmentSnapshot = await prisma.assignmentSnapshot.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends AssignmentSnapshotCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentSnapshotCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a AssignmentSnapshot.
+     * @param {AssignmentSnapshotDeleteArgs} args - Arguments to delete one AssignmentSnapshot.
+     * @example
+     * // Delete one AssignmentSnapshot
+     * const AssignmentSnapshot = await prisma.assignmentSnapshot.delete({
+     *   where: {
+     *     // ... filter to delete one AssignmentSnapshot
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends AssignmentSnapshotDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentSnapshotDeleteArgs<ExtArgs>>
+    ): Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one AssignmentSnapshot.
+     * @param {AssignmentSnapshotUpdateArgs} args - Arguments to update one AssignmentSnapshot.
+     * @example
+     * // Update one AssignmentSnapshot
+     * const assignmentSnapshot = await prisma.assignmentSnapshot.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends AssignmentSnapshotUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentSnapshotUpdateArgs<ExtArgs>>
+    ): Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more AssignmentSnapshots.
+     * @param {AssignmentSnapshotDeleteManyArgs} args - Arguments to filter AssignmentSnapshots to delete.
+     * @example
+     * // Delete a few AssignmentSnapshots
+     * const { count } = await prisma.assignmentSnapshot.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends AssignmentSnapshotDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, AssignmentSnapshotDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AssignmentSnapshots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentSnapshotUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AssignmentSnapshots
+     * const assignmentSnapshot = await prisma.assignmentSnapshot.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends AssignmentSnapshotUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentSnapshotUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one AssignmentSnapshot.
+     * @param {AssignmentSnapshotUpsertArgs} args - Arguments to update or create a AssignmentSnapshot.
+     * @example
+     * // Update or create a AssignmentSnapshot
+     * const assignmentSnapshot = await prisma.assignmentSnapshot.upsert({
+     *   create: {
+     *     // ... data to create a AssignmentSnapshot
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AssignmentSnapshot we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends AssignmentSnapshotUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, AssignmentSnapshotUpsertArgs<ExtArgs>>
+    ): Prisma__AssignmentSnapshotClient<$Types.GetResult<AssignmentSnapshotPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of AssignmentSnapshots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentSnapshotCountArgs} args - Arguments to filter AssignmentSnapshots to count.
+     * @example
+     * // Count the number of AssignmentSnapshots
+     * const count = await prisma.assignmentSnapshot.count({
+     *   where: {
+     *     // ... the filter for the AssignmentSnapshots we want to count
+     *   }
+     * })
+    **/
+    count<T extends AssignmentSnapshotCountArgs>(
+      args?: Subset<T, AssignmentSnapshotCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AssignmentSnapshotCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AssignmentSnapshot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentSnapshotAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AssignmentSnapshotAggregateArgs>(args: Subset<T, AssignmentSnapshotAggregateArgs>): Prisma.PrismaPromise<GetAssignmentSnapshotAggregateType<T>>
+
+    /**
+     * Group by AssignmentSnapshot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AssignmentSnapshotGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AssignmentSnapshotGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AssignmentSnapshotGroupByArgs['orderBy'] }
+        : { orderBy?: AssignmentSnapshotGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AssignmentSnapshotGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAssignmentSnapshotGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AssignmentSnapshot.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__AssignmentSnapshotClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * AssignmentSnapshot base type for findUnique actions
+   */
+  export type AssignmentSnapshotFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which AssignmentSnapshot to fetch.
+     */
+    where: AssignmentSnapshotWhereUniqueInput
+  }
+
+  /**
+   * AssignmentSnapshot findUnique
+   */
+  export interface AssignmentSnapshotFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends AssignmentSnapshotFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * AssignmentSnapshot findUniqueOrThrow
+   */
+  export type AssignmentSnapshotFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which AssignmentSnapshot to fetch.
+     */
+    where: AssignmentSnapshotWhereUniqueInput
+  }
+
+
+  /**
+   * AssignmentSnapshot base type for findFirst actions
+   */
+  export type AssignmentSnapshotFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which AssignmentSnapshot to fetch.
+     */
+    where?: AssignmentSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssignmentSnapshots to fetch.
+     */
+    orderBy?: Enumerable<AssignmentSnapshotOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssignmentSnapshots.
+     */
+    cursor?: AssignmentSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssignmentSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssignmentSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssignmentSnapshots.
+     */
+    distinct?: Enumerable<AssignmentSnapshotScalarFieldEnum>
+  }
+
+  /**
+   * AssignmentSnapshot findFirst
+   */
+  export interface AssignmentSnapshotFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends AssignmentSnapshotFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * AssignmentSnapshot findFirstOrThrow
+   */
+  export type AssignmentSnapshotFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which AssignmentSnapshot to fetch.
+     */
+    where?: AssignmentSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssignmentSnapshots to fetch.
+     */
+    orderBy?: Enumerable<AssignmentSnapshotOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AssignmentSnapshots.
+     */
+    cursor?: AssignmentSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssignmentSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssignmentSnapshots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AssignmentSnapshots.
+     */
+    distinct?: Enumerable<AssignmentSnapshotScalarFieldEnum>
+  }
+
+
+  /**
+   * AssignmentSnapshot findMany
+   */
+  export type AssignmentSnapshotFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter, which AssignmentSnapshots to fetch.
+     */
+    where?: AssignmentSnapshotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AssignmentSnapshots to fetch.
+     */
+    orderBy?: Enumerable<AssignmentSnapshotOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AssignmentSnapshots.
+     */
+    cursor?: AssignmentSnapshotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AssignmentSnapshots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AssignmentSnapshots.
+     */
+    skip?: number
+    distinct?: Enumerable<AssignmentSnapshotScalarFieldEnum>
+  }
+
+
+  /**
+   * AssignmentSnapshot create
+   */
+  export type AssignmentSnapshotCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * The data needed to create a AssignmentSnapshot.
+     */
+    data: XOR<AssignmentSnapshotCreateInput, AssignmentSnapshotUncheckedCreateInput>
+  }
+
+
+  /**
+   * AssignmentSnapshot createMany
+   */
+  export type AssignmentSnapshotCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AssignmentSnapshots.
+     */
+    data: Enumerable<AssignmentSnapshotCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * AssignmentSnapshot update
+   */
+  export type AssignmentSnapshotUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * The data needed to update a AssignmentSnapshot.
+     */
+    data: XOR<AssignmentSnapshotUpdateInput, AssignmentSnapshotUncheckedUpdateInput>
+    /**
+     * Choose, which AssignmentSnapshot to update.
+     */
+    where: AssignmentSnapshotWhereUniqueInput
+  }
+
+
+  /**
+   * AssignmentSnapshot updateMany
+   */
+  export type AssignmentSnapshotUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AssignmentSnapshots.
+     */
+    data: XOR<AssignmentSnapshotUpdateManyMutationInput, AssignmentSnapshotUncheckedUpdateManyInput>
+    /**
+     * Filter which AssignmentSnapshots to update
+     */
+    where?: AssignmentSnapshotWhereInput
+  }
+
+
+  /**
+   * AssignmentSnapshot upsert
+   */
+  export type AssignmentSnapshotUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * The filter to search for the AssignmentSnapshot to update in case it exists.
+     */
+    where: AssignmentSnapshotWhereUniqueInput
+    /**
+     * In case the AssignmentSnapshot found by the `where` argument doesn't exist, create a new AssignmentSnapshot with this data.
+     */
+    create: XOR<AssignmentSnapshotCreateInput, AssignmentSnapshotUncheckedCreateInput>
+    /**
+     * In case the AssignmentSnapshot was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AssignmentSnapshotUpdateInput, AssignmentSnapshotUncheckedUpdateInput>
+  }
+
+
+  /**
+   * AssignmentSnapshot delete
+   */
+  export type AssignmentSnapshotDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+    /**
+     * Filter which AssignmentSnapshot to delete.
+     */
+    where: AssignmentSnapshotWhereUniqueInput
+  }
+
+
+  /**
+   * AssignmentSnapshot deleteMany
+   */
+  export type AssignmentSnapshotDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AssignmentSnapshots to delete
+     */
+    where?: AssignmentSnapshotWhereInput
+  }
+
+
+  /**
+   * AssignmentSnapshot without action
+   */
+  export type AssignmentSnapshotArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AssignmentSnapshot
+     */
+    select?: AssignmentSnapshotSelect<ExtArgs> | null
+  }
+
+
+
+  /**
+   * Model PushDelivery
+   */
+
+
+  export type AggregatePushDelivery = {
+    _count: PushDeliveryCountAggregateOutputType | null
+    _avg: PushDeliveryAvgAggregateOutputType | null
+    _sum: PushDeliverySumAggregateOutputType | null
+    _min: PushDeliveryMinAggregateOutputType | null
+    _max: PushDeliveryMaxAggregateOutputType | null
+  }
+
+  export type PushDeliveryAvgAggregateOutputType = {
+    id: number | null
+    pushSubscriptionId: number | null
+    wcaUserId: number | null
+  }
+
+  export type PushDeliverySumAggregateOutputType = {
+    id: number | null
+    pushSubscriptionId: number | null
+    wcaUserId: number | null
+  }
+
+  export type PushDeliveryMinAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    pushSubscriptionId: number | null
+    competitionId: string | null
+    wcaUserId: number | null
+    dedupeKey: string | null
+    status: PushDeliveryStatus | null
+  }
+
+  export type PushDeliveryMaxAggregateOutputType = {
+    id: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    pushSubscriptionId: number | null
+    competitionId: string | null
+    wcaUserId: number | null
+    dedupeKey: string | null
+    status: PushDeliveryStatus | null
+  }
+
+  export type PushDeliveryCountAggregateOutputType = {
+    id: number
+    createdAt: number
+    updatedAt: number
+    pushSubscriptionId: number
+    competitionId: number
+    wcaUserId: number
+    dedupeKey: number
+    status: number
+    error: number
+    _all: number
+  }
+
+
+  export type PushDeliveryAvgAggregateInputType = {
+    id?: true
+    pushSubscriptionId?: true
+    wcaUserId?: true
+  }
+
+  export type PushDeliverySumAggregateInputType = {
+    id?: true
+    pushSubscriptionId?: true
+    wcaUserId?: true
+  }
+
+  export type PushDeliveryMinAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    pushSubscriptionId?: true
+    competitionId?: true
+    wcaUserId?: true
+    dedupeKey?: true
+    status?: true
+  }
+
+  export type PushDeliveryMaxAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    pushSubscriptionId?: true
+    competitionId?: true
+    wcaUserId?: true
+    dedupeKey?: true
+    status?: true
+  }
+
+  export type PushDeliveryCountAggregateInputType = {
+    id?: true
+    createdAt?: true
+    updatedAt?: true
+    pushSubscriptionId?: true
+    competitionId?: true
+    wcaUserId?: true
+    dedupeKey?: true
+    status?: true
+    error?: true
+    _all?: true
+  }
+
+  export type PushDeliveryAggregateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PushDelivery to aggregate.
+     */
+    where?: PushDeliveryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushDeliveries to fetch.
+     */
+    orderBy?: Enumerable<PushDeliveryOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PushDeliveryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushDeliveries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushDeliveries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PushDeliveries
+    **/
+    _count?: true | PushDeliveryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PushDeliveryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PushDeliverySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PushDeliveryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PushDeliveryMaxAggregateInputType
+  }
+
+  export type GetPushDeliveryAggregateType<T extends PushDeliveryAggregateArgs> = {
+        [P in keyof T & keyof AggregatePushDelivery]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePushDelivery[P]>
+      : GetScalarType<T[P], AggregatePushDelivery[P]>
+  }
+
+
+
+
+  export type PushDeliveryGroupByArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    where?: PushDeliveryWhereInput
+    orderBy?: Enumerable<PushDeliveryOrderByWithAggregationInput>
+    by: PushDeliveryScalarFieldEnum[]
+    having?: PushDeliveryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PushDeliveryCountAggregateInputType | true
+    _avg?: PushDeliveryAvgAggregateInputType
+    _sum?: PushDeliverySumAggregateInputType
+    _min?: PushDeliveryMinAggregateInputType
+    _max?: PushDeliveryMaxAggregateInputType
+  }
+
+
+  export type PushDeliveryGroupByOutputType = {
+    id: number
+    createdAt: Date
+    updatedAt: Date
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+    dedupeKey: string
+    status: PushDeliveryStatus
+    error: JsonValue | null
+    _count: PushDeliveryCountAggregateOutputType | null
+    _avg: PushDeliveryAvgAggregateOutputType | null
+    _sum: PushDeliverySumAggregateOutputType | null
+    _min: PushDeliveryMinAggregateOutputType | null
+    _max: PushDeliveryMaxAggregateOutputType | null
+  }
+
+  type GetPushDeliveryGroupByPayload<T extends PushDeliveryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickArray<PushDeliveryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PushDeliveryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PushDeliveryGroupByOutputType[P]>
+            : GetScalarType<T[P], PushDeliveryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PushDeliverySelect<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    pushSubscriptionId?: boolean
+    competitionId?: boolean
+    wcaUserId?: boolean
+    dedupeKey?: boolean
+    status?: boolean
+    error?: boolean
+    pushSubscription?: boolean | PushSubscriptionArgs<ExtArgs>
+  }, ExtArgs["result"]["pushDelivery"]>
+
+  export type PushDeliverySelectScalar = {
+    id?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    pushSubscriptionId?: boolean
+    competitionId?: boolean
+    wcaUserId?: boolean
+    dedupeKey?: boolean
+    status?: boolean
+    error?: boolean
+  }
+
+  export type PushDeliveryInclude<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    pushSubscription?: boolean | PushSubscriptionArgs<ExtArgs>
+  }
+
+
+  type PushDeliveryGetPayload<S extends boolean | null | undefined | PushDeliveryArgs> = $Types.GetResult<PushDeliveryPayload, S>
+
+  type PushDeliveryCountArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = 
+    Omit<PushDeliveryFindManyArgs, 'select' | 'include'> & {
+      select?: PushDeliveryCountAggregateInputType | true
+    }
+
+  export interface PushDeliveryDelegate<GlobalRejectSettings extends Prisma.RejectOnNotFound | Prisma.RejectPerOperation | false | undefined, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PushDelivery'], meta: { name: 'PushDelivery' } }
+    /**
+     * Find zero or one PushDelivery that matches the filter.
+     * @param {PushDeliveryFindUniqueArgs} args - Arguments to find a PushDelivery
+     * @example
+     * // Get one PushDelivery
+     * const pushDelivery = await prisma.pushDelivery.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUnique<T extends PushDeliveryFindUniqueArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args: SelectSubset<T, PushDeliveryFindUniqueArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findUnique', 'PushDelivery'> extends True ? Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'findUnique', never>, never, ExtArgs> : Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'findUnique', never> | null, null, ExtArgs>
+
+    /**
+     * Find one PushDelivery that matches the filter or throw an error  with `error.code='P2025'` 
+     *     if no matches were found.
+     * @param {PushDeliveryFindUniqueOrThrowArgs} args - Arguments to find a PushDelivery
+     * @example
+     * // Get one PushDelivery
+     * const pushDelivery = await prisma.pushDelivery.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findUniqueOrThrow<T extends PushDeliveryFindUniqueOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushDeliveryFindUniqueOrThrowArgs<ExtArgs>>
+    ): Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'findUniqueOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find the first PushDelivery that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushDeliveryFindFirstArgs} args - Arguments to find a PushDelivery
+     * @example
+     * // Get one PushDelivery
+     * const pushDelivery = await prisma.pushDelivery.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirst<T extends PushDeliveryFindFirstArgs<ExtArgs>, LocalRejectSettings = T["rejectOnNotFound"] extends RejectOnNotFound ? T['rejectOnNotFound'] : undefined>(
+      args?: SelectSubset<T, PushDeliveryFindFirstArgs<ExtArgs>>
+    ): HasReject<GlobalRejectSettings, LocalRejectSettings, 'findFirst', 'PushDelivery'> extends True ? Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'findFirst', never>, never, ExtArgs> : Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'findFirst', never> | null, null, ExtArgs>
+
+    /**
+     * Find the first PushDelivery that matches the filter or
+     * throw `NotFoundError` if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushDeliveryFindFirstOrThrowArgs} args - Arguments to find a PushDelivery
+     * @example
+     * // Get one PushDelivery
+     * const pushDelivery = await prisma.pushDelivery.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+    **/
+    findFirstOrThrow<T extends PushDeliveryFindFirstOrThrowArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushDeliveryFindFirstOrThrowArgs<ExtArgs>>
+    ): Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'findFirstOrThrow', never>, never, ExtArgs>
+
+    /**
+     * Find zero or more PushDeliveries that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushDeliveryFindManyArgs=} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PushDeliveries
+     * const pushDeliveries = await prisma.pushDelivery.findMany()
+     * 
+     * // Get first 10 PushDeliveries
+     * const pushDeliveries = await prisma.pushDelivery.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const pushDeliveryWithIdOnly = await prisma.pushDelivery.findMany({ select: { id: true } })
+     * 
+    **/
+    findMany<T extends PushDeliveryFindManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushDeliveryFindManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'findMany', never>>
+
+    /**
+     * Create a PushDelivery.
+     * @param {PushDeliveryCreateArgs} args - Arguments to create a PushDelivery.
+     * @example
+     * // Create one PushDelivery
+     * const PushDelivery = await prisma.pushDelivery.create({
+     *   data: {
+     *     // ... data to create a PushDelivery
+     *   }
+     * })
+     * 
+    **/
+    create<T extends PushDeliveryCreateArgs<ExtArgs>>(
+      args: SelectSubset<T, PushDeliveryCreateArgs<ExtArgs>>
+    ): Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'create', never>, never, ExtArgs>
+
+    /**
+     * Create many PushDeliveries.
+     *     @param {PushDeliveryCreateManyArgs} args - Arguments to create many PushDeliveries.
+     *     @example
+     *     // Create many PushDeliveries
+     *     const pushDelivery = await prisma.pushDelivery.createMany({
+     *       data: {
+     *         // ... provide data here
+     *       }
+     *     })
+     *     
+    **/
+    createMany<T extends PushDeliveryCreateManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushDeliveryCreateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a PushDelivery.
+     * @param {PushDeliveryDeleteArgs} args - Arguments to delete one PushDelivery.
+     * @example
+     * // Delete one PushDelivery
+     * const PushDelivery = await prisma.pushDelivery.delete({
+     *   where: {
+     *     // ... filter to delete one PushDelivery
+     *   }
+     * })
+     * 
+    **/
+    delete<T extends PushDeliveryDeleteArgs<ExtArgs>>(
+      args: SelectSubset<T, PushDeliveryDeleteArgs<ExtArgs>>
+    ): Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'delete', never>, never, ExtArgs>
+
+    /**
+     * Update one PushDelivery.
+     * @param {PushDeliveryUpdateArgs} args - Arguments to update one PushDelivery.
+     * @example
+     * // Update one PushDelivery
+     * const pushDelivery = await prisma.pushDelivery.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    update<T extends PushDeliveryUpdateArgs<ExtArgs>>(
+      args: SelectSubset<T, PushDeliveryUpdateArgs<ExtArgs>>
+    ): Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'update', never>, never, ExtArgs>
+
+    /**
+     * Delete zero or more PushDeliveries.
+     * @param {PushDeliveryDeleteManyArgs} args - Arguments to filter PushDeliveries to delete.
+     * @example
+     * // Delete a few PushDeliveries
+     * const { count } = await prisma.pushDelivery.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+    **/
+    deleteMany<T extends PushDeliveryDeleteManyArgs<ExtArgs>>(
+      args?: SelectSubset<T, PushDeliveryDeleteManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PushDeliveries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushDeliveryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PushDeliveries
+     * const pushDelivery = await prisma.pushDelivery.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+    **/
+    updateMany<T extends PushDeliveryUpdateManyArgs<ExtArgs>>(
+      args: SelectSubset<T, PushDeliveryUpdateManyArgs<ExtArgs>>
+    ): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one PushDelivery.
+     * @param {PushDeliveryUpsertArgs} args - Arguments to update or create a PushDelivery.
+     * @example
+     * // Update or create a PushDelivery
+     * const pushDelivery = await prisma.pushDelivery.upsert({
+     *   create: {
+     *     // ... data to create a PushDelivery
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PushDelivery we want to update
+     *   }
+     * })
+    **/
+    upsert<T extends PushDeliveryUpsertArgs<ExtArgs>>(
+      args: SelectSubset<T, PushDeliveryUpsertArgs<ExtArgs>>
+    ): Prisma__PushDeliveryClient<$Types.GetResult<PushDeliveryPayload<ExtArgs>, T, 'upsert', never>, never, ExtArgs>
+
+    /**
+     * Count the number of PushDeliveries.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushDeliveryCountArgs} args - Arguments to filter PushDeliveries to count.
+     * @example
+     * // Count the number of PushDeliveries
+     * const count = await prisma.pushDelivery.count({
+     *   where: {
+     *     // ... the filter for the PushDeliveries we want to count
+     *   }
+     * })
+    **/
+    count<T extends PushDeliveryCountArgs>(
+      args?: Subset<T, PushDeliveryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PushDeliveryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PushDelivery.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushDeliveryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PushDeliveryAggregateArgs>(args: Subset<T, PushDeliveryAggregateArgs>): Prisma.PrismaPromise<GetPushDeliveryAggregateType<T>>
+
+    /**
+     * Group by PushDelivery.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PushDeliveryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PushDeliveryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PushDeliveryGroupByArgs['orderBy'] }
+        : { orderBy?: PushDeliveryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends TupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PushDeliveryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPushDeliveryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PushDelivery.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export class Prisma__PushDeliveryClient<T, Null = never, ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> implements Prisma.PrismaPromise<T> {
+    private readonly _dmmf;
+    private readonly _queryType;
+    private readonly _rootField;
+    private readonly _clientMethod;
+    private readonly _args;
+    private readonly _dataPath;
+    private readonly _errorFormat;
+    private readonly _measurePerformance?;
+    private _isList;
+    private _callsite;
+    private _requestPromise?;
+    readonly [Symbol.toStringTag]: 'PrismaPromise';
+    constructor(_dmmf: runtime.DMMFClass, _queryType: 'query' | 'mutation', _rootField: string, _clientMethod: string, _args: any, _dataPath: string[], _errorFormat: ErrorFormat, _measurePerformance?: boolean | undefined, _isList?: boolean);
+
+    pushSubscription<T extends PushSubscriptionArgs<ExtArgs> = {}>(args?: Subset<T, PushSubscriptionArgs<ExtArgs>>): Prisma__PushSubscriptionClient<$Types.GetResult<PushSubscriptionPayload<ExtArgs>, T, 'findUnique', never> | Null, never, ExtArgs>;
+
+    private get _document();
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Promise<T | TResult>;
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): Promise<T>;
+  }
+
+
+
+  // Custom InputTypes
+
+  /**
+   * PushDelivery base type for findUnique actions
+   */
+  export type PushDeliveryFindUniqueArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * Filter, which PushDelivery to fetch.
+     */
+    where: PushDeliveryWhereUniqueInput
+  }
+
+  /**
+   * PushDelivery findUnique
+   */
+  export interface PushDeliveryFindUniqueArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends PushDeliveryFindUniqueArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findUniqueOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * PushDelivery findUniqueOrThrow
+   */
+  export type PushDeliveryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * Filter, which PushDelivery to fetch.
+     */
+    where: PushDeliveryWhereUniqueInput
+  }
+
+
+  /**
+   * PushDelivery base type for findFirst actions
+   */
+  export type PushDeliveryFindFirstArgsBase<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * Filter, which PushDelivery to fetch.
+     */
+    where?: PushDeliveryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushDeliveries to fetch.
+     */
+    orderBy?: Enumerable<PushDeliveryOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PushDeliveries.
+     */
+    cursor?: PushDeliveryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushDeliveries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushDeliveries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PushDeliveries.
+     */
+    distinct?: Enumerable<PushDeliveryScalarFieldEnum>
+  }
+
+  /**
+   * PushDelivery findFirst
+   */
+  export interface PushDeliveryFindFirstArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> extends PushDeliveryFindFirstArgsBase<ExtArgs> {
+   /**
+    * Throw an Error if query returns no results
+    * @deprecated since 4.0.0: use `findFirstOrThrow` method instead
+    */
+    rejectOnNotFound?: RejectOnNotFound
+  }
+      
+
+  /**
+   * PushDelivery findFirstOrThrow
+   */
+  export type PushDeliveryFindFirstOrThrowArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * Filter, which PushDelivery to fetch.
+     */
+    where?: PushDeliveryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushDeliveries to fetch.
+     */
+    orderBy?: Enumerable<PushDeliveryOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PushDeliveries.
+     */
+    cursor?: PushDeliveryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushDeliveries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushDeliveries.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PushDeliveries.
+     */
+    distinct?: Enumerable<PushDeliveryScalarFieldEnum>
+  }
+
+
+  /**
+   * PushDelivery findMany
+   */
+  export type PushDeliveryFindManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * Filter, which PushDeliveries to fetch.
+     */
+    where?: PushDeliveryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PushDeliveries to fetch.
+     */
+    orderBy?: Enumerable<PushDeliveryOrderByWithRelationInput>
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PushDeliveries.
+     */
+    cursor?: PushDeliveryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PushDeliveries from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PushDeliveries.
+     */
+    skip?: number
+    distinct?: Enumerable<PushDeliveryScalarFieldEnum>
+  }
+
+
+  /**
+   * PushDelivery create
+   */
+  export type PushDeliveryCreateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PushDelivery.
+     */
+    data: XOR<PushDeliveryCreateInput, PushDeliveryUncheckedCreateInput>
+  }
+
+
+  /**
+   * PushDelivery createMany
+   */
+  export type PushDeliveryCreateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PushDeliveries.
+     */
+    data: Enumerable<PushDeliveryCreateManyInput>
+    skipDuplicates?: boolean
+  }
+
+
+  /**
+   * PushDelivery update
+   */
+  export type PushDeliveryUpdateArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PushDelivery.
+     */
+    data: XOR<PushDeliveryUpdateInput, PushDeliveryUncheckedUpdateInput>
+    /**
+     * Choose, which PushDelivery to update.
+     */
+    where: PushDeliveryWhereUniqueInput
+  }
+
+
+  /**
+   * PushDelivery updateMany
+   */
+  export type PushDeliveryUpdateManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PushDeliveries.
+     */
+    data: XOR<PushDeliveryUpdateManyMutationInput, PushDeliveryUncheckedUpdateManyInput>
+    /**
+     * Filter which PushDeliveries to update
+     */
+    where?: PushDeliveryWhereInput
+  }
+
+
+  /**
+   * PushDelivery upsert
+   */
+  export type PushDeliveryUpsertArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PushDelivery to update in case it exists.
+     */
+    where: PushDeliveryWhereUniqueInput
+    /**
+     * In case the PushDelivery found by the `where` argument doesn't exist, create a new PushDelivery with this data.
+     */
+    create: XOR<PushDeliveryCreateInput, PushDeliveryUncheckedCreateInput>
+    /**
+     * In case the PushDelivery was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PushDeliveryUpdateInput, PushDeliveryUncheckedUpdateInput>
+  }
+
+
+  /**
+   * PushDelivery delete
+   */
+  export type PushDeliveryDeleteArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
+    /**
+     * Filter which PushDelivery to delete.
+     */
+    where: PushDeliveryWhereUniqueInput
+  }
+
+
+  /**
+   * PushDelivery deleteMany
+   */
+  export type PushDeliveryDeleteManyArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PushDeliveries to delete
+     */
+    where?: PushDeliveryWhereInput
+  }
+
+
+  /**
+   * PushDelivery without action
+   */
+  export type PushDeliveryArgs<ExtArgs extends $Extensions.Args = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PushDelivery
+     */
+    select?: PushDeliverySelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well.
+     */
+    include?: PushDeliveryInclude<ExtArgs> | null
   }
 
 
@@ -7172,6 +11567,60 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+  export const PushSubscriptionScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    endpoint: 'endpoint',
+    p256dh: 'p256dh',
+    auth: 'auth',
+    source: 'source',
+    externalSubject: 'externalSubject',
+    disabledAt: 'disabledAt'
+  };
+
+  export type PushSubscriptionScalarFieldEnum = (typeof PushSubscriptionScalarFieldEnum)[keyof typeof PushSubscriptionScalarFieldEnum]
+
+
+  export const AssignmentWatchScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    pushSubscriptionId: 'pushSubscriptionId',
+    competitionId: 'competitionId',
+    wcaUserId: 'wcaUserId'
+  };
+
+  export type AssignmentWatchScalarFieldEnum = (typeof AssignmentWatchScalarFieldEnum)[keyof typeof AssignmentWatchScalarFieldEnum]
+
+
+  export const AssignmentSnapshotScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    competitionId: 'competitionId',
+    wcaUserId: 'wcaUserId',
+    assignmentsHash: 'assignmentsHash'
+  };
+
+  export type AssignmentSnapshotScalarFieldEnum = (typeof AssignmentSnapshotScalarFieldEnum)[keyof typeof AssignmentSnapshotScalarFieldEnum]
+
+
+  export const PushDeliveryScalarFieldEnum: {
+    id: 'id',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    pushSubscriptionId: 'pushSubscriptionId',
+    competitionId: 'competitionId',
+    wcaUserId: 'wcaUserId',
+    dedupeKey: 'dedupeKey',
+    status: 'status',
+    error: 'error'
+  };
+
+  export type PushDeliveryScalarFieldEnum = (typeof PushDeliveryScalarFieldEnum)[keyof typeof PushDeliveryScalarFieldEnum]
+
+
   export const SessionScalarFieldEnum: {
     id: 'id',
     sid: 'sid',
@@ -7226,12 +11675,37 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
   export const QueryMode: {
     default: 'default',
     insensitive: 'insensitive'
   };
 
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -7332,6 +11806,246 @@ export namespace Prisma {
     NOT?: Enumerable<UserScalarWhereWithAggregatesInput>
     id?: IntWithAggregatesFilter | number
     phoneNumber?: StringWithAggregatesFilter | string
+  }
+
+  export type PushSubscriptionWhereInput = {
+    AND?: Enumerable<PushSubscriptionWhereInput>
+    OR?: Enumerable<PushSubscriptionWhereInput>
+    NOT?: Enumerable<PushSubscriptionWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    endpoint?: StringFilter | string
+    p256dh?: StringFilter | string
+    auth?: StringFilter | string
+    source?: EnumPushSubscriptionSourceFilter | PushSubscriptionSource
+    externalSubject?: StringFilter | string
+    disabledAt?: DateTimeNullableFilter | Date | string | null
+    watches?: AssignmentWatchListRelationFilter
+    deliveries?: PushDeliveryListRelationFilter
+  }
+
+  export type PushSubscriptionOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    source?: SortOrder
+    externalSubject?: SortOrder
+    disabledAt?: SortOrderInput | SortOrder
+    watches?: AssignmentWatchOrderByRelationAggregateInput
+    deliveries?: PushDeliveryOrderByRelationAggregateInput
+  }
+
+  export type PushSubscriptionWhereUniqueInput = {
+    id?: number
+    endpoint?: string
+  }
+
+  export type PushSubscriptionOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    source?: SortOrder
+    externalSubject?: SortOrder
+    disabledAt?: SortOrderInput | SortOrder
+    _count?: PushSubscriptionCountOrderByAggregateInput
+    _avg?: PushSubscriptionAvgOrderByAggregateInput
+    _max?: PushSubscriptionMaxOrderByAggregateInput
+    _min?: PushSubscriptionMinOrderByAggregateInput
+    _sum?: PushSubscriptionSumOrderByAggregateInput
+  }
+
+  export type PushSubscriptionScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<PushSubscriptionScalarWhereWithAggregatesInput>
+    OR?: Enumerable<PushSubscriptionScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<PushSubscriptionScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    endpoint?: StringWithAggregatesFilter | string
+    p256dh?: StringWithAggregatesFilter | string
+    auth?: StringWithAggregatesFilter | string
+    source?: EnumPushSubscriptionSourceWithAggregatesFilter | PushSubscriptionSource
+    externalSubject?: StringWithAggregatesFilter | string
+    disabledAt?: DateTimeNullableWithAggregatesFilter | Date | string | null
+  }
+
+  export type AssignmentWatchWhereInput = {
+    AND?: Enumerable<AssignmentWatchWhereInput>
+    OR?: Enumerable<AssignmentWatchWhereInput>
+    NOT?: Enumerable<AssignmentWatchWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    pushSubscriptionId?: IntFilter | number
+    competitionId?: StringFilter | string
+    wcaUserId?: IntFilter | number
+    pushSubscription?: XOR<PushSubscriptionRelationFilter, PushSubscriptionWhereInput>
+  }
+
+  export type AssignmentWatchOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    pushSubscription?: PushSubscriptionOrderByWithRelationInput
+  }
+
+  export type AssignmentWatchWhereUniqueInput = {
+    id?: number
+    pushSubscriptionId_competitionId_wcaUserId?: AssignmentWatchPushSubscriptionIdCompetitionIdWcaUserIdCompoundUniqueInput
+  }
+
+  export type AssignmentWatchOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    _count?: AssignmentWatchCountOrderByAggregateInput
+    _avg?: AssignmentWatchAvgOrderByAggregateInput
+    _max?: AssignmentWatchMaxOrderByAggregateInput
+    _min?: AssignmentWatchMinOrderByAggregateInput
+    _sum?: AssignmentWatchSumOrderByAggregateInput
+  }
+
+  export type AssignmentWatchScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<AssignmentWatchScalarWhereWithAggregatesInput>
+    OR?: Enumerable<AssignmentWatchScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<AssignmentWatchScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    pushSubscriptionId?: IntWithAggregatesFilter | number
+    competitionId?: StringWithAggregatesFilter | string
+    wcaUserId?: IntWithAggregatesFilter | number
+  }
+
+  export type AssignmentSnapshotWhereInput = {
+    AND?: Enumerable<AssignmentSnapshotWhereInput>
+    OR?: Enumerable<AssignmentSnapshotWhereInput>
+    NOT?: Enumerable<AssignmentSnapshotWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    competitionId?: StringFilter | string
+    wcaUserId?: IntFilter | number
+    assignmentsHash?: StringFilter | string
+  }
+
+  export type AssignmentSnapshotOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    assignmentsHash?: SortOrder
+  }
+
+  export type AssignmentSnapshotWhereUniqueInput = {
+    id?: number
+    competitionId_wcaUserId?: AssignmentSnapshotCompetitionIdWcaUserIdCompoundUniqueInput
+  }
+
+  export type AssignmentSnapshotOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    assignmentsHash?: SortOrder
+    _count?: AssignmentSnapshotCountOrderByAggregateInput
+    _avg?: AssignmentSnapshotAvgOrderByAggregateInput
+    _max?: AssignmentSnapshotMaxOrderByAggregateInput
+    _min?: AssignmentSnapshotMinOrderByAggregateInput
+    _sum?: AssignmentSnapshotSumOrderByAggregateInput
+  }
+
+  export type AssignmentSnapshotScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<AssignmentSnapshotScalarWhereWithAggregatesInput>
+    OR?: Enumerable<AssignmentSnapshotScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<AssignmentSnapshotScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    competitionId?: StringWithAggregatesFilter | string
+    wcaUserId?: IntWithAggregatesFilter | number
+    assignmentsHash?: StringWithAggregatesFilter | string
+  }
+
+  export type PushDeliveryWhereInput = {
+    AND?: Enumerable<PushDeliveryWhereInput>
+    OR?: Enumerable<PushDeliveryWhereInput>
+    NOT?: Enumerable<PushDeliveryWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    pushSubscriptionId?: IntFilter | number
+    competitionId?: StringFilter | string
+    wcaUserId?: IntFilter | number
+    dedupeKey?: StringFilter | string
+    status?: EnumPushDeliveryStatusFilter | PushDeliveryStatus
+    error?: JsonNullableFilter
+    pushSubscription?: XOR<PushSubscriptionRelationFilter, PushSubscriptionWhereInput>
+  }
+
+  export type PushDeliveryOrderByWithRelationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+    error?: SortOrderInput | SortOrder
+    pushSubscription?: PushSubscriptionOrderByWithRelationInput
+  }
+
+  export type PushDeliveryWhereUniqueInput = {
+    id?: number
+    pushSubscriptionId_dedupeKey?: PushDeliveryPushSubscriptionIdDedupeKeyCompoundUniqueInput
+  }
+
+  export type PushDeliveryOrderByWithAggregationInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+    error?: SortOrderInput | SortOrder
+    _count?: PushDeliveryCountOrderByAggregateInput
+    _avg?: PushDeliveryAvgOrderByAggregateInput
+    _max?: PushDeliveryMaxOrderByAggregateInput
+    _min?: PushDeliveryMinOrderByAggregateInput
+    _sum?: PushDeliverySumOrderByAggregateInput
+  }
+
+  export type PushDeliveryScalarWhereWithAggregatesInput = {
+    AND?: Enumerable<PushDeliveryScalarWhereWithAggregatesInput>
+    OR?: Enumerable<PushDeliveryScalarWhereWithAggregatesInput>
+    NOT?: Enumerable<PushDeliveryScalarWhereWithAggregatesInput>
+    id?: IntWithAggregatesFilter | number
+    createdAt?: DateTimeWithAggregatesFilter | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter | Date | string
+    pushSubscriptionId?: IntWithAggregatesFilter | number
+    competitionId?: StringWithAggregatesFilter | string
+    wcaUserId?: IntWithAggregatesFilter | number
+    dedupeKey?: StringWithAggregatesFilter | string
+    status?: EnumPushDeliveryStatusWithAggregatesFilter | PushDeliveryStatus
+    error?: JsonNullableWithAggregatesFilter
   }
 
   export type SessionWhereInput = {
@@ -7634,6 +12348,294 @@ export namespace Prisma {
   export type UserUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     phoneNumber?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PushSubscriptionCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt?: Date | string | null
+    watches?: AssignmentWatchCreateNestedManyWithoutPushSubscriptionInput
+    deliveries?: PushDeliveryCreateNestedManyWithoutPushSubscriptionInput
+  }
+
+  export type PushSubscriptionUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt?: Date | string | null
+    watches?: AssignmentWatchUncheckedCreateNestedManyWithoutPushSubscriptionInput
+    deliveries?: PushDeliveryUncheckedCreateNestedManyWithoutPushSubscriptionInput
+  }
+
+  export type PushSubscriptionUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    source?: EnumPushSubscriptionSourceFieldUpdateOperationsInput | PushSubscriptionSource
+    externalSubject?: StringFieldUpdateOperationsInput | string
+    disabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    watches?: AssignmentWatchUpdateManyWithoutPushSubscriptionNestedInput
+    deliveries?: PushDeliveryUpdateManyWithoutPushSubscriptionNestedInput
+  }
+
+  export type PushSubscriptionUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    source?: EnumPushSubscriptionSourceFieldUpdateOperationsInput | PushSubscriptionSource
+    externalSubject?: StringFieldUpdateOperationsInput | string
+    disabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    watches?: AssignmentWatchUncheckedUpdateManyWithoutPushSubscriptionNestedInput
+    deliveries?: PushDeliveryUncheckedUpdateManyWithoutPushSubscriptionNestedInput
+  }
+
+  export type PushSubscriptionCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt?: Date | string | null
+  }
+
+  export type PushSubscriptionUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    source?: EnumPushSubscriptionSourceFieldUpdateOperationsInput | PushSubscriptionSource
+    externalSubject?: StringFieldUpdateOperationsInput | string
+    disabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type PushSubscriptionUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    source?: EnumPushSubscriptionSourceFieldUpdateOperationsInput | PushSubscriptionSource
+    externalSubject?: StringFieldUpdateOperationsInput | string
+    disabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AssignmentWatchCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+    pushSubscription: PushSubscriptionCreateNestedOneWithoutWatchesInput
+  }
+
+  export type AssignmentWatchUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+  }
+
+  export type AssignmentWatchUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    pushSubscription?: PushSubscriptionUpdateOneRequiredWithoutWatchesNestedInput
+  }
+
+  export type AssignmentWatchUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    pushSubscriptionId?: IntFieldUpdateOperationsInput | number
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AssignmentWatchCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+  }
+
+  export type AssignmentWatchUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AssignmentWatchUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    pushSubscriptionId?: IntFieldUpdateOperationsInput | number
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AssignmentSnapshotCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+    assignmentsHash: string
+  }
+
+  export type AssignmentSnapshotUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+    assignmentsHash: string
+  }
+
+  export type AssignmentSnapshotUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    assignmentsHash?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AssignmentSnapshotUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    assignmentsHash?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AssignmentSnapshotCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+    assignmentsHash: string
+  }
+
+  export type AssignmentSnapshotUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    assignmentsHash?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AssignmentSnapshotUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    assignmentsHash?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type PushDeliveryCreateInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+    dedupeKey: string
+    status: PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+    pushSubscription: PushSubscriptionCreateNestedOneWithoutDeliveriesInput
+  }
+
+  export type PushDeliveryUncheckedCreateInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+    dedupeKey: string
+    status: PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PushDeliveryUpdateInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: EnumPushDeliveryStatusFieldUpdateOperationsInput | PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+    pushSubscription?: PushSubscriptionUpdateOneRequiredWithoutDeliveriesNestedInput
+  }
+
+  export type PushDeliveryUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    pushSubscriptionId?: IntFieldUpdateOperationsInput | number
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: EnumPushDeliveryStatusFieldUpdateOperationsInput | PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PushDeliveryCreateManyInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+    dedupeKey: string
+    status: PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PushDeliveryUpdateManyMutationInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: EnumPushDeliveryStatusFieldUpdateOperationsInput | PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PushDeliveryUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    pushSubscriptionId?: IntFieldUpdateOperationsInput | number
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: EnumPushDeliveryStatusFieldUpdateOperationsInput | PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type SessionCreateInput = {
@@ -8046,6 +13048,324 @@ export namespace Prisma {
     id?: SortOrder
   }
 
+  export type EnumPushSubscriptionSourceFilter = {
+    equals?: PushSubscriptionSource
+    in?: Enumerable<PushSubscriptionSource>
+    notIn?: Enumerable<PushSubscriptionSource>
+    not?: NestedEnumPushSubscriptionSourceFilter | PushSubscriptionSource
+  }
+
+  export type DateTimeNullableFilter = {
+    equals?: Date | string | null
+    in?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    lt?: Date | string
+    lte?: Date | string
+    gt?: Date | string
+    gte?: Date | string
+    not?: NestedDateTimeNullableFilter | Date | string | null
+  }
+
+  export type AssignmentWatchListRelationFilter = {
+    every?: AssignmentWatchWhereInput
+    some?: AssignmentWatchWhereInput
+    none?: AssignmentWatchWhereInput
+  }
+
+  export type PushDeliveryListRelationFilter = {
+    every?: PushDeliveryWhereInput
+    some?: PushDeliveryWhereInput
+    none?: PushDeliveryWhereInput
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
+  export type AssignmentWatchOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PushDeliveryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PushSubscriptionCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    source?: SortOrder
+    externalSubject?: SortOrder
+    disabledAt?: SortOrder
+  }
+
+  export type PushSubscriptionAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type PushSubscriptionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    source?: SortOrder
+    externalSubject?: SortOrder
+    disabledAt?: SortOrder
+  }
+
+  export type PushSubscriptionMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    endpoint?: SortOrder
+    p256dh?: SortOrder
+    auth?: SortOrder
+    source?: SortOrder
+    externalSubject?: SortOrder
+    disabledAt?: SortOrder
+  }
+
+  export type PushSubscriptionSumOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type EnumPushSubscriptionSourceWithAggregatesFilter = {
+    equals?: PushSubscriptionSource
+    in?: Enumerable<PushSubscriptionSource>
+    notIn?: Enumerable<PushSubscriptionSource>
+    not?: NestedEnumPushSubscriptionSourceWithAggregatesFilter | PushSubscriptionSource
+    _count?: NestedIntFilter
+    _min?: NestedEnumPushSubscriptionSourceFilter
+    _max?: NestedEnumPushSubscriptionSourceFilter
+  }
+
+  export type DateTimeNullableWithAggregatesFilter = {
+    equals?: Date | string | null
+    in?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    lt?: Date | string
+    lte?: Date | string
+    gt?: Date | string
+    gte?: Date | string
+    not?: NestedDateTimeNullableWithAggregatesFilter | Date | string | null
+    _count?: NestedIntNullableFilter
+    _min?: NestedDateTimeNullableFilter
+    _max?: NestedDateTimeNullableFilter
+  }
+
+  export type PushSubscriptionRelationFilter = {
+    is?: PushSubscriptionWhereInput | null
+    isNot?: PushSubscriptionWhereInput | null
+  }
+
+  export type AssignmentWatchPushSubscriptionIdCompetitionIdWcaUserIdCompoundUniqueInput = {
+    pushSubscriptionId: number
+    competitionId: string
+    wcaUserId: number
+  }
+
+  export type AssignmentWatchCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type AssignmentWatchAvgOrderByAggregateInput = {
+    id?: SortOrder
+    pushSubscriptionId?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type AssignmentWatchMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type AssignmentWatchMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type AssignmentWatchSumOrderByAggregateInput = {
+    id?: SortOrder
+    pushSubscriptionId?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type AssignmentSnapshotCompetitionIdWcaUserIdCompoundUniqueInput = {
+    competitionId: string
+    wcaUserId: number
+  }
+
+  export type AssignmentSnapshotCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    assignmentsHash?: SortOrder
+  }
+
+  export type AssignmentSnapshotAvgOrderByAggregateInput = {
+    id?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type AssignmentSnapshotMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    assignmentsHash?: SortOrder
+  }
+
+  export type AssignmentSnapshotMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    assignmentsHash?: SortOrder
+  }
+
+  export type AssignmentSnapshotSumOrderByAggregateInput = {
+    id?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type EnumPushDeliveryStatusFilter = {
+    equals?: PushDeliveryStatus
+    in?: Enumerable<PushDeliveryStatus>
+    notIn?: Enumerable<PushDeliveryStatus>
+    not?: NestedEnumPushDeliveryStatusFilter | PushDeliveryStatus
+  }
+  export type JsonNullableFilter = 
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase>, Exclude<keyof Required<JsonNullableFilterBase>, 'path'>>,
+        Required<JsonNullableFilterBase>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase>, 'path'>>
+
+  export type JsonNullableFilterBase = {
+    equals?: InputJsonValue | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string
+    string_starts_with?: string
+    string_ends_with?: string
+    array_contains?: InputJsonValue | null
+    array_starts_with?: InputJsonValue | null
+    array_ends_with?: InputJsonValue | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonNullValueFilter
+  }
+
+  export type PushDeliveryPushSubscriptionIdDedupeKeyCompoundUniqueInput = {
+    pushSubscriptionId: number
+    dedupeKey: string
+  }
+
+  export type PushDeliveryCountOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+    error?: SortOrder
+  }
+
+  export type PushDeliveryAvgOrderByAggregateInput = {
+    id?: SortOrder
+    pushSubscriptionId?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type PushDeliveryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+  }
+
+  export type PushDeliveryMinOrderByAggregateInput = {
+    id?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    pushSubscriptionId?: SortOrder
+    competitionId?: SortOrder
+    wcaUserId?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+  }
+
+  export type PushDeliverySumOrderByAggregateInput = {
+    id?: SortOrder
+    pushSubscriptionId?: SortOrder
+    wcaUserId?: SortOrder
+  }
+
+  export type EnumPushDeliveryStatusWithAggregatesFilter = {
+    equals?: PushDeliveryStatus
+    in?: Enumerable<PushDeliveryStatus>
+    notIn?: Enumerable<PushDeliveryStatus>
+    not?: NestedEnumPushDeliveryStatusWithAggregatesFilter | PushDeliveryStatus
+    _count?: NestedIntFilter
+    _min?: NestedEnumPushDeliveryStatusFilter
+    _max?: NestedEnumPushDeliveryStatusFilter
+  }
+  export type JsonNullableWithAggregatesFilter = 
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase = {
+    equals?: InputJsonValue | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string
+    string_starts_with?: string
+    string_ends_with?: string
+    array_contains?: InputJsonValue | null
+    array_starts_with?: InputJsonValue | null
+    array_ends_with?: InputJsonValue | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonNullValueFilter
+    _count?: NestedIntNullableFilter
+    _min?: NestedJsonNullableFilter
+    _max?: NestedJsonNullableFilter
+  }
+
   export type SessionCountOrderByAggregateInput = {
     id?: SortOrder
     sid?: SortOrder
@@ -8368,6 +13688,130 @@ export namespace Prisma {
     deleteMany?: Enumerable<CompetitorSubscriptionScalarWhereInput>
   }
 
+  export type AssignmentWatchCreateNestedManyWithoutPushSubscriptionInput = {
+    create?: XOR<Enumerable<AssignmentWatchCreateWithoutPushSubscriptionInput>, Enumerable<AssignmentWatchUncheckedCreateWithoutPushSubscriptionInput>>
+    connectOrCreate?: Enumerable<AssignmentWatchCreateOrConnectWithoutPushSubscriptionInput>
+    createMany?: AssignmentWatchCreateManyPushSubscriptionInputEnvelope
+    connect?: Enumerable<AssignmentWatchWhereUniqueInput>
+  }
+
+  export type PushDeliveryCreateNestedManyWithoutPushSubscriptionInput = {
+    create?: XOR<Enumerable<PushDeliveryCreateWithoutPushSubscriptionInput>, Enumerable<PushDeliveryUncheckedCreateWithoutPushSubscriptionInput>>
+    connectOrCreate?: Enumerable<PushDeliveryCreateOrConnectWithoutPushSubscriptionInput>
+    createMany?: PushDeliveryCreateManyPushSubscriptionInputEnvelope
+    connect?: Enumerable<PushDeliveryWhereUniqueInput>
+  }
+
+  export type AssignmentWatchUncheckedCreateNestedManyWithoutPushSubscriptionInput = {
+    create?: XOR<Enumerable<AssignmentWatchCreateWithoutPushSubscriptionInput>, Enumerable<AssignmentWatchUncheckedCreateWithoutPushSubscriptionInput>>
+    connectOrCreate?: Enumerable<AssignmentWatchCreateOrConnectWithoutPushSubscriptionInput>
+    createMany?: AssignmentWatchCreateManyPushSubscriptionInputEnvelope
+    connect?: Enumerable<AssignmentWatchWhereUniqueInput>
+  }
+
+  export type PushDeliveryUncheckedCreateNestedManyWithoutPushSubscriptionInput = {
+    create?: XOR<Enumerable<PushDeliveryCreateWithoutPushSubscriptionInput>, Enumerable<PushDeliveryUncheckedCreateWithoutPushSubscriptionInput>>
+    connectOrCreate?: Enumerable<PushDeliveryCreateOrConnectWithoutPushSubscriptionInput>
+    createMany?: PushDeliveryCreateManyPushSubscriptionInputEnvelope
+    connect?: Enumerable<PushDeliveryWhereUniqueInput>
+  }
+
+  export type EnumPushSubscriptionSourceFieldUpdateOperationsInput = {
+    set?: PushSubscriptionSource
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type AssignmentWatchUpdateManyWithoutPushSubscriptionNestedInput = {
+    create?: XOR<Enumerable<AssignmentWatchCreateWithoutPushSubscriptionInput>, Enumerable<AssignmentWatchUncheckedCreateWithoutPushSubscriptionInput>>
+    connectOrCreate?: Enumerable<AssignmentWatchCreateOrConnectWithoutPushSubscriptionInput>
+    upsert?: Enumerable<AssignmentWatchUpsertWithWhereUniqueWithoutPushSubscriptionInput>
+    createMany?: AssignmentWatchCreateManyPushSubscriptionInputEnvelope
+    set?: Enumerable<AssignmentWatchWhereUniqueInput>
+    disconnect?: Enumerable<AssignmentWatchWhereUniqueInput>
+    delete?: Enumerable<AssignmentWatchWhereUniqueInput>
+    connect?: Enumerable<AssignmentWatchWhereUniqueInput>
+    update?: Enumerable<AssignmentWatchUpdateWithWhereUniqueWithoutPushSubscriptionInput>
+    updateMany?: Enumerable<AssignmentWatchUpdateManyWithWhereWithoutPushSubscriptionInput>
+    deleteMany?: Enumerable<AssignmentWatchScalarWhereInput>
+  }
+
+  export type PushDeliveryUpdateManyWithoutPushSubscriptionNestedInput = {
+    create?: XOR<Enumerable<PushDeliveryCreateWithoutPushSubscriptionInput>, Enumerable<PushDeliveryUncheckedCreateWithoutPushSubscriptionInput>>
+    connectOrCreate?: Enumerable<PushDeliveryCreateOrConnectWithoutPushSubscriptionInput>
+    upsert?: Enumerable<PushDeliveryUpsertWithWhereUniqueWithoutPushSubscriptionInput>
+    createMany?: PushDeliveryCreateManyPushSubscriptionInputEnvelope
+    set?: Enumerable<PushDeliveryWhereUniqueInput>
+    disconnect?: Enumerable<PushDeliveryWhereUniqueInput>
+    delete?: Enumerable<PushDeliveryWhereUniqueInput>
+    connect?: Enumerable<PushDeliveryWhereUniqueInput>
+    update?: Enumerable<PushDeliveryUpdateWithWhereUniqueWithoutPushSubscriptionInput>
+    updateMany?: Enumerable<PushDeliveryUpdateManyWithWhereWithoutPushSubscriptionInput>
+    deleteMany?: Enumerable<PushDeliveryScalarWhereInput>
+  }
+
+  export type AssignmentWatchUncheckedUpdateManyWithoutPushSubscriptionNestedInput = {
+    create?: XOR<Enumerable<AssignmentWatchCreateWithoutPushSubscriptionInput>, Enumerable<AssignmentWatchUncheckedCreateWithoutPushSubscriptionInput>>
+    connectOrCreate?: Enumerable<AssignmentWatchCreateOrConnectWithoutPushSubscriptionInput>
+    upsert?: Enumerable<AssignmentWatchUpsertWithWhereUniqueWithoutPushSubscriptionInput>
+    createMany?: AssignmentWatchCreateManyPushSubscriptionInputEnvelope
+    set?: Enumerable<AssignmentWatchWhereUniqueInput>
+    disconnect?: Enumerable<AssignmentWatchWhereUniqueInput>
+    delete?: Enumerable<AssignmentWatchWhereUniqueInput>
+    connect?: Enumerable<AssignmentWatchWhereUniqueInput>
+    update?: Enumerable<AssignmentWatchUpdateWithWhereUniqueWithoutPushSubscriptionInput>
+    updateMany?: Enumerable<AssignmentWatchUpdateManyWithWhereWithoutPushSubscriptionInput>
+    deleteMany?: Enumerable<AssignmentWatchScalarWhereInput>
+  }
+
+  export type PushDeliveryUncheckedUpdateManyWithoutPushSubscriptionNestedInput = {
+    create?: XOR<Enumerable<PushDeliveryCreateWithoutPushSubscriptionInput>, Enumerable<PushDeliveryUncheckedCreateWithoutPushSubscriptionInput>>
+    connectOrCreate?: Enumerable<PushDeliveryCreateOrConnectWithoutPushSubscriptionInput>
+    upsert?: Enumerable<PushDeliveryUpsertWithWhereUniqueWithoutPushSubscriptionInput>
+    createMany?: PushDeliveryCreateManyPushSubscriptionInputEnvelope
+    set?: Enumerable<PushDeliveryWhereUniqueInput>
+    disconnect?: Enumerable<PushDeliveryWhereUniqueInput>
+    delete?: Enumerable<PushDeliveryWhereUniqueInput>
+    connect?: Enumerable<PushDeliveryWhereUniqueInput>
+    update?: Enumerable<PushDeliveryUpdateWithWhereUniqueWithoutPushSubscriptionInput>
+    updateMany?: Enumerable<PushDeliveryUpdateManyWithWhereWithoutPushSubscriptionInput>
+    deleteMany?: Enumerable<PushDeliveryScalarWhereInput>
+  }
+
+  export type PushSubscriptionCreateNestedOneWithoutWatchesInput = {
+    create?: XOR<PushSubscriptionCreateWithoutWatchesInput, PushSubscriptionUncheckedCreateWithoutWatchesInput>
+    connectOrCreate?: PushSubscriptionCreateOrConnectWithoutWatchesInput
+    connect?: PushSubscriptionWhereUniqueInput
+  }
+
+  export type PushSubscriptionUpdateOneRequiredWithoutWatchesNestedInput = {
+    create?: XOR<PushSubscriptionCreateWithoutWatchesInput, PushSubscriptionUncheckedCreateWithoutWatchesInput>
+    connectOrCreate?: PushSubscriptionCreateOrConnectWithoutWatchesInput
+    upsert?: PushSubscriptionUpsertWithoutWatchesInput
+    connect?: PushSubscriptionWhereUniqueInput
+    update?: XOR<PushSubscriptionUpdateWithoutWatchesInput, PushSubscriptionUncheckedUpdateWithoutWatchesInput>
+  }
+
+  export type PushSubscriptionCreateNestedOneWithoutDeliveriesInput = {
+    create?: XOR<PushSubscriptionCreateWithoutDeliveriesInput, PushSubscriptionUncheckedCreateWithoutDeliveriesInput>
+    connectOrCreate?: PushSubscriptionCreateOrConnectWithoutDeliveriesInput
+    connect?: PushSubscriptionWhereUniqueInput
+  }
+
+  export type EnumPushDeliveryStatusFieldUpdateOperationsInput = {
+    set?: PushDeliveryStatus
+  }
+
+  export type PushSubscriptionUpdateOneRequiredWithoutDeliveriesNestedInput = {
+    create?: XOR<PushSubscriptionCreateWithoutDeliveriesInput, PushSubscriptionUncheckedCreateWithoutDeliveriesInput>
+    connectOrCreate?: PushSubscriptionCreateOrConnectWithoutDeliveriesInput
+    upsert?: PushSubscriptionUpsertWithoutDeliveriesInput
+    connect?: PushSubscriptionWhereUniqueInput
+    update?: XOR<PushSubscriptionUpdateWithoutDeliveriesInput, PushSubscriptionUncheckedUpdateWithoutDeliveriesInput>
+  }
+
   export type UserCreateNestedOneWithoutCompetitionSubscriptionInput = {
     create?: XOR<UserCreateWithoutCompetitionSubscriptionInput, UserUncheckedCreateWithoutCompetitionSubscriptionInput>
     connectOrCreate?: UserCreateOrConnectWithoutCompetitionSubscriptionInput
@@ -8496,6 +13940,98 @@ export namespace Prisma {
     _count?: NestedIntFilter
     _min?: NestedDateTimeFilter
     _max?: NestedDateTimeFilter
+  }
+
+  export type NestedEnumPushSubscriptionSourceFilter = {
+    equals?: PushSubscriptionSource
+    in?: Enumerable<PushSubscriptionSource>
+    notIn?: Enumerable<PushSubscriptionSource>
+    not?: NestedEnumPushSubscriptionSourceFilter | PushSubscriptionSource
+  }
+
+  export type NestedDateTimeNullableFilter = {
+    equals?: Date | string | null
+    in?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    lt?: Date | string
+    lte?: Date | string
+    gt?: Date | string
+    gte?: Date | string
+    not?: NestedDateTimeNullableFilter | Date | string | null
+  }
+
+  export type NestedEnumPushSubscriptionSourceWithAggregatesFilter = {
+    equals?: PushSubscriptionSource
+    in?: Enumerable<PushSubscriptionSource>
+    notIn?: Enumerable<PushSubscriptionSource>
+    not?: NestedEnumPushSubscriptionSourceWithAggregatesFilter | PushSubscriptionSource
+    _count?: NestedIntFilter
+    _min?: NestedEnumPushSubscriptionSourceFilter
+    _max?: NestedEnumPushSubscriptionSourceFilter
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter = {
+    equals?: Date | string | null
+    in?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    notIn?: Enumerable<Date> | Enumerable<string> | Date | string | null
+    lt?: Date | string
+    lte?: Date | string
+    gt?: Date | string
+    gte?: Date | string
+    not?: NestedDateTimeNullableWithAggregatesFilter | Date | string | null
+    _count?: NestedIntNullableFilter
+    _min?: NestedDateTimeNullableFilter
+    _max?: NestedDateTimeNullableFilter
+  }
+
+  export type NestedIntNullableFilter = {
+    equals?: number | null
+    in?: Enumerable<number> | number | null
+    notIn?: Enumerable<number> | number | null
+    lt?: number
+    lte?: number
+    gt?: number
+    gte?: number
+    not?: NestedIntNullableFilter | number | null
+  }
+
+  export type NestedEnumPushDeliveryStatusFilter = {
+    equals?: PushDeliveryStatus
+    in?: Enumerable<PushDeliveryStatus>
+    notIn?: Enumerable<PushDeliveryStatus>
+    not?: NestedEnumPushDeliveryStatusFilter | PushDeliveryStatus
+  }
+
+  export type NestedEnumPushDeliveryStatusWithAggregatesFilter = {
+    equals?: PushDeliveryStatus
+    in?: Enumerable<PushDeliveryStatus>
+    notIn?: Enumerable<PushDeliveryStatus>
+    not?: NestedEnumPushDeliveryStatusWithAggregatesFilter | PushDeliveryStatus
+    _count?: NestedIntFilter
+    _min?: NestedEnumPushDeliveryStatusFilter
+    _max?: NestedEnumPushDeliveryStatusFilter
+  }
+  export type NestedJsonNullableFilter = 
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase>, Exclude<keyof Required<NestedJsonNullableFilterBase>, 'path'>>,
+        Required<NestedJsonNullableFilterBase>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase>, 'path'>>
+
+  export type NestedJsonNullableFilterBase = {
+    equals?: InputJsonValue | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string
+    string_starts_with?: string
+    string_ends_with?: string
+    array_contains?: InputJsonValue | null
+    array_starts_with?: InputJsonValue | null
+    array_ends_with?: InputJsonValue | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonNullValueFilter
   }
 
   export type NestedEnumCompetitionSubscriptionTypeFilter = {
@@ -8729,6 +14265,241 @@ export namespace Prisma {
     code?: StringFilter | string
   }
 
+  export type AssignmentWatchCreateWithoutPushSubscriptionInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+  }
+
+  export type AssignmentWatchUncheckedCreateWithoutPushSubscriptionInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+  }
+
+  export type AssignmentWatchCreateOrConnectWithoutPushSubscriptionInput = {
+    where: AssignmentWatchWhereUniqueInput
+    create: XOR<AssignmentWatchCreateWithoutPushSubscriptionInput, AssignmentWatchUncheckedCreateWithoutPushSubscriptionInput>
+  }
+
+  export type AssignmentWatchCreateManyPushSubscriptionInputEnvelope = {
+    data: Enumerable<AssignmentWatchCreateManyPushSubscriptionInput>
+    skipDuplicates?: boolean
+  }
+
+  export type PushDeliveryCreateWithoutPushSubscriptionInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+    dedupeKey: string
+    status: PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PushDeliveryUncheckedCreateWithoutPushSubscriptionInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+    dedupeKey: string
+    status: PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PushDeliveryCreateOrConnectWithoutPushSubscriptionInput = {
+    where: PushDeliveryWhereUniqueInput
+    create: XOR<PushDeliveryCreateWithoutPushSubscriptionInput, PushDeliveryUncheckedCreateWithoutPushSubscriptionInput>
+  }
+
+  export type PushDeliveryCreateManyPushSubscriptionInputEnvelope = {
+    data: Enumerable<PushDeliveryCreateManyPushSubscriptionInput>
+    skipDuplicates?: boolean
+  }
+
+  export type AssignmentWatchUpsertWithWhereUniqueWithoutPushSubscriptionInput = {
+    where: AssignmentWatchWhereUniqueInput
+    update: XOR<AssignmentWatchUpdateWithoutPushSubscriptionInput, AssignmentWatchUncheckedUpdateWithoutPushSubscriptionInput>
+    create: XOR<AssignmentWatchCreateWithoutPushSubscriptionInput, AssignmentWatchUncheckedCreateWithoutPushSubscriptionInput>
+  }
+
+  export type AssignmentWatchUpdateWithWhereUniqueWithoutPushSubscriptionInput = {
+    where: AssignmentWatchWhereUniqueInput
+    data: XOR<AssignmentWatchUpdateWithoutPushSubscriptionInput, AssignmentWatchUncheckedUpdateWithoutPushSubscriptionInput>
+  }
+
+  export type AssignmentWatchUpdateManyWithWhereWithoutPushSubscriptionInput = {
+    where: AssignmentWatchScalarWhereInput
+    data: XOR<AssignmentWatchUpdateManyMutationInput, AssignmentWatchUncheckedUpdateManyWithoutWatchesInput>
+  }
+
+  export type AssignmentWatchScalarWhereInput = {
+    AND?: Enumerable<AssignmentWatchScalarWhereInput>
+    OR?: Enumerable<AssignmentWatchScalarWhereInput>
+    NOT?: Enumerable<AssignmentWatchScalarWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    pushSubscriptionId?: IntFilter | number
+    competitionId?: StringFilter | string
+    wcaUserId?: IntFilter | number
+  }
+
+  export type PushDeliveryUpsertWithWhereUniqueWithoutPushSubscriptionInput = {
+    where: PushDeliveryWhereUniqueInput
+    update: XOR<PushDeliveryUpdateWithoutPushSubscriptionInput, PushDeliveryUncheckedUpdateWithoutPushSubscriptionInput>
+    create: XOR<PushDeliveryCreateWithoutPushSubscriptionInput, PushDeliveryUncheckedCreateWithoutPushSubscriptionInput>
+  }
+
+  export type PushDeliveryUpdateWithWhereUniqueWithoutPushSubscriptionInput = {
+    where: PushDeliveryWhereUniqueInput
+    data: XOR<PushDeliveryUpdateWithoutPushSubscriptionInput, PushDeliveryUncheckedUpdateWithoutPushSubscriptionInput>
+  }
+
+  export type PushDeliveryUpdateManyWithWhereWithoutPushSubscriptionInput = {
+    where: PushDeliveryScalarWhereInput
+    data: XOR<PushDeliveryUpdateManyMutationInput, PushDeliveryUncheckedUpdateManyWithoutDeliveriesInput>
+  }
+
+  export type PushDeliveryScalarWhereInput = {
+    AND?: Enumerable<PushDeliveryScalarWhereInput>
+    OR?: Enumerable<PushDeliveryScalarWhereInput>
+    NOT?: Enumerable<PushDeliveryScalarWhereInput>
+    id?: IntFilter | number
+    createdAt?: DateTimeFilter | Date | string
+    updatedAt?: DateTimeFilter | Date | string
+    pushSubscriptionId?: IntFilter | number
+    competitionId?: StringFilter | string
+    wcaUserId?: IntFilter | number
+    dedupeKey?: StringFilter | string
+    status?: EnumPushDeliveryStatusFilter | PushDeliveryStatus
+    error?: JsonNullableFilter
+  }
+
+  export type PushSubscriptionCreateWithoutWatchesInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt?: Date | string | null
+    deliveries?: PushDeliveryCreateNestedManyWithoutPushSubscriptionInput
+  }
+
+  export type PushSubscriptionUncheckedCreateWithoutWatchesInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt?: Date | string | null
+    deliveries?: PushDeliveryUncheckedCreateNestedManyWithoutPushSubscriptionInput
+  }
+
+  export type PushSubscriptionCreateOrConnectWithoutWatchesInput = {
+    where: PushSubscriptionWhereUniqueInput
+    create: XOR<PushSubscriptionCreateWithoutWatchesInput, PushSubscriptionUncheckedCreateWithoutWatchesInput>
+  }
+
+  export type PushSubscriptionUpsertWithoutWatchesInput = {
+    update: XOR<PushSubscriptionUpdateWithoutWatchesInput, PushSubscriptionUncheckedUpdateWithoutWatchesInput>
+    create: XOR<PushSubscriptionCreateWithoutWatchesInput, PushSubscriptionUncheckedCreateWithoutWatchesInput>
+  }
+
+  export type PushSubscriptionUpdateWithoutWatchesInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    source?: EnumPushSubscriptionSourceFieldUpdateOperationsInput | PushSubscriptionSource
+    externalSubject?: StringFieldUpdateOperationsInput | string
+    disabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deliveries?: PushDeliveryUpdateManyWithoutPushSubscriptionNestedInput
+  }
+
+  export type PushSubscriptionUncheckedUpdateWithoutWatchesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    source?: EnumPushSubscriptionSourceFieldUpdateOperationsInput | PushSubscriptionSource
+    externalSubject?: StringFieldUpdateOperationsInput | string
+    disabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deliveries?: PushDeliveryUncheckedUpdateManyWithoutPushSubscriptionNestedInput
+  }
+
+  export type PushSubscriptionCreateWithoutDeliveriesInput = {
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt?: Date | string | null
+    watches?: AssignmentWatchCreateNestedManyWithoutPushSubscriptionInput
+  }
+
+  export type PushSubscriptionUncheckedCreateWithoutDeliveriesInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    endpoint: string
+    p256dh: string
+    auth: string
+    source: PushSubscriptionSource
+    externalSubject: string
+    disabledAt?: Date | string | null
+    watches?: AssignmentWatchUncheckedCreateNestedManyWithoutPushSubscriptionInput
+  }
+
+  export type PushSubscriptionCreateOrConnectWithoutDeliveriesInput = {
+    where: PushSubscriptionWhereUniqueInput
+    create: XOR<PushSubscriptionCreateWithoutDeliveriesInput, PushSubscriptionUncheckedCreateWithoutDeliveriesInput>
+  }
+
+  export type PushSubscriptionUpsertWithoutDeliveriesInput = {
+    update: XOR<PushSubscriptionUpdateWithoutDeliveriesInput, PushSubscriptionUncheckedUpdateWithoutDeliveriesInput>
+    create: XOR<PushSubscriptionCreateWithoutDeliveriesInput, PushSubscriptionUncheckedCreateWithoutDeliveriesInput>
+  }
+
+  export type PushSubscriptionUpdateWithoutDeliveriesInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    source?: EnumPushSubscriptionSourceFieldUpdateOperationsInput | PushSubscriptionSource
+    externalSubject?: StringFieldUpdateOperationsInput | string
+    disabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    watches?: AssignmentWatchUpdateManyWithoutPushSubscriptionNestedInput
+  }
+
+  export type PushSubscriptionUncheckedUpdateWithoutDeliveriesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoint?: StringFieldUpdateOperationsInput | string
+    p256dh?: StringFieldUpdateOperationsInput | string
+    auth?: StringFieldUpdateOperationsInput | string
+    source?: EnumPushSubscriptionSourceFieldUpdateOperationsInput | PushSubscriptionSource
+    externalSubject?: StringFieldUpdateOperationsInput | string
+    disabledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    watches?: AssignmentWatchUncheckedUpdateManyWithoutPushSubscriptionNestedInput
+  }
+
   export type UserCreateWithoutCompetitionSubscriptionInput = {
     phoneNumber: string
     AuditLog?: AuditLogCreateNestedManyWithoutUserInput
@@ -8900,6 +14671,80 @@ export namespace Prisma {
     wcaUserId?: IntFieldUpdateOperationsInput | number
     verified?: BoolFieldUpdateOperationsInput | boolean
     code?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type AssignmentWatchCreateManyPushSubscriptionInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+  }
+
+  export type PushDeliveryCreateManyPushSubscriptionInput = {
+    id?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    competitionId: string
+    wcaUserId: number
+    dedupeKey: string
+    status: PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type AssignmentWatchUpdateWithoutPushSubscriptionInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AssignmentWatchUncheckedUpdateWithoutPushSubscriptionInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AssignmentWatchUncheckedUpdateManyWithoutWatchesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type PushDeliveryUpdateWithoutPushSubscriptionInput = {
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: EnumPushDeliveryStatusFieldUpdateOperationsInput | PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PushDeliveryUncheckedUpdateWithoutPushSubscriptionInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: EnumPushDeliveryStatusFieldUpdateOperationsInput | PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PushDeliveryUncheckedUpdateManyWithoutDeliveriesInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    competitionId?: StringFieldUpdateOperationsInput | string
+    wcaUserId?: IntFieldUpdateOperationsInput | number
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: EnumPushDeliveryStatusFieldUpdateOperationsInput | PushDeliveryStatus
+    error?: NullableJsonNullValueInput | InputJsonValue
   }
 
 
