@@ -119,48 +119,6 @@ exports.Prisma.UserScalarFieldEnum = {
   phoneNumber: 'phoneNumber'
 };
 
-exports.Prisma.PushSubscriptionScalarFieldEnum = {
-  id: 'id',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  endpoint: 'endpoint',
-  p256dh: 'p256dh',
-  auth: 'auth',
-  source: 'source',
-  externalSubject: 'externalSubject',
-  disabledAt: 'disabledAt'
-};
-
-exports.Prisma.AssignmentWatchScalarFieldEnum = {
-  id: 'id',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  pushSubscriptionId: 'pushSubscriptionId',
-  competitionId: 'competitionId',
-  wcaUserId: 'wcaUserId'
-};
-
-exports.Prisma.AssignmentSnapshotScalarFieldEnum = {
-  id: 'id',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  competitionId: 'competitionId',
-  wcaUserId: 'wcaUserId',
-  assignmentsHash: 'assignmentsHash'
-};
-
-exports.Prisma.PushDeliveryScalarFieldEnum = {
-  id: 'id',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  pushSubscriptionId: 'pushSubscriptionId',
-  competitionId: 'competitionId',
-  wcaUserId: 'wcaUserId',
-  dedupeKey: 'dedupeKey',
-  status: 'status',
-  error: 'error'
-};
-
 exports.Prisma.SessionScalarFieldEnum = {
   id: 'id',
   sid: 'sid',
@@ -200,37 +158,10 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
-exports.Prisma.NullableJsonNullValueInput = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull
-};
-
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 };
-
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
-};
-
-exports.Prisma.JsonNullValueFilter = {
-  DbNull: Prisma.DbNull,
-  JsonNull: Prisma.JsonNull,
-  AnyNull: Prisma.AnyNull
-};
-exports.PushSubscriptionSource = {
-  competitiongroups: 'competitiongroups'
-};
-
-exports.PushDeliveryStatus = {
-  pending: 'pending',
-  sent: 'sent',
-  failed: 'failed',
-  skipped: 'skipped'
-};
-
 exports.CompetitionSubscriptionType = {
   activity: 'activity',
   competitor: 'competitor'
@@ -239,10 +170,6 @@ exports.CompetitionSubscriptionType = {
 exports.Prisma.ModelName = {
   AuditLog: 'AuditLog',
   User: 'User',
-  PushSubscription: 'PushSubscription',
-  AssignmentWatch: 'AssignmentWatch',
-  AssignmentSnapshot: 'AssignmentSnapshot',
-  PushDelivery: 'PushDelivery',
   Session: 'Session',
   CompetitionSubscription: 'CompetitionSubscription',
   CompetitorSubscription: 'CompetitorSubscription',

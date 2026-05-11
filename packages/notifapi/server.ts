@@ -27,7 +27,6 @@ import { PrismaSessionStore } from '@quixo3/prisma-session-store';
 import { internal, external } from './routes/v0';
 import logger from './lib/logger';
 import morganMiddleware from './middlewares/morgan.middleware';
-import { startAssignmentNotificationWorker } from './services/assignmentNotificationWorker';
 
 const SECRET = process.env.SESSION_SECRET ?? 'compnotifySecret';
 
@@ -52,7 +51,6 @@ const sessionOptions: SessionOptions & {
 
 export async function init() {
   const app = express();
-  startAssignmentNotificationWorker();
 
   app.use(json());
   app.use(morganMiddleware);
@@ -71,8 +69,6 @@ export async function init() {
     }
   );
 
-  app.use('/v0/external', external);
-
   logger.info(
     `Allowing the following origins: ${
       process.env.CORS_ORIGINS?.split(',')?.join(', ') ?? 'none'
@@ -80,12 +76,14 @@ export async function init() {
   );
   app.use(
     cors<cors.CorsRequest>({
-      allowedHeaders: 'Content-Type',
+      allowedHeaders: ['Authorization', 'Content-Type'],
       origin: process.env.CORS_ORIGINS?.split(','),
-      preflightContinue: true,
+      preflightContinue: false,
       credentials: true,
     })
   );
+
+  app.use('/v0/external', external);
 
   app.set('trust proxy', 1); // trust first proxy
 
