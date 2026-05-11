@@ -13,7 +13,7 @@
     "start": "ts-node index.ts",
     "lint": "eslint ./",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test -r ts-node/register test",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:generate": "prisma generate",

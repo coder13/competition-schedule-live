@@ -33,6 +33,29 @@ This is the service that handles text notifications to individual people. Users 
 
 This service is pinged from the core server to send the notifications.
 
+It also exposes the CompetitionGroups push-notification bridge under `/v0/external/push`.
+That integration lets competitiongroups.com register browser Push API subscriptions
+and lets notifapi poll WCIF assignment changes for those watched users.
+
+Required push-notification environment variables:
+
+- `VAPID_PUBLIC_KEY`: public VAPID key returned to competitiongroups.com.
+- `VAPID_PRIVATE_KEY`: private VAPID key used to send browser push messages.
+- `COMPETITION_GROUPS_JWT_SECRET`: shared HS256 secret used to authenticate
+  CompetitionGroups subscription requests.
+
+Optional push-notification environment variables:
+
+- `ASSIGNMENT_PUSH_ENABLED`: set to `true` on the single notifapi instance that
+  should poll WCIF and send assignment-change pushes.
+- `ASSIGNMENT_POLL_INTERVAL_MS`: poll interval in milliseconds. Defaults to
+  `300000`.
+- `VAPID_SUBJECT`: VAPID contact subject. Defaults to
+  `mailto:notifications@example.com`.
+- `COMPETITION_GROUPS_JWT_ISSUER`: expected `iss` claim when configured.
+- `COMPETITION_GROUPS_JWT_AUDIENCE`: expected `aud` claim when configured.
+- `COMPETITION_GROUPS_ORIGIN`: origin used when building notification click URLs.
+
 ### `packages/www`
 
 This is the main frontend that users interact with to sign up for notifications. This site is very simple and just helps with competition discovery, authenticating user's phone numbers, and gives users a way to sign up for competitors as well as additional activities.
