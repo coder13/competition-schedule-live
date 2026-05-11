@@ -4,6 +4,9 @@
   "main": "index.ts",
   "license": "MIT",
   "description": "Core api for notify comp infra",
+  "engines": {
+    "node": "20.19.0"
+  },
   "scripts": {
     "dev": "concurrently \"yarn prisma:generate:watch\" \"yarn graphql:generate:watch\" \"NODE_ENV=development nodemon index.ts\"",
     "prestart": "yarn prisma:generate && yarn prisma:migrate",
