@@ -7,13 +7,15 @@
   "workspaces": [
     "packages/*"
   ],
+  "dependencies": {
+    "lerna": "^6.0.1"
+  },
   "devDependencies": {
     "husky": "^8.0.1",
-    "lerna": "^6.0.1",
     "prettier": "^2.7.1"
   },
   "scripts": {
-    "prepare": "husky install",
+    "prepare": "command -v husky >/dev/null 2>&1 && husky install || true",
     "bootstrap": "lerna bootstrap",
     "postinstall": "lerna bootstrap",
     "lint": "yarn workspace api lint && yarn workspace notifapi lint",
