@@ -5,7 +5,13 @@ export interface CompetitionGroupsClaims {
   iss?: string;
   aud?: string | string[];
   exp?: number;
+  iat?: number;
   nbf?: number;
+  competitionIds?: string[];
+  name?: string;
+  scope?: string | string[];
+  scopes?: string[];
+  wcaUserId?: number;
   wcaUserIds: number[];
 }
 
@@ -26,7 +32,9 @@ const audienceMatches = (
     return false;
   }
 
-  return Array.isArray(actual) ? actual.includes(expected) : actual === expected;
+  return Array.isArray(actual)
+    ? actual.includes(expected)
+    : actual === expected;
 };
 
 export const verifyCompetitionGroupsToken = (
