@@ -113,8 +113,6 @@ export async function determineAndScheduleCompetition(
     if (!compSchedule) {
       throw new Error('No schedule found');
     }
-    console.log(67, competition.activityHistory);
-
     const allFlatActivities = getFlatActivities(compSchedule);
 
     const unstartedActivities = allFlatActivities.filter((activity) => {
@@ -142,8 +140,6 @@ export async function determineAndScheduleCompetition(
       // idk
       return false;
     });
-
-    console.log(68, unstartedActivities);
 
     if (unstartedActivities.length === 0) {
       // This means all activities have started and ended.
