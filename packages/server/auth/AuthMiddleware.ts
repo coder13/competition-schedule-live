@@ -1,7 +1,58 @@
 import fs from 'fs';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import {
+  CompetitionGroupsClaims,
+  verifyCompetitionGroupsToken,
+} from '../lib/competitionGroupsToken';
 const PUBLIC_KEY = process.env.PUBLIC_KEY ?? fs.readFileSync('public.key');
+const COMPETITION_GROUPS_REMOTE_SCOPE = 'notifycomp.remote';
+
+const scopesForClaims = (claims: CompetitionGroupsClaims) => [
+  ...(Array.isArray(claims.scope)
+    ? claims.scope
+    : claims.scope
+      ? [claims.scope]
+      : []),
+  ...(claims.scopes ?? []),
+];
+
+const competitionGroupsClaimsToUser = (
+  claims: CompetitionGroupsClaims
+): User => {
+  const scopes = scopesForClaims(claims);
+  if (!scopes.includes(COMPETITION_GROUPS_REMOTE_SCOPE)) {
+    throw new Error('CompetitionGroups token is not valid for remote control');
+  }
+
+  const id = claims.wcaUserId ?? claims.wcaUserIds[0];
+  if (!Number.isInteger(id)) {
+    throw new Error('CompetitionGroups token is missing a WCA user ID');
+  }
+
+  return {
+    type: 2,
+    id,
+    name: claims.name ?? claims.sub,
+    wcaId: '',
+    countryId: '',
+    avatar: {
+      url: '',
+    },
+    wca: {
+      accessToken: '',
+      expiration: 0,
+      refreshToken: '',
+      code: '',
+    },
+    competitionGroups: {
+      competitionIds: claims.competitionIds,
+      scopes,
+    },
+    iat: claims.iat ?? 0,
+    exp: claims.exp ?? 0,
+  };
+};
 
 export const authMiddlewareVerify = (
   req: Request,
@@ -24,17 +75,17 @@ export const authMiddlewareVerify = (
   const token = split[1];
 
   try {
-    jwt.verify(token, PUBLIC_KEY, (err, decoded) => {
-      if (err) {
-        return next(err);
-      }
-
-      req.user = decoded as User | undefined;
-      next(null);
-    });
+    req.user = jwt.verify(token, PUBLIC_KEY) as User | undefined;
+    next(null);
   } catch (e) {
-    console.error(e);
-    next(e);
+    try {
+      const claims = verifyCompetitionGroupsToken(token);
+      req.competitionGroups = claims;
+      req.user = competitionGroupsClaimsToUser(claims);
+      next(null);
+    } catch {
+      next(e);
+    }
   }
 };
 export const authMiddlewareDecode = (

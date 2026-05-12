@@ -17,6 +17,13 @@ const isAuthorized = async (
     return;
   }
 
+  if (
+    user.competitionGroups?.competitionIds &&
+    !user.competitionGroups.competitionIds.includes(competitionId)
+  ) {
+    throw new Error('Not Authorized');
+  }
+
   const compAccess = await db.competitionAccess.findFirst({
     where: {
       competitionId: {
@@ -34,7 +41,7 @@ const isAuthorized = async (
 
 export const startActivity: MutationResolvers<AppContext>['startActivity'] =
   async (_, { competitionId, activityId }, { db, user, wcaApi }) => {
-    void isAuthorized(db, competitionId, user);
+    await isAuthorized(db, competitionId, user);
 
     const activity = activitiesController.startActivity(
       competitionId,
@@ -58,12 +65,10 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
         'webhooks'
       );
       res
-        .filter(
-          (r): r is PromiseRejectedResult => r.status === 'rejected'
-        )
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
         .forEach((r) => {
-        console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
-      });
+          console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
+        });
     });
 
     return activity;
@@ -71,7 +76,7 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
 
 export const startActivities: MutationResolvers<AppContext>['startActivities'] =
   async (_, { competitionId, activityIds }, { db, user, wcaApi }) => {
-    void isAuthorized(db, competitionId, user);
+    await isAuthorized(db, competitionId, user);
 
     const activities = await Promise.all(
       activityIds.map(async (activityId) =>
@@ -96,12 +101,10 @@ export const startActivities: MutationResolvers<AppContext>['startActivities'] =
         'webhooks'
       );
       res
-        .filter(
-          (r): r is PromiseRejectedResult => r.status === 'rejected'
-        )
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
         .forEach((r) => {
-        console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
-      });
+          console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
+        });
     });
 
     return activities;
@@ -109,14 +112,14 @@ export const startActivities: MutationResolvers<AppContext>['startActivities'] =
 
 export const stopActivity: MutationResolvers<AppContext>['stopActivity'] =
   async (_, { competitionId, activityId }, { db, user }) => {
-    void isAuthorized(db, competitionId, user);
+    await isAuthorized(db, competitionId, user);
 
     return activitiesController.stopActivity(competitionId, activityId);
   };
 
 export const stopActivities: MutationResolvers<AppContext>['stopActivities'] =
   async (_, { competitionId, activityIds }, { db, user, pubsub }) => {
-    void isAuthorized(db, competitionId, user);
+    await isAuthorized(db, competitionId, user);
 
     const activities = await Promise.all(
       activityIds.map(async (activityId) => {
@@ -150,7 +153,7 @@ export const stopActivities: MutationResolvers<AppContext>['stopActivities'] =
 
 export const resetActivities: MutationResolvers<AppContext>['resetActivities'] =
   async (_, { competitionId, activityIds }, { db, user, pubsub }) => {
-    void isAuthorized(db, competitionId, user);
+    await isAuthorized(db, competitionId, user);
 
     await db.activityHistory.updateMany({
       where: {
@@ -194,7 +197,7 @@ export const resetActivities: MutationResolvers<AppContext>['resetActivities'] =
 
 export const resetActivity: MutationResolvers<AppContext>['resetActivity'] =
   async (_, { competitionId, activityId }, { db, user, pubsub }) => {
-    void isAuthorized(db, competitionId, user);
+    await isAuthorized(db, competitionId, user);
 
     const activity = await db.activityHistory.update({
       where: {

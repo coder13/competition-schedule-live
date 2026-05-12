@@ -17,6 +17,11 @@ interface User {
     code: string;
   };
 
+  competitionGroups?: {
+    competitionIds?: string[];
+    scopes: string[];
+  };
+
   iat: number;
   exp: number;
 }
