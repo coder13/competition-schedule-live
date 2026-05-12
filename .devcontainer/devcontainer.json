@@ -1,0 +1,20 @@
+{
+  "name": "competition-schedule-live mocks",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "runServices": ["postgres"],
+  "workspaceFolder": "/workspaces/competition-schedule-live",
+  "forwardPorts": [5173, 8080, 5432],
+  "containerEnv": {
+    "DATABASE_URL": "postgresql://username:password@postgres:5432/live_competition_group_tracker",
+    "MOCKS_MODE": "true",
+    "NODE_ENV": "mocks"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

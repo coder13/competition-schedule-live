@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host",
+    "dev:mocks": "VITE_API_ORIGIN=http://localhost:8080 VITE_WS_ORIGIN=ws://localhost:8080 VITE_WCA_API_ORIGIN=http://localhost:8080 vite --host --mode mocks",
     "typecheck": "tsc --noEmit",
     "build": "tsc && vite build",
     "preview": "vite preview"

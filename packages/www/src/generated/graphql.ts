@@ -80,6 +80,7 @@ export type Mutation = {
   importCompetition?: Maybe<Competition>;
   resetActivities?: Maybe<Array<Maybe<Activity>>>;
   resetActivity?: Maybe<Activity>;
+  scheduleActivity?: Maybe<Activity>;
   startActivities?: Maybe<Array<Maybe<Activity>>>;
   startActivity?: Maybe<Activity>;
   stopActivities?: Maybe<Array<Maybe<Activity>>>;
@@ -117,6 +118,14 @@ export type MutationResetActivitiesArgs = {
 export type MutationResetActivityArgs = {
   activityId: Scalars['Int'];
   competitionId: Scalars['String'];
+};
+
+
+export type MutationScheduleActivityArgs = {
+  activityId: Scalars['Int'];
+  competitionId: Scalars['String'];
+  scheduledEndTime?: InputMaybe<Scalars['DateTime']>;
+  scheduledStartTime?: InputMaybe<Scalars['DateTime']>;
 };
 
 
@@ -428,6 +437,7 @@ export type MutationResolvers<ContextType = any, ParentType extends ResolversPar
   importCompetition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<MutationImportCompetitionArgs, 'competitionId'>>;
   resetActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationResetActivitiesArgs, 'competitionId'>>;
   resetActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationResetActivityArgs, 'activityId' | 'competitionId'>>;
+  scheduleActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationScheduleActivityArgs, 'activityId' | 'competitionId'>>;
   startActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationStartActivitiesArgs, 'activityIds' | 'competitionId'>>;
   startActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStartActivityArgs, 'activityId' | 'competitionId'>>;
   stopActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationStopActivitiesArgs, 'activityIds' | 'competitionId'>>;

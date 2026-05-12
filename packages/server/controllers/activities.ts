@@ -69,8 +69,10 @@ export const scheduleActivity = async (
     update: {
       ...('scheduledStartTime' in props && {
         scheduledStartTime: props.scheduledStartTime,
+        scheduledEndTime: null,
       }),
       ...('scheduledEndTime' in props && {
+        scheduledStartTime: null,
         scheduledEndTime: props.scheduledEndTime,
       }),
     },

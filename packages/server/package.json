@@ -11,6 +11,8 @@
     "dev": "concurrently \"yarn prisma:generate:watch\" \"yarn graphql:generate:watch\" \"NODE_ENV=development nodemon index.ts\"",
     "prestart": "yarn prisma:generate && yarn prisma:migrate",
     "start": "yarn prisma:migrate && ts-node index.ts",
+    "start:mocks": "DATABASE_URL=postgresql://username:password@localhost:55432/live_competition_group_tracker NODE_ENV=mocks MOCKS_MODE=true WCA_ORIGIN=http://localhost:8080 CLIENT_ID=mock-client-id CLIENT_SECRET=mock-client-secret REDIRECT_URI=http://localhost:5173/login PORT=8080 HOST=0.0.0.0 yarn prisma:migrate && DATABASE_URL=postgresql://username:password@localhost:55432/live_competition_group_tracker NODE_ENV=mocks MOCKS_MODE=true WCA_ORIGIN=http://localhost:8080 CLIENT_ID=mock-client-id CLIENT_SECRET=mock-client-secret REDIRECT_URI=http://localhost:5173/login PORT=8080 HOST=0.0.0.0 ts-node index.ts",
+    "test:auto-advance": "ts-node scheduler/autoAdvance.spec.ts",
     "lint": "eslint ./",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prisma:migrate": "prisma migrate deploy",

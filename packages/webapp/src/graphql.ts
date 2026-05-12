@@ -100,6 +100,25 @@ export const ResetActivitiesMutation = gql`
   ${ActivityFragment}
 `;
 
+export const ScheduleActivityMutation = gql`
+  mutation ScheduleActivity(
+    $competitionId: String!
+    $activityId: Int!
+    $scheduledStartTime: DateTime
+    $scheduledEndTime: DateTime
+  ) {
+    scheduleActivity(
+      competitionId: $competitionId
+      activityId: $activityId
+      scheduledStartTime: $scheduledStartTime
+      scheduledEndTime: $scheduledEndTime
+    ) {
+      ...ActivityFragment
+    }
+  }
+  ${ActivityFragment}
+`;
+
 export const StopStartActivityMutation = gql`
   mutation StopStartActivity(
     $competitionId: String!

@@ -1,7 +1,7 @@
 import { AppContext } from '../../../server';
 import { Competition, MutationResolvers } from '../../../generated/graphql';
 import {
-  CompetitionActivitiesJobsMap,
+  cancelCompetitionActivityJobs,
   determineAndScheduleCompetition,
 } from '../../../scheduler';
 import { fetchCompWithNoScheduledActivities } from '../../../scheduler/utils';
@@ -87,7 +87,7 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
   };
 
 export const updateAutoAdvance: MutationResolvers<AppContext>['updateAutoAdvance'] =
-  async (_, { competitionId, autoAdvance }, { db, user }) => {
+  async (_, { competitionId, autoAdvance, autoAdvanceDelay }, { db, user }) => {
     await isAuthorized(db, competitionId, user);
 
     if (autoAdvance === false) {
@@ -107,12 +107,7 @@ export const updateAutoAdvance: MutationResolvers<AppContext>['updateAutoAdvance
         },
       });
 
-      for (const key in CompetitionActivitiesJobsMap.keys()) {
-        if (key.includes(competitionId)) {
-          CompetitionActivitiesJobsMap.get(key)?.job?.cancel();
-          CompetitionActivitiesJobsMap.delete(key);
-        }
-      }
+      cancelCompetitionActivityJobs(competitionId);
     } else {
       const comp = await fetchCompWithNoScheduledActivities(competitionId);
       if (comp) {
@@ -126,6 +121,7 @@ export const updateAutoAdvance: MutationResolvers<AppContext>['updateAutoAdvance
       },
       data: {
         ...(autoAdvance !== null && { autoAdvance }),
+        ...(autoAdvanceDelay !== null && { autoAdvanceDelay }),
       },
     })) as Competition;
   };

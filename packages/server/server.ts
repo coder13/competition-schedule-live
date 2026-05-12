@@ -36,6 +36,9 @@ import { initScheduler } from './scheduler';
 import { pubsub } from './graphql/pubsub';
 import pushRouter from './routes/v0/external/push';
 import { startAssignmentNotificationWorker } from './services/assignmentNotificationWorker';
+import { isMocksMode } from './mocks/config';
+import mockWcaRouter from './mocks/routes';
+import { seedMockCompetition } from './mocks/seed';
 
 export interface AppContext {
   user?: User;
@@ -45,6 +48,10 @@ export interface AppContext {
 }
 
 export async function init() {
+  if (isMocksMode()) {
+    await seedMockCompetition(db);
+  }
+
   await initScheduler();
 
   const app = express();
@@ -65,6 +72,9 @@ export async function init() {
 
   app.use('/auth', AuthRouter);
   app.use('/v0/external/push', pushRouter);
+  if (isMocksMode()) {
+    app.use(mockWcaRouter);
+  }
 
   const httpServer = http.createServer(app);
 

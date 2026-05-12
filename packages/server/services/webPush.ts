@@ -11,6 +11,18 @@ export interface AssignmentPushPayload {
   url?: string;
 }
 
+export interface ActivityHeadsUpPushPayload {
+  type: 'activity-heads-up';
+  competitionId: string;
+  activityIds: number[];
+  startsAt: string;
+  title: string;
+  body: string;
+  url?: string;
+}
+
+export type PushPayload = AssignmentPushPayload | ActivityHeadsUpPushPayload;
+
 const configureWebPush = () => {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
@@ -33,7 +45,7 @@ const shouldDisableSubscription = (error: unknown) => {
 
 export const sendAssignmentPush = async (
   subscription: PushSubscription,
-  payload: AssignmentPushPayload
+  payload: PushPayload
 ) => {
   try {
     configureWebPush();

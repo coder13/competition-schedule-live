@@ -11,11 +11,14 @@ import type { Prisma } from '../prisma/generated/client';
 import { WCA_ORIGIN } from '../env';
 import { getFlatActivities } from './utils';
 import * as activitiesController from '../controllers/activities';
+import { determineAutoAdvancePlan } from './autoAdvance';
+import { sendActivityHeadsUpPush } from '../services/activityHeadsUpNotifications';
 
 export const CompetitionActivitiesJobsMap = new Map<
   string,
   {
     job: schedule.Job;
+    headsUpJob?: schedule.Job;
   } & (
     | {
         endTime: Date;
@@ -27,6 +30,38 @@ export const CompetitionActivitiesJobsMap = new Map<
 >();
 const competitionActivityKey = (competitionId: string, activityId: number) =>
   `${competitionId}_${activityId}`;
+
+export function cancelScheduledActivityJob(
+  competitionId: string,
+  activityId: number
+) {
+  const key = competitionActivityKey(competitionId, activityId);
+  const entry = CompetitionActivitiesJobsMap.get(key);
+
+  if (!entry) {
+    return;
+  }
+
+  entry.job.cancel();
+  entry.headsUpJob?.cancel();
+
+  for (const [jobKey, jobEntry] of CompetitionActivitiesJobsMap.entries()) {
+    if (jobEntry.job === entry.job) {
+      CompetitionActivitiesJobsMap.delete(jobKey);
+    }
+  }
+}
+
+export function cancelCompetitionActivityJobs(competitionId: string) {
+  for (const key of CompetitionActivitiesJobsMap.keys()) {
+    if (key.startsWith(`${competitionId}_`)) {
+      cancelScheduledActivityJob(
+        competitionId,
+        Number(key.slice(competitionId.length + 1))
+      );
+    }
+  }
+}
 
 const wcaApi = new WcaApi(WCA_ORIGIN);
 
@@ -48,16 +83,9 @@ export async function initScheduler() {
         not: Status.FINISHED,
       },
       autoAdvance: true,
-      // fetch comps where no activity is currently scheduled
-      activityHistory: {
-        some: {
-          scheduledEndTime: null,
-          scheduledStartTime: null,
-        },
-      },
     },
     include: {
-      activityHistory: activityHistoryClause,
+      activityHistory: true,
     },
   });
 
@@ -82,20 +110,22 @@ export async function initScheduler() {
     },
   });
 
-  console.log(79, activities);
-
   activities.forEach(async (activity) => {
     console.log(
       'Scheduling',
       competitionActivityKey(activity.competitionId, activity.activityId)
     );
 
-    if (
-      (activity.scheduledStartTime &&
-        new Date(activity.scheduledStartTime).getTime() > Date.now()) ??
-      (activity.scheduledEndTime &&
-        new Date(activity.scheduledEndTime).getTime() > Date.now())
-    ) {
+    const scheduledStartIsFuture = Boolean(
+      activity.scheduledStartTime &&
+        new Date(activity.scheduledStartTime).getTime() > Date.now()
+    );
+    const scheduledEndIsFuture = Boolean(
+      activity.scheduledEndTime &&
+        new Date(activity.scheduledEndTime).getTime() > Date.now()
+    );
+
+    if (scheduledStartIsFuture || scheduledEndIsFuture) {
       void scheduleActivity(activity);
     } else {
       console.log('Activity is in the past', activity);
@@ -115,197 +145,29 @@ export async function determineAndScheduleCompetition(
     }
     const allFlatActivities = getFlatActivities(compSchedule);
 
-    const unstartedActivities = allFlatActivities.filter((activity) => {
-      const liveActivity = competition.activityHistory.find(
-        (a) => a.activityId === activity.id
-      );
-
-      // This 100% is an unstarted activity
-      if (!liveActivity) {
-        return new Date(activity.startTime).getTime() >= Date.now();
-      }
-
-      console.log(activity, liveActivity);
-
-      // This activity is done
-      if (liveActivity.startTime && liveActivity.endTime) {
-        return false;
-      }
-
-      // The activity had been started but got reset
-      if (!liveActivity.startTime && !liveActivity.endTime) {
-        return true;
-      }
-
-      // idk
-      return false;
+    const plan = determineAutoAdvancePlan({
+      activities: allFlatActivities,
+      activityHistory: competition.activityHistory,
+      autoAdvanceDelaySeconds: competition.autoAdvanceDelay,
+      now: new Date(),
     });
 
-    if (unstartedActivities.length === 0) {
-      // This means all activities have started and ended.
-      // We should check if the competition has ended and update the status accordingly.
+    if (!plan) {
       return;
     }
 
-    const currentActivities = competition.activityHistory.filter(
-      (activity) => activity.startTime && !activity.endTime
-    );
-    console.log(85, currentActivities);
-
-    const nextActivityStartTime = unstartedActivities.sort((a, b) =>
-      a.startTime.localeCompare(b.startTime)
-    )[0].startTime;
-    const nextActivities = unstartedActivities.filter(
-      (activity) => activity.startTime === nextActivityStartTime
-    );
-
-    // This just determines what activities should start given that nothing is on-going.
-
-    if (!currentActivities || currentActivities.length === 0) {
-      // This could mean nothing has been started or there just isn't anything currently running.
-      // This just means we should figure out what the next activity should be and combine it with the current schedule delay.
-
-      const jobStartTime = new Date(nextActivityStartTime);
-
-      if (jobStartTime.getTime() < Date.now()) {
-        console.error('Next activity is in the past', jobStartTime);
-        console.error("I mean this shouldn't really happen");
-        return;
-      }
-
-      console.log(
-        'Starting activities',
-        nextActivities.map((a) => a.name),
-        'at',
-        jobStartTime.toLocaleTimeString()
-      );
-
-      startAndStopActivities(competition.id, jobStartTime, [], nextActivities);
-      return;
-    }
-
-    // There are some activities we need to stop before we can start the next activities.
-
-    const activitiesToStop = currentActivities
-      .map((activityHistory) => {
-        const activity = allFlatActivities.find(
-          (a) => a.id === activityHistory.activityId
-        );
-
-        if (!activity) {
-          console.error(
-            'Activity not found in schedule',
-            activityHistory.activityId,
-            competition.id
-          );
-          return null;
-        }
-
-        return activity;
-      })
-      .filter(Boolean) as Activity[];
-
-    if (nextActivityStartTime > activitiesToStop[0].endTime) {
-      // We can just worry about stopping the activities.
-      console.log('We can just worry about stopping the activities');
-
-      const jobStartTime = new Date(activitiesToStop[0].endTime);
-
-      startAndStopActivities(
-        competition.id,
-        jobStartTime,
-        activitiesToStop,
-        []
-      );
-    }
-
-    // If we do have ongoing activities, we want to start the next activities when the current activities duration has elapsed.
-
-    const totalDuration = currentActivities.reduce((acc, activity) => {
-      const scheduleActivity = allFlatActivities.find(
-        (a) => a.id === activity.activityId
-      );
-      console.log(134, scheduleActivity);
-
-      if (!scheduleActivity) {
-        return 0;
-      }
-
-      return (
-        Number(acc) +
-        new Date(scheduleActivity.endTime).getTime() -
-        new Date(scheduleActivity.startTime).getTime()
-      );
-    }, 0);
-
-    const elapsedDuration = currentActivities.reduce((acc, activity) => {
-      const scheduleActivity = allFlatActivities.find(
-        (a) => a.id === activity.activityId
-      );
-      if (!scheduleActivity) {
-        return 0;
-      }
-
-      return (
-        Number(acc) +
-        new Date().getTime() -
-        new Date(scheduleActivity.startTime).getTime()
-      );
-    }, 0);
-
-    const remainingDuration =
-      (totalDuration - elapsedDuration) / currentActivities.length;
-
-    if (remainingDuration < 0 || activitiesToStop.length === 0) {
-      // Woah we're behind schedule.
-      // We should probably start the next activities immediately.
-
-      const startInDelay =
-        new Date(nextActivityStartTime).getTime() - Date.now();
-
-      if (startInDelay < 0) {
-        console.error('Next activity is in the past', nextActivityStartTime);
-        return;
-      }
-
-      const jobStartTime = new Date(new Date().getTime() + remainingDuration);
-
-      startAndStopActivities(
-        competition.id,
-        jobStartTime,
-        activitiesToStop,
-        nextActivities
-      );
-      return;
-    }
-
-    if (!currentActivities[0].startTime) {
-      return;
-    }
-
-    const startDelay =
-      currentActivities[0].startTime.getTime() -
-      new Date(activitiesToStop[0].startTime).getTime();
-
-    const jobStartTime = Math.max(
-      new Date(nextActivityStartTime).getTime(),
-      new Date(
-        new Date(nextActivityStartTime).getTime() + Number(startDelay)
-      ).getTime()
-    );
-
-    startAndStopActivities(
+    await startAndStopActivities(
       competition.id,
-      new Date(jobStartTime),
-      activitiesToStop,
-      nextActivities
+      plan.jobTime,
+      plan.stopActivities,
+      plan.startActivities
     );
   } catch (e) {
     console.error(e);
   }
 }
 
-function startAndStopActivities(
+async function startAndStopActivities(
   competitionId: string,
   jobTime: Date,
   stopActivities: Activity[],
@@ -335,10 +197,14 @@ function startAndStopActivities(
         activitiesController.startActivity(competitionId, activity.id)
       ),
     ]);
+    [...stopActivities, ...startActivities].forEach((activity) => {
+      cancelScheduledActivityJob(competitionId, activity.id);
+    });
 
     const updatedCompetition = await prisma.competition.findFirst({
       where: {
         id: competitionId,
+        autoAdvance: true,
         activityHistory: {
           some: {
             scheduledEndTime: null,
@@ -367,10 +233,14 @@ function startAndStopActivities(
     throw new Error('Job could not be created');
   }
 
+  const headsUpJob = scheduleActivityHeadsUp(
+    competitionId,
+    startActivities,
+    jobTime
+  );
+
   stopActivities.forEach((stopActivity) => {
-    void activitiesController.scheduleActivity(competitionId, stopActivity.id, {
-      scheduledEndTime: jobTime,
-    });
+    cancelScheduledActivityJob(competitionId, stopActivity.id);
     CompetitionActivitiesJobsMap.set(
       competitionActivityKey(competitionId, stopActivity.id),
       {
@@ -380,33 +250,96 @@ function startAndStopActivities(
     );
   });
   startActivities.forEach((startActivity) => {
-    void activitiesController.scheduleActivity(
-      competitionId,
-      startActivity.id,
-      {
-        scheduledStartTime: jobTime,
-      }
-    );
+    cancelScheduledActivityJob(competitionId, startActivity.id);
     CompetitionActivitiesJobsMap.set(
       competitionActivityKey(competitionId, startActivity.id),
       {
         job,
-        endTime: jobTime,
+        headsUpJob,
+        startTime: jobTime,
       }
     );
   });
+  await Promise.all([
+    ...stopActivities.map(async (stopActivity) =>
+      activitiesController.scheduleActivity(competitionId, stopActivity.id, {
+        scheduledEndTime: jobTime,
+      })
+    ),
+    ...startActivities.map(async (startActivity) =>
+      activitiesController.scheduleActivity(competitionId, startActivity.id, {
+        scheduledStartTime: jobTime,
+      })
+    ),
+  ]);
   console.log('Scheduled ', job.name, 'for', jobTime.toLocaleString());
 }
 
+function scheduleActivityHeadsUp(
+  competitionId: string,
+  startActivities: Activity[],
+  startTime: Date
+) {
+  if (!startActivities.length) {
+    return undefined;
+  }
+
+  const headsUpTime = new Date(startTime.getTime() - 5 * 60 * 1000);
+  if (headsUpTime <= new Date()) {
+    return undefined;
+  }
+
+  return schedule.scheduleJob(headsUpTime, async () => {
+    await sendActivityHeadsUpPush(
+      competitionId,
+      startActivities.map((activity) => activity.id),
+      startTime
+    );
+  });
+}
+
 export async function scheduleActivity(activity: ActivityHistory) {
+  cancelScheduledActivityJob(activity.competitionId, activity.activityId);
+
   if (activity.scheduledStartTime) {
+    const startTime = new Date(activity.scheduledStartTime);
+    const headsUpJob = scheduleActivityHeadsUp(
+      activity.competitionId,
+      [
+        {
+          id: activity.activityId,
+          name: '',
+          activityCode: '',
+          startTime: startTime.toISOString(),
+          endTime: startTime.toISOString(),
+          childActivities: [],
+          extensions: [],
+        },
+      ],
+      startTime
+    );
     const job = schedule.scheduleJob(
-      new Date(activity.scheduledStartTime),
+      startTime,
       async () => {
         await activitiesController.startActivity(
           activity.competitionId,
           activity.activityId
         );
+        cancelScheduledActivityJob(activity.competitionId, activity.activityId);
+
+        const comp = await prisma.competition.findFirst({
+          where: {
+            id: activity.competitionId,
+            autoAdvance: true,
+          },
+          include: {
+            activityHistory: true,
+          },
+        });
+
+        if (comp) {
+          void determineAndScheduleCompetition(comp);
+        }
       }
     );
 
@@ -414,7 +347,8 @@ export async function scheduleActivity(activity: ActivityHistory) {
       competitionActivityKey(activity.competitionId, activity.activityId),
       {
         job,
-        startTime: new Date(activity.scheduledStartTime),
+        headsUpJob,
+        startTime,
       }
     );
   }
@@ -427,12 +361,14 @@ export async function scheduleActivity(activity: ActivityHistory) {
           activity.competitionId,
           activity.activityId
         );
+        cancelScheduledActivityJob(activity.competitionId, activity.activityId);
 
         // If this is the last activity that ends, we should determine the next activities to start.
 
         const comp = await prisma.competition.findFirst({
           where: {
             id: activity.competitionId,
+            autoAdvance: true,
           },
           include: {
             activityHistory: {

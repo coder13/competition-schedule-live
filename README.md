@@ -52,6 +52,36 @@ I leave this problem still unsolved.
 
 This is the main app that competition owners will interact with. This is a material-UI app that talks directly to the main server (packages/server)
 
+## Mock Auto-Advance Mode
+
+Use mock mode to run the app locally without WCA network calls. It starts a
+Postgres container on Docker's `default` context, mocks WCA
+OAuth/WCIF/schedule/search responses from the API server, and seeds an example
+competition:
+
+- Competition ID: `MockAutoAdvance2026`
+- First activity starts 5 minutes after the API server starts
+- Four activities run for 10 minutes each
+- Auto-advance is enabled by default
+
+Run it in three terminals:
+
+```bash
+yarn mocks:db
+yarn start:api:mocks
+yarn dev:webapp:mocks
+```
+
+The `yarn mocks:db` script intentionally runs
+`docker --context default compose ...` because Docker Desktop contexts are flaky
+on some local machines. A matching `.devcontainer/` setup is included for tools
+that understand the containers.dev/devcontainer spec; use Docker's default
+context before opening it.
+
+Then open `http://localhost:5173`, click Login, and open/import
+`MockAutoAdvance2026`. The webapp uses `http://localhost:8080` as both the API
+and mocked WCA origin in this mode.
+
 ### `packages/notifapi`
 
 This is the service that handles text notifications to individual people. Users sign up via a frontend and it saves the data here.

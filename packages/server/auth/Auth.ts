@@ -3,6 +3,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import fetch from 'node-fetch';
 import { authMiddlewareDecode } from './AuthMiddleware';
+import { getMockUser, isMocksMode } from '../mocks/config';
 
 // TODO Should really be fetched from environment variables
 // Depending on how we want to deploy this
@@ -18,18 +19,23 @@ console.log('Loading values from environment variables', {
   REDIRECT_URI,
 });
 
-if (!WCA_ORIGIN) {
+if (!isMocksMode() && !WCA_ORIGIN) {
   throw new Error('WCA_ORIGIN is not defined');
 }
-if (!CLIENT_ID) {
+if (!isMocksMode() && !CLIENT_ID) {
   throw new Error('CLIENT_ID is not defined');
 }
-if (!CLIENT_SECRET) {
+if (!isMocksMode() && !CLIENT_SECRET) {
   throw new Error('CLIENT_SECRET is not defined');
 }
-if (!REDIRECT_URI) {
+if (!isMocksMode() && !REDIRECT_URI) {
   throw new Error('REDIRECT_URI is not defined');
 }
+
+const resolvedWcaOrigin = WCA_ORIGIN ?? '';
+const resolvedClientId = CLIENT_ID ?? '';
+const resolvedClientSecret = CLIENT_SECRET ?? '';
+const resolvedRedirectUri = REDIRECT_URI ?? '';
 
 const SCOPE = 'public email manage_competitions';
 
@@ -48,16 +54,33 @@ router.get('/keys/', (_, res) => {
  * Redirects user to WCA OAuth2 authorization page.
  */
 router.get('/wca/', (req, res) => {
-  const redirectUri = req.get('Referer') ?? REDIRECT_URI;
+  if (isMocksMode()) {
+    const redirectUri =
+      typeof req.query.redirect_uri === 'string'
+        ? req.query.redirect_uri
+        : req.get('Referer') ?? REDIRECT_URI;
+
+    if (!redirectUri) {
+      res.status(400).send('Missing redirect_uri');
+      return;
+    }
+
+    const url = new URL(redirectUri);
+    url.searchParams.set('code', 'mock-wca-code');
+    res.redirect(url.toString());
+    return;
+  }
+
+  const redirectUri = req.get('Referer') ?? resolvedRedirectUri;
 
   const params = new URLSearchParams({
-    client_id: CLIENT_ID,
+    client_id: resolvedClientId,
     response_type: 'code',
     redirect_uri: redirectUri,
     scope: SCOPE,
   });
 
-  res.redirect(`${WCA_ORIGIN}/oauth/authorize?${params.toString()}`);
+  res.redirect(`${resolvedWcaOrigin}/oauth/authorize?${params.toString()}`);
 });
 
 const SignOpts: jwt.SignOptions = {
@@ -119,29 +142,48 @@ const resignJWT = async ({ exp, iat, ...data }: User) =>
     });
   });
 
+const signMockJWT = async () =>
+  new Promise<string>((resolve, reject) => {
+    jwt.sign(getMockUser(), String(PRIVATE_KEY), SignOpts, (err, token) => {
+      if (err) {
+        return reject(err);
+      }
+
+      if (!token) {
+        return reject(new Error('Token is not defined'));
+      }
+
+      resolve(token);
+    });
+  });
+
 /**
  * Handles WCA OAuth2 callback. Fetches access token and user info.
  * Returns JWT token.
  */
 router.get('/wca/callback', async (req, res) => {
   const { code } = req.query as { code: string };
-  const redirectUri: string = req.get('Referer') ?? REDIRECT_URI;
+  const redirectUri: string = req.get('Referer') ?? resolvedRedirectUri;
 
   if (typeof code !== 'string') {
     res.status(400).send('Missing code');
     return;
   }
 
+  if (isMocksMode()) {
+    return res.json({ jwt: await signMockJWT() });
+  }
+
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
     code,
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
+    client_id: resolvedClientId,
+    client_secret: resolvedClientSecret,
     redirect_uri: redirectUri,
   });
 
   try {
-    const response = await fetch(`${WCA_ORIGIN}/oauth/token`, {
+    const response = await fetch(`${resolvedWcaOrigin}/oauth/token`, {
       method: 'POST',
       body: params,
       headers: {
@@ -155,7 +197,7 @@ router.get('/wca/callback', async (req, res) => {
 
     const wcaToken = (await response.json()) as WcaOauthRes;
 
-    const profileRes = await fetch(`${WCA_ORIGIN}/api/v0/me`, {
+    const profileRes = await fetch(`${resolvedWcaOrigin}/api/v0/me`, {
       headers: createHeaders(wcaToken.access_token),
     });
 
@@ -178,18 +220,22 @@ router.post('/wca/refresh', authMiddlewareDecode, async (req, res) => {
     return res.status(403).send('Unauthenticated');
   }
 
+  if (isMocksMode()) {
+    return res.json({ jwt: await resignJWT(req.user) });
+  }
+
   const params = new URLSearchParams({
     grant_type: 'refresh_token',
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
+    client_id: resolvedClientId,
+    client_secret: resolvedClientSecret,
     refresh_token: req.user.wca.refreshToken,
     code: req.user.wca.code,
     scope: SCOPE,
-    redirect_uri: req.get('Referer') ?? REDIRECT_URI,
+    redirect_uri: req.get('Referer') ?? resolvedRedirectUri,
   });
 
   try {
-    const response = await fetch(`${WCA_ORIGIN}/oauth/token`, {
+    const response = await fetch(`${resolvedWcaOrigin}/oauth/token`, {
       method: 'POST',
       body: params,
       headers: {
