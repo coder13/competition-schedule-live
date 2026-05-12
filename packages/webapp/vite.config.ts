@@ -9,7 +9,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: createManualChunks({
-          react: ['react', 'react-dom', 'react-router', 'react-router-dom'],
+          react: ['react', 'react-dom', 'scheduler', 'react-router', 'react-router-dom', '@remix-run/router'],
           query: ['@tanstack'],
           apollo: ['@apollo', 'graphql', 'graphql-ws'],
           mui: ['@mui', '@emotion', 'notistack', 'material-ui-confirm'],

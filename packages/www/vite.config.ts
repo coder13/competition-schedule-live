@@ -8,7 +8,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: createManualChunks({
-          react: ['react', 'react-dom', 'react-router', 'react-router-dom'],
+          react: ['react', 'react-dom', 'scheduler', 'react-router', 'react-router-dom', '@remix-run/router'],
           query: ['@tanstack'],
           apollo: ['@apollo', 'graphql', 'graphql-ws', 'apollo-link-scalars'],
           ui: ['notistack', 'styled-components', 'react-bulma-components', 'react-phone-number-input', 'react-spinners'],
