@@ -33,3 +33,6 @@ jobs:
 
       - name: Typecheck
         run: yarn typecheck
+
+      - name: Server test coverage
+        run: yarn workspace api test:coverage
