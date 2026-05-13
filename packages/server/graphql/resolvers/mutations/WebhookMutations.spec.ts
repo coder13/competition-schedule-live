@@ -10,6 +10,8 @@ jest.mock('../../../controllers/webhooks', () => ({
 import {
   createWebhook,
   deleteWebhook,
+  testWebhook,
+  testWebhooks,
   testEditingWebhook,
   updateWebhook,
 } from './WebhookMutations';
@@ -43,6 +45,20 @@ const callUpdateWebhook = updateWebhook as (
 ) => Promise<unknown>;
 
 const callDeleteWebhook = deleteWebhook as (
+  parent: unknown,
+  args: { id: number },
+  context: unknown,
+  info: unknown
+) => Promise<unknown>;
+
+const callTestWebhooks = testWebhooks as (
+  parent: unknown,
+  args: { competitionId: string },
+  context: unknown,
+  info: unknown
+) => Promise<unknown>;
+
+const callTestWebhook = testWebhook as (
   parent: unknown,
   args: { id: number },
   context: unknown,
@@ -103,6 +119,7 @@ describe('WebhookMutations', () => {
       text: jest.fn().mockResolvedValue('pong'),
     });
     jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -303,5 +320,115 @@ describe('WebhookMutations', () => {
         notifications: [{ type: 'ping' }],
       }
     );
+  });
+
+  it('tests all saved webhooks and converts thrown fetches into empty responses', async () => {
+    const db = createDb();
+    db.competition.findFirst.mockResolvedValue({
+      id: 'TestComp2026',
+      competitionAccess: [{ userId: 123 }],
+      webhooks: [
+        {
+          id: 10,
+          url: 'https://hooks.example/ok',
+          method: 'POST',
+          headers: [],
+        },
+        {
+          id: 11,
+          url: 'https://hooks.example/fail',
+          method: 'POST',
+          headers: [],
+        },
+      ],
+    });
+    webhookFetch
+      .mockResolvedValueOnce({
+        status: 200,
+        statusText: 'OK',
+        text: jest.fn().mockResolvedValue('pong'),
+      })
+      .mockRejectedValueOnce(new Error('network failed'));
+
+    await expect(
+      callTestWebhooks(
+        {},
+        { competitionId: 'TestComp2026' },
+        { db, user: userFixture({ id: 123 }) },
+        {}
+      )
+    ).resolves.toEqual([
+      {
+        url: 'https://hooks.example/ok',
+        status: 200,
+        statusText: 'OK',
+        body: 'pong',
+      },
+      {
+        url: 'https://hooks.example/fail',
+        status: 0,
+        statusText: '',
+        body: '',
+      },
+    ]);
+  });
+
+  it('rejects webhook tests when the competition cannot be found', async () => {
+    const db = createDb();
+    db.competition.findFirst.mockResolvedValue(null);
+
+    await expect(
+      callTestWebhooks(
+        {},
+        { competitionId: 'MissingComp2026' },
+        { db, user: userFixture({ id: 123 }) },
+        {}
+      )
+    ).rejects.toThrow('Competition not found');
+  });
+
+  it('tests one saved webhook and returns response details', async () => {
+    const db = createDb();
+
+    await expect(
+      callTestWebhook(
+        {},
+        { id: 10 },
+        { db, user: userFixture({ id: 123 }) },
+        {}
+      )
+    ).resolves.toEqual({
+      url: 'https://hooks.example/old',
+      status: 200,
+      statusText: 'OK',
+      body: 'pong',
+    });
+
+    expect(webhookFetch).toHaveBeenCalledWith(
+      {
+        id: 10,
+        competitionId: 'TestComp2026',
+        url: 'https://hooks.example/old',
+        method: 'POST',
+        headers: [],
+      },
+      {
+        competitionId: 'TestComp2026',
+        notifications: [{ type: 'ping' }],
+      }
+    );
+  });
+
+  it('rejects one-webhook tests when the webhook cannot be found', async () => {
+    const db = createDb();
+
+    await expect(
+      callTestWebhook(
+        {},
+        { id: 99 },
+        { db, user: userFixture({ id: 123 }) },
+        {}
+      )
+    ).rejects.toThrow('Webhook not found');
   });
 });

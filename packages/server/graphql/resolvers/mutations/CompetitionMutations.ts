@@ -49,12 +49,14 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
 
     const competition = await wcaApi.getWcif(competitionId);
 
-    const delegatesAndOrganizers = competition.persons.filter(
-      (person) =>
-        person.roles?.includes('delegate') ??
-        person.roles?.includes('trainee-delegate') ??
-        person.roles?.includes('organizer')
-    );
+    const delegatesAndOrganizers = competition.persons.filter((person) => {
+      const roles = person.roles ?? [];
+      return (
+        roles.includes('delegate') ||
+        roles.includes('trainee-delegate') ||
+        roles.includes('organizer')
+      );
+    });
 
     // Have to calculate end Date
     const endDate = new Date(

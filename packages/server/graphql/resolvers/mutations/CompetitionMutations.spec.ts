@@ -14,7 +14,14 @@ jest.mock('../../../scheduler/utils', () => ({
   fetchCompWithNoScheduledActivities: mockFetchCompWithNoScheduledActivities,
 }));
 
-import { updateAutoAdvance } from './CompetitionMutations';
+import { importCompetition, updateAutoAdvance } from './CompetitionMutations';
+
+const callImportCompetition = importCompetition as (
+  parent: unknown,
+  args: { competitionId: string },
+  context: unknown,
+  info: unknown
+) => Promise<unknown>;
 
 const callUpdateAutoAdvance = updateAutoAdvance as (
   parent: unknown,
@@ -35,12 +42,85 @@ const createDb = () => ({
     updateMany: jest.fn().mockResolvedValue({ count: 2 }),
   },
   competition: {
+    create: jest.fn().mockResolvedValue({
+      id: 'TestComp2026',
+      name: 'Test Competition',
+      competitionAccess: [{ userId: 123, roomId: 0 }],
+    }),
     update: jest.fn().mockResolvedValue({
       id: 'TestComp2026',
       autoAdvance: false,
       autoAdvanceDelay: 0,
     }),
   },
+});
+
+describe('CompetitionMutations.importCompetition', () => {
+  it('rejects unauthenticated imports', async () => {
+    await expect(
+      callImportCompetition(
+        {},
+        { competitionId: 'TestComp2026' },
+        { db: createDb(), user: undefined, wcaApi: { getWcif: jest.fn() } },
+        {}
+      )
+    ).rejects.toThrow('Not Authenticated');
+  });
+
+  it('creates a competition with delegate and organizer access', async () => {
+    const db = createDb();
+    const wcaApi = {
+      getWcif: jest.fn().mockResolvedValue({
+        id: 'TestComp2026',
+        name: 'Test Competition',
+        persons: [
+          { wcaUserId: 111, roles: ['delegate'] },
+          { wcaUserId: 222, roles: ['trainee-delegate'] },
+          { wcaUserId: 333, roles: ['organizer'] },
+          { wcaUserId: 444, roles: [] },
+        ],
+        schedule: {
+          startDate: '2026-05-01',
+          numberOfDays: 3,
+          venues: [{ countryIso2: 'US' }],
+        },
+      }),
+    };
+
+    await expect(
+      callImportCompetition(
+        {},
+        { competitionId: 'TestComp2026' },
+        { db, user: userFixture(), wcaApi },
+        {}
+      )
+    ).resolves.toEqual({
+      id: 'TestComp2026',
+      name: 'Test Competition',
+      competitionAccess: [{ userId: 123, roomId: 0 }],
+    });
+
+    expect(wcaApi.getWcif).toHaveBeenCalledWith('TestComp2026');
+    expect(db.competition.create).toHaveBeenCalledWith({
+      include: {
+        competitionAccess: true,
+      },
+      data: {
+        id: 'TestComp2026',
+        name: 'Test Competition',
+        startDate: '2026-05-01',
+        endDate: '2026-05-03',
+        country: 'US',
+        competitionAccess: {
+          create: [
+            { userId: 111, roomId: 0 },
+            { userId: 222, roomId: 0 },
+            { userId: 333, roomId: 0 },
+          ],
+        },
+      },
+    });
+  });
 });
 
 describe('CompetitionMutations.updateAutoAdvance', () => {
