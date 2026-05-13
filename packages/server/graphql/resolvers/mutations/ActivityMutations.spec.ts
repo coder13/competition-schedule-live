@@ -30,11 +30,13 @@ jest.mock('../../../controllers/webhooks', () => ({
 }));
 
 import {
+  cancelScheduledActivity,
   cancelScheduledActivities,
   resetActivities,
   resetActivity,
   scheduleActivities,
   scheduleActivity,
+  startActivities,
   startActivity,
   stopActivities,
   stopActivity,
@@ -46,6 +48,13 @@ const callStartActivity = startActivity as (
   context: unknown,
   info: unknown
 ) => Promise<unknown>;
+
+const callStartActivities = startActivities as (
+  parent: unknown,
+  args: { competitionId: string; activityIds: number[]; startTime?: unknown },
+  context: unknown,
+  info: unknown
+) => Promise<unknown[]>;
 
 const callStopActivity = stopActivity as (
   parent: unknown,
@@ -105,6 +114,13 @@ const callCancelScheduledActivities = cancelScheduledActivities as (
   context: unknown,
   info: unknown
 ) => Promise<unknown[]>;
+
+const callCancelScheduledActivity = cancelScheduledActivity as (
+  parent: unknown,
+  args: { competitionId: string; activityId: number },
+  context: unknown,
+  info: unknown
+) => Promise<unknown>;
 
 const createDb = () => ({
   competitionAccess: {
@@ -188,6 +204,65 @@ describe('ActivityMutations scheduling', () => {
         {}
       )
     ).rejects.toThrow('Not Authenticated');
+  });
+
+  it('rejects Competition Groups users scoped away from the competition', async () => {
+    await expect(
+      callStartActivity(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          activityId: 1,
+          startTime: '2026-01-01T09:55:00Z',
+        },
+        {
+          db: createDb(),
+          user: userFixture({
+            competitionGroups: {
+              competitionIds: ['OtherComp2026'],
+              scopes: ['notifycomp.remote'],
+            },
+          }),
+          wcaApi: { getWcif: jest.fn() },
+        },
+        {}
+      )
+    ).rejects.toThrow('Not Authorized');
+
+    expect(mockStartActivityController).not.toHaveBeenCalled();
+  });
+
+  it('rejects users without delegate access', async () => {
+    const db = createDb();
+    db.competitionAccess.findFirst.mockResolvedValue(null);
+
+    await expect(
+      callStopActivity(
+        {},
+        { competitionId: 'TestComp2026', activityId: 1 },
+        { db, user: userFixture() },
+        {}
+      )
+    ).rejects.toThrow('Not Authorized');
+
+    expect(mockStopActivityController).not.toHaveBeenCalled();
+  });
+
+  it('allows the super admin user without delegate access', async () => {
+    const db = createDb();
+    db.competitionAccess.findFirst.mockResolvedValue(null);
+
+    await expect(
+      callStopActivity(
+        {},
+        { competitionId: 'TestComp2026', activityId: 1 },
+        { db, user: userFixture({ id: 8184 }) },
+        {}
+      )
+    ).resolves.toEqual({ competitionId: 'TestComp2026', activityId: 1 });
+
+    expect(db.competitionAccess.findFirst).not.toHaveBeenCalled();
+    expect(mockStopActivityController).toHaveBeenCalledWith('TestComp2026', 1);
   });
 
   it('requires exactly one scheduled time', async () => {
@@ -351,6 +426,57 @@ describe('ActivityMutations scheduling', () => {
     );
   });
 
+  it('starts multiple activities and sends one webhook payload', async () => {
+    const db = createDb();
+    const wcaApi = {
+      getWcif: jest.fn().mockResolvedValue({
+        id: 'TestComp2026',
+        persons: [],
+      }),
+    };
+
+    await expect(
+      callStartActivities(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          activityIds: [1, 2],
+          startTime: '2026-01-01T09:55:00Z',
+        },
+        { db, user: userFixture(), wcaApi },
+        {}
+      )
+    ).resolves.toEqual([
+      {
+        competitionId: 'TestComp2026',
+        activityId: 1,
+        startTime: new Date('2026-01-01T09:55:00Z'),
+      },
+      {
+        competitionId: 'TestComp2026',
+        activityId: 2,
+        startTime: new Date('2026-01-01T09:55:00Z'),
+      },
+    ]);
+
+    expect(mockCancelScheduledActivityJob).toHaveBeenCalledTimes(2);
+    expect(mockStartActivityController).toHaveBeenCalledTimes(2);
+    expect(mockDetermineAndScheduleCompetition).toHaveBeenCalledWith({
+      id: 'TestComp2026',
+    });
+    expect(wcaApi.getWcif).toHaveBeenCalledWith('TestComp2026');
+    expect(mockSendWebhooksForCompetition).toHaveBeenCalledWith(
+      'TestComp2026',
+      {
+        competitionId: 'TestComp2026',
+        notifications: [
+          { type: 'activity', id: 1 },
+          { type: 'activity', id: 2 },
+        ],
+      }
+    );
+  });
+
   it('rejects future start times and invalid start times', async () => {
     await expect(
       callStartActivity(
@@ -462,6 +588,47 @@ describe('ActivityMutations scheduling', () => {
     expect(pubsub.publish).toHaveBeenCalledTimes(2);
   });
 
+  it('resets all competition activities when no activity ids are provided', async () => {
+    const db = createDb();
+    const pubsub = {
+      publish: jest.fn().mockResolvedValue(undefined),
+    };
+
+    await expect(
+      callResetActivities(
+        {},
+        { competitionId: 'TestComp2026', activityIds: null },
+        { db, user: userFixture(), pubsub },
+        {}
+      )
+    ).resolves.toEqual([
+      { competitionId: 'TestComp2026', activityId: 1 },
+      { competitionId: 'TestComp2026', activityId: 2 },
+    ]);
+
+    expect(mockCancelCompetitionActivityJobs).toHaveBeenCalledWith(
+      'TestComp2026'
+    );
+    expect(mockCancelScheduledActivityJob).not.toHaveBeenCalled();
+    expect(db.activityHistory.updateMany).toHaveBeenCalledWith({
+      where: {
+        competitionId: 'TestComp2026',
+      },
+      data: {
+        startTime: null,
+        endTime: null,
+        scheduledStartTime: null,
+        scheduledEndTime: null,
+      },
+    });
+    expect(db.activityHistory.findMany).toHaveBeenCalledWith({
+      where: {
+        competitionId: 'TestComp2026',
+      },
+    });
+    expect(pubsub.publish).toHaveBeenCalledTimes(2);
+  });
+
   it('resets a single activity and publishes the update', async () => {
     const db = createDb();
     const pubsub = {
@@ -511,5 +678,25 @@ describe('ActivityMutations scheduling', () => {
 
     expect(mockCancelScheduledActivityJob).toHaveBeenCalledTimes(2);
     expect(mockCancelScheduledActivityController).toHaveBeenCalledTimes(2);
+  });
+
+  it('cancels one queued activity time', async () => {
+    await expect(
+      callCancelScheduledActivity(
+        {},
+        { competitionId: 'TestComp2026', activityId: 1 },
+        { db: createDb(), user: userFixture() },
+        {}
+      )
+    ).resolves.toEqual({ competitionId: 'TestComp2026', activityId: 1 });
+
+    expect(mockCancelScheduledActivityJob).toHaveBeenCalledWith(
+      'TestComp2026',
+      1
+    );
+    expect(mockCancelScheduledActivityController).toHaveBeenCalledWith(
+      'TestComp2026',
+      1
+    );
   });
 });
