@@ -12,7 +12,10 @@
     "prestart": "yarn prisma:generate && yarn prisma:migrate",
     "start": "yarn prisma:migrate && ts-node index.ts",
     "start:mocks": "DATABASE_URL=postgresql://username:password@localhost:55432/live_competition_group_tracker NODE_ENV=mocks MOCKS_MODE=true WCA_ORIGIN=http://localhost:8080 CLIENT_ID=mock-client-id CLIENT_SECRET=mock-client-secret REDIRECT_URI=http://localhost:5173/login PORT=8080 HOST=0.0.0.0 yarn prisma:migrate && DATABASE_URL=postgresql://username:password@localhost:55432/live_competition_group_tracker NODE_ENV=mocks MOCKS_MODE=true WCA_ORIGIN=http://localhost:8080 CLIENT_ID=mock-client-id CLIENT_SECRET=mock-client-secret REDIRECT_URI=http://localhost:5173/login PORT=8080 HOST=0.0.0.0 ts-node index.ts",
-    "test:auto-advance": "ts-node scheduler/autoAdvance.spec.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:auto-advance": "jest scheduler/autoAdvance.spec.ts",
     "lint": "eslint ./",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "prisma:migrate": "prisma migrate deploy",
@@ -64,6 +67,7 @@
     "@graphql-codegen/introspection": "2.2.1",
     "@graphql-codegen/typescript": "2.7.5",
     "@graphql-codegen/typescript-resolvers": "2.7.5",
+    "@types/jest": "^29.2.5",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "concurrently": "^7.6.0",
@@ -73,6 +77,8 @@
     "eslint-plugin-import": "^2.25.2",
     "eslint-plugin-n": "^15.0.0",
     "eslint-plugin-promise": "^6.0.0",
-    "nodemon": "^2.0.20"
+    "jest": "^29.3.1",
+    "nodemon": "^2.0.20",
+    "ts-jest": "^29.0.5"
   }
 }
