@@ -1,0 +1,132 @@
+/* eslint-disable import/first */
+const jwtVerify = jest.fn();
+const jwtDecode = jest.fn();
+const verifyCompetitionGroupsToken = jest.fn();
+
+jest.mock('jsonwebtoken', () => ({
+  __esModule: true,
+  default: {
+    verify: jwtVerify,
+    decode: jwtDecode,
+  },
+}));
+
+jest.mock('../lib/competitionGroupsToken', () => ({
+  verifyCompetitionGroupsToken,
+}));
+
+import { authMiddlewareDecode, authMiddlewareVerify } from './AuthMiddleware';
+
+const createRequest = (authorization?: string) => ({
+  headers: {
+    ...(authorization && { authorization }),
+  },
+});
+
+const callAuthMiddlewareVerify = authMiddlewareVerify as unknown as (
+  req: ReturnType<typeof createRequest>,
+  res: unknown,
+  next: jest.Mock
+) => void;
+
+const callAuthMiddlewareDecode = authMiddlewareDecode as unknown as (
+  req: ReturnType<typeof createRequest>,
+  res: unknown,
+  next: jest.Mock
+) => void;
+
+describe('AuthMiddleware', () => {
+  beforeEach(() => {
+    jwtVerify.mockReset();
+    jwtDecode.mockReset();
+    verifyCompetitionGroupsToken.mockReset();
+  });
+
+  it('continues without a user when no authorization header is present', () => {
+    const request = createRequest();
+    const next = jest.fn();
+
+    callAuthMiddlewareVerify(request, {}, next);
+
+    expect(next).toHaveBeenCalledWith();
+    expect(jwtVerify).not.toHaveBeenCalled();
+  });
+
+  it('verifies normal bearer JWT users', () => {
+    const user = { id: 123, name: 'Test User' };
+    const request = createRequest('Bearer jwt-token');
+    const next = jest.fn();
+    jwtVerify.mockReturnValue(user);
+
+    callAuthMiddlewareVerify(request, {}, next);
+
+    expect(jwtVerify).toHaveBeenCalledWith('jwt-token', expect.anything());
+    expect(request).toMatchObject({ user });
+    expect(next).toHaveBeenCalledWith(null);
+  });
+
+  it('falls back to Competition Groups tokens for remote-control users', () => {
+    const request = createRequest('Bearer competition-groups-token');
+    const next = jest.fn();
+    const claims = {
+      sub: 'remote-user',
+      name: 'Remote User',
+      scope: 'notifycomp.remote',
+      competitionIds: ['TestComp2026'],
+      wcaUserIds: [456],
+      iat: 10,
+      exp: 20,
+    };
+    jwtVerify.mockImplementation(() => {
+      throw new Error('invalid jwt');
+    });
+    verifyCompetitionGroupsToken.mockReturnValue(claims);
+
+    callAuthMiddlewareVerify(request, {}, next);
+
+    expect(request).toMatchObject({
+      competitionGroups: claims,
+      user: {
+        type: 2,
+        id: 456,
+        name: 'Remote User',
+        competitionGroups: {
+          competitionIds: ['TestComp2026'],
+          scopes: ['notifycomp.remote'],
+        },
+        iat: 10,
+        exp: 20,
+      },
+    });
+    expect(next).toHaveBeenCalledWith(null);
+  });
+
+  it('passes the original JWT verification error when fallback verification fails', () => {
+    const request = createRequest('Bearer invalid-token');
+    const next = jest.fn();
+    const jwtError = new Error('invalid jwt');
+    jwtVerify.mockImplementation(() => {
+      throw jwtError;
+    });
+    verifyCompetitionGroupsToken.mockImplementation(() => {
+      throw new Error('invalid competition groups token');
+    });
+
+    callAuthMiddlewareVerify(request, {}, next);
+
+    expect(next).toHaveBeenCalledWith(jwtError);
+  });
+
+  it('decodes bearer tokens without verifying them', () => {
+    const user = { id: 123, name: 'Decoded User' };
+    const request = createRequest('Bearer jwt-token');
+    const next = jest.fn();
+    jwtDecode.mockReturnValue(user);
+
+    callAuthMiddlewareDecode(request, {}, next);
+
+    expect(jwtDecode).toHaveBeenCalledWith('jwt-token');
+    expect(request).toMatchObject({ user });
+    expect(next).toHaveBeenCalledWith();
+  });
+});
