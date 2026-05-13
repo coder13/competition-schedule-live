@@ -17,7 +17,11 @@ type Mutation {
     autoAdvanceDelay: Int
   ): Competition
 
-  startActivity(competitionId: String!, activityId: Int!): Activity
+  startActivity(
+    competitionId: String!
+    activityId: Int!
+    startTime: DateTime
+  ): Activity
   stopActivity(competitionId: String!, activityId: Int!): Activity
   resetActivity(competitionId: String!, activityId: Int!): Activity
   scheduleActivity(
@@ -26,7 +30,19 @@ type Mutation {
     scheduledStartTime: DateTime
     scheduledEndTime: DateTime
   ): Activity
-  startActivities(competitionId: String!, activityIds: [Int!]!): [Activity]
+  scheduleActivities(
+    competitionId: String!
+    activityIds: [Int!]!
+    scheduledStartTime: DateTime
+    scheduledEndTime: DateTime
+  ): [Activity]
+  cancelScheduledActivity(competitionId: String!, activityId: Int!): Activity
+  cancelScheduledActivities(competitionId: String!, activityIds: [Int!]!): [Activity]
+  startActivities(
+    competitionId: String!
+    activityIds: [Int!]!
+    startTime: DateTime
+  ): [Activity]
   stopActivities(competitionId: String!, activityIds: [Int!]!): [Activity]
   resetActivities(competitionId: String!, activityIds: [Int!]): [Activity]
 }

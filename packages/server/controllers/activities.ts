@@ -3,8 +3,10 @@ import { pubsub } from '../graphql/pubsub';
 
 export const startActivity = async (
   competitionId: string,
-  activityId: number
+  activityId: number,
+  props?: { startTime?: Date }
 ) => {
+  const startTime = props?.startTime ?? new Date();
   const activity = await prisma.activityHistory.upsert({
     where: {
       competitionId_activityId: {
@@ -13,7 +15,7 @@ export const startActivity = async (
       },
     },
     update: {
-      startTime: new Date(),
+      startTime,
       endTime: null,
       scheduledStartTime: null,
       scheduledEndTime: null,
@@ -21,7 +23,7 @@ export const startActivity = async (
     create: {
       competitionId,
       activityId,
-      startTime: new Date(),
+      startTime,
       endTime: null,
     },
   });
@@ -85,6 +87,28 @@ export const scheduleActivity = async (
       ...('scheduledEndTime' in props && {
         scheduledEndTime: props.scheduledEndTime,
       }),
+    },
+  });
+
+  await pubsub.publish('ACTIVITY_UPDATED', { activityUpdated: activity });
+
+  return activity;
+};
+
+export const cancelScheduledActivity = async (
+  competitionId: string,
+  activityId: number
+) => {
+  const activity = await prisma.activityHistory.update({
+    where: {
+      competitionId_activityId: {
+        competitionId,
+        activityId,
+      },
+    },
+    data: {
+      scheduledStartTime: null,
+      scheduledEndTime: null,
     },
   });
 

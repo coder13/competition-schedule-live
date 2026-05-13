@@ -75,11 +75,14 @@ export type HeaderInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  cancelScheduledActivities?: Maybe<Array<Maybe<Activity>>>;
+  cancelScheduledActivity?: Maybe<Activity>;
   createWebhook: Webhook;
   deleteWebhook?: Maybe<Scalars['Void']>;
   importCompetition?: Maybe<Competition>;
   resetActivities?: Maybe<Array<Maybe<Activity>>>;
   resetActivity?: Maybe<Activity>;
+  scheduleActivities?: Maybe<Array<Maybe<Activity>>>;
   scheduleActivity?: Maybe<Activity>;
   startActivities?: Maybe<Array<Maybe<Activity>>>;
   startActivity?: Maybe<Activity>;
@@ -90,6 +93,18 @@ export type Mutation = {
   testWebhooks: Array<Maybe<WebhookResponse>>;
   updateAutoAdvance?: Maybe<Competition>;
   updateWebhook: Webhook;
+};
+
+
+export type MutationCancelScheduledActivitiesArgs = {
+  activityIds: Array<Scalars['Int']>;
+  competitionId: Scalars['String'];
+};
+
+
+export type MutationCancelScheduledActivityArgs = {
+  activityId: Scalars['Int'];
+  competitionId: Scalars['String'];
 };
 
 
@@ -121,6 +136,14 @@ export type MutationResetActivityArgs = {
 };
 
 
+export type MutationScheduleActivitiesArgs = {
+  activityIds: Array<Scalars['Int']>;
+  competitionId: Scalars['String'];
+  scheduledEndTime?: InputMaybe<Scalars['DateTime']>;
+  scheduledStartTime?: InputMaybe<Scalars['DateTime']>;
+};
+
+
 export type MutationScheduleActivityArgs = {
   activityId: Scalars['Int'];
   competitionId: Scalars['String'];
@@ -132,12 +155,14 @@ export type MutationScheduleActivityArgs = {
 export type MutationStartActivitiesArgs = {
   activityIds: Array<Scalars['Int']>;
   competitionId: Scalars['String'];
+  startTime?: InputMaybe<Scalars['DateTime']>;
 };
 
 
 export type MutationStartActivityArgs = {
   activityId: Scalars['Int'];
   competitionId: Scalars['String'];
+  startTime?: InputMaybe<Scalars['DateTime']>;
 };
 
 
@@ -432,11 +457,14 @@ export interface JsonScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes
 }
 
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
+  cancelScheduledActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationCancelScheduledActivitiesArgs, 'activityIds' | 'competitionId'>>;
+  cancelScheduledActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationCancelScheduledActivityArgs, 'activityId' | 'competitionId'>>;
   createWebhook?: Resolver<ResolversTypes['Webhook'], ParentType, ContextType, RequireFields<MutationCreateWebhookArgs, 'competitionId' | 'webhook'>>;
   deleteWebhook?: Resolver<Maybe<ResolversTypes['Void']>, ParentType, ContextType, RequireFields<MutationDeleteWebhookArgs, 'id'>>;
   importCompetition?: Resolver<Maybe<ResolversTypes['Competition']>, ParentType, ContextType, RequireFields<MutationImportCompetitionArgs, 'competitionId'>>;
   resetActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationResetActivitiesArgs, 'competitionId'>>;
   resetActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationResetActivityArgs, 'activityId' | 'competitionId'>>;
+  scheduleActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationScheduleActivitiesArgs, 'activityIds' | 'competitionId'>>;
   scheduleActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationScheduleActivityArgs, 'activityId' | 'competitionId'>>;
   startActivities?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType, RequireFields<MutationStartActivitiesArgs, 'activityIds' | 'competitionId'>>;
   startActivity?: Resolver<Maybe<ResolversTypes['Activity']>, ParentType, ContextType, RequireFields<MutationStartActivityArgs, 'activityId' | 'competitionId'>>;
