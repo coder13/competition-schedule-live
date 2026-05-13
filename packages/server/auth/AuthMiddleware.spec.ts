@@ -101,6 +101,52 @@ describe('AuthMiddleware', () => {
     expect(next).toHaveBeenCalledWith(null);
   });
 
+  it('uses explicit Competition Groups WCA user IDs and scopes arrays', () => {
+    const request = createRequest('Bearer competition-groups-token');
+    const next = jest.fn();
+    const claims = {
+      sub: 'remote-user',
+      scopes: ['notifycomp.remote'],
+      wcaUserId: 789,
+      wcaUserIds: [456],
+    };
+    jwtVerify.mockImplementation(() => {
+      throw new Error('invalid jwt');
+    });
+    verifyCompetitionGroupsToken.mockReturnValue(claims);
+
+    callAuthMiddlewareVerify(request, {}, next);
+
+    expect(request).toMatchObject({
+      user: {
+        id: 789,
+        name: 'remote-user',
+        competitionGroups: {
+          scopes: ['notifycomp.remote'],
+        },
+      },
+    });
+    expect(next).toHaveBeenCalledWith(null);
+  });
+
+  it('passes the JWT verification error when Competition Groups claims lack remote scope', () => {
+    const request = createRequest('Bearer competition-groups-token');
+    const next = jest.fn();
+    const jwtError = new Error('invalid jwt');
+    jwtVerify.mockImplementation(() => {
+      throw jwtError;
+    });
+    verifyCompetitionGroupsToken.mockReturnValue({
+      sub: 'remote-user',
+      scopes: [],
+      wcaUserIds: [456],
+    });
+
+    callAuthMiddlewareVerify(request, {}, next);
+
+    expect(next).toHaveBeenCalledWith(jwtError);
+  });
+
   it('passes the original JWT verification error when fallback verification fails', () => {
     const request = createRequest('Bearer invalid-token');
     const next = jest.fn();
@@ -127,6 +173,16 @@ describe('AuthMiddleware', () => {
 
     expect(jwtDecode).toHaveBeenCalledWith('jwt-token');
     expect(request).toMatchObject({ user });
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('continues without decoding when no authorization header is present', () => {
+    const request = createRequest();
+    const next = jest.fn();
+
+    callAuthMiddlewareDecode(request, {}, next);
+
+    expect(jwtDecode).not.toHaveBeenCalled();
     expect(next).toHaveBeenCalledWith();
   });
 });

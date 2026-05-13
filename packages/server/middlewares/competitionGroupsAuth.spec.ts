@@ -76,4 +76,27 @@ describe('competitionGroupsAuth', () => {
     });
     expect(next).not.toHaveBeenCalled();
   });
+
+  it('uses the generic invalid-token message for non-Error failures', () => {
+    const response = createResponse();
+    const next = jest.fn();
+    const nonErrorFailure = { message: 'invalid' };
+    verifyCompetitionGroupsToken.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-throw-literal
+      throw nonErrorFailure;
+    });
+
+    callCompetitionGroupsAuth(
+      { headers: { authorization: 'Bearer invalid-token' } },
+      response,
+      next
+    );
+
+    expect(response.status).toHaveBeenCalledWith(401);
+    expect(response.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Invalid bearer token',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
 });
