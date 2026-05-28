@@ -175,6 +175,76 @@ describe('WebhookMutations', () => {
     });
   });
 
+  it('creates webhooks for Competition Groups users scoped to the competition', async () => {
+    const db = createDb();
+    db.competition.findFirst.mockResolvedValue({
+      id: 'TestComp2026',
+      competitionAccess: [],
+      webhooks: [],
+    });
+
+    await expect(
+      callCreateWebhook(
+        {},
+        {
+          competitionId: 'testcomp2026',
+          webhook: {
+            url: 'https://hooks.example/new',
+            method: 'POST',
+          },
+        },
+        {
+          db,
+          user: userFixture({
+            competitionGroups: {
+              competitionIds: ['TestComp2026'],
+              scopes: ['notifycomp.remote'],
+            },
+          }),
+        },
+        {}
+      )
+    ).resolves.toEqual({
+      id: 10,
+      url: 'https://hooks.example/new',
+      method: 'POST',
+    });
+
+    expect(db.webhook.create).toHaveBeenCalled();
+  });
+
+  it('rejects Competition Groups users scoped away from the competition', async () => {
+    const db = createDb();
+    db.competition.findFirst.mockResolvedValue({
+      id: 'TestComp2026',
+      competitionAccess: [],
+      webhooks: [],
+    });
+
+    await expect(
+      callCreateWebhook(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          webhook: {
+            url: 'https://hooks.example/new',
+            method: 'POST',
+          },
+        },
+        {
+          db,
+          user: userFixture({
+            competitionGroups: {
+              competitionIds: ['OtherComp2026'],
+              scopes: ['notifycomp.remote'],
+            },
+          }),
+        },
+        {}
+      )
+    ).rejects.toThrow('Not Authorized');
+  });
+
   it('allows the super-admin user to create and read custom headers', async () => {
     const db = createDb();
 
@@ -267,7 +337,7 @@ describe('WebhookMutations', () => {
     });
   });
 
-  it('deletes webhooks for authenticated users', async () => {
+  it('deletes webhooks for competition staff', async () => {
     const db = createDb();
 
     await expect(
@@ -284,6 +354,42 @@ describe('WebhookMutations', () => {
         id: 10,
       },
     });
+  });
+
+  it('rejects webhook deletes from users without competition access', async () => {
+    const db = createDb();
+    db.competition.findFirst.mockResolvedValue({
+      competitionAccess: [{ userId: 999 }],
+      webhooks: [{ id: 10 }],
+    });
+
+    await expect(
+      callDeleteWebhook(
+        {},
+        { id: 10 },
+        { db, user: userFixture({ id: 123 }) },
+        {}
+      )
+    ).rejects.toThrow('Not Authorized');
+
+    expect(db.webhook.delete).not.toHaveBeenCalled();
+  });
+
+  it('rejects webhook URLs that do not use HTTPS', async () => {
+    await expect(
+      callCreateWebhook(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          webhook: {
+            url: 'http://hooks.example/new',
+            method: 'POST',
+          },
+        },
+        { db: createDb(), user: userFixture({ id: 123 }) },
+        {}
+      )
+    ).rejects.toThrow('Webhook URL must use HTTPS');
   });
 
   it('tests unsaved webhook settings and returns response details', async () => {
@@ -320,6 +426,50 @@ describe('WebhookMutations', () => {
         notifications: [{ type: 'ping' }],
       }
     );
+  });
+
+  it('rejects unsaved webhook tests from users without competition access', async () => {
+    const db = createDb();
+    db.competition.findFirst.mockResolvedValue({
+      competitionAccess: [{ userId: 999 }],
+      webhooks: [],
+    });
+
+    await expect(
+      callTestEditingWebhook(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          webhook: {
+            url: 'https://hooks.example/new',
+            method: 'POST',
+          },
+        },
+        { db, user: userFixture({ id: 123 }) },
+        {}
+      )
+    ).rejects.toThrow('Not Authorized');
+
+    expect(webhookFetch).not.toHaveBeenCalled();
+  });
+
+  it('rejects unsaved webhook tests for local URLs', async () => {
+    await expect(
+      callTestEditingWebhook(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          webhook: {
+            url: 'https://localhost/new',
+            method: 'POST',
+          },
+        },
+        { db: createDb(), user: userFixture({ id: 123 }) },
+        {}
+      )
+    ).rejects.toThrow('Webhook URL cannot target local hosts');
+
+    expect(webhookFetch).not.toHaveBeenCalled();
   });
 
   it('tests all saved webhooks and converts thrown fetches into empty responses', async () => {

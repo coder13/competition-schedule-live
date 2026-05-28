@@ -98,9 +98,8 @@ const loadAuth = async (
       sign: jwtSign,
     },
   }));
-  jest.doMock('node-fetch', () => ({
-    __esModule: true,
-    default: fetchMock,
+  jest.doMock('../lib/fetchWithTimeout', () => ({
+    fetchWithTimeout: fetchMock,
   }));
   jest.doMock('../mocks/config', () => ({
     isMocksMode: jest.fn(() => mocksMode),
@@ -110,7 +109,7 @@ const loadAuth = async (
     })),
   }));
   jest.doMock('./AuthMiddleware', () => ({
-    authMiddlewareDecode: jest.fn(
+    authMiddlewareVerify: jest.fn(
       (req: MockRequest, _res: MockResponse, next: () => void) => next()
     ),
   }));
@@ -144,6 +143,17 @@ describe('Auth router', () => {
     getRoutes['/keys/'](createRequest(), response);
 
     expect(response.send).toHaveBeenCalledWith('public-key');
+  });
+
+  it('redacts client secrets from startup config logs', async () => {
+    await loadAuth(false);
+
+    expect(console.log).toHaveBeenCalledWith(
+      'Loading values from environment variables',
+      expect.objectContaining({
+        CLIENT_SECRET: '[redacted]',
+      })
+    );
   });
 
   it('redirects mock WCA auth requests back with a mock code', async () => {
@@ -233,12 +243,16 @@ describe('Auth router', () => {
       'https://wca.example/oauth/token',
       expect.objectContaining({ method: 'POST' })
     );
-    expect(fetchMock).toHaveBeenCalledWith('https://wca.example/api/v0/me', {
-      headers: {
-        Authorization: 'Bearer access-token',
-        'Content-Type': 'application/x-www-form-urlencoded',
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://wca.example/api/v0/me',
+      {
+        headers: {
+          Authorization: 'Bearer access-token',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
       },
-    });
+      { retries: 2 }
+    );
     expect(jwtSign).toHaveBeenCalled();
     expect(response.json).toHaveBeenCalledWith({ jwt: 'signed-jwt' });
   });

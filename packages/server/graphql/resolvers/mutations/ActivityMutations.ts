@@ -23,11 +23,16 @@ const isAuthorized = async (
     return;
   }
 
-  if (
-    user.competitionGroups?.competitionIds &&
-    !user.competitionGroups.competitionIds.includes(competitionId)
-  ) {
-    throw new Error('Not Authorized');
+  if (user.competitionGroups) {
+    const allowedCompetitionIds = (
+      user.competitionGroups.competitionIds ?? []
+    ).map((id) => id.toLowerCase());
+
+    if (!allowedCompetitionIds.includes(competitionId.toLowerCase())) {
+      throw new Error('Not Authorized');
+    }
+
+    return;
   }
 
   const compAccess = await db.competitionAccess.findFirst({
@@ -131,6 +136,20 @@ const ensureRunningActivity = async (
   }
 };
 
+const publishActivityUpdates = async (
+  pubsub: AppContext['pubsub'],
+  activities: unknown[]
+) => {
+  await Promise.all(
+    activities.map(
+      async (activity) =>
+        await pubsub.publish('ACTIVITY_UPDATED', {
+          activityUpdated: activity,
+        })
+    )
+  );
+};
+
 export const startActivity: MutationResolvers<AppContext>['startActivity'] =
   async (_, { competitionId, activityId, startTime }, { db, user, wcaApi }) => {
     await isAuthorized(db, competitionId, user);
@@ -171,21 +190,47 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
   };
 
 export const startActivities: MutationResolvers<AppContext>['startActivities'] =
-  async (_, { competitionId, activityIds, startTime }, { db, user, wcaApi }) => {
+  async (
+    _,
+    { competitionId, activityIds, startTime },
+    { db, user, wcaApi, pubsub }
+  ) => {
     await isAuthorized(db, competitionId, user);
     const parsedStartTime = parseStartTime(startTime);
+    const effectiveStartTime = parsedStartTime ?? new Date();
+
+    const activities = await db.$transaction(async (tx) =>
+      Promise.all(
+        activityIds.map(async (activityId) =>
+          tx.activityHistory.upsert({
+            where: {
+              competitionId_activityId: {
+                competitionId,
+                activityId,
+              },
+            },
+            update: {
+              startTime: effectiveStartTime,
+              endTime: null,
+              scheduledStartTime: null,
+              scheduledEndTime: null,
+            },
+            create: {
+              competitionId,
+              activityId,
+              startTime: effectiveStartTime,
+              endTime: null,
+            },
+          })
+        )
+      )
+    );
 
     activityIds.forEach((activityId) => {
       cancelScheduledActivityJob(competitionId, activityId);
     });
+    await publishActivityUpdates(pubsub, activities);
 
-    const activities = await Promise.all(
-      activityIds.map(async (activityId) =>
-        activitiesController.startActivity(competitionId, activityId, {
-          startTime: parsedStartTime,
-        })
-      )
-    );
     await scheduleAutoAdvanceIfEnabled(db, competitionId);
 
     const wcif = await wcaApi.getWcif(competitionId);
@@ -233,38 +278,31 @@ export const stopActivities: MutationResolvers<AppContext>['stopActivities'] =
   async (_, { competitionId, activityIds }, { db, user, pubsub }) => {
     await isAuthorized(db, competitionId, user);
 
+    const endTime = new Date();
+    const activities = await db.$transaction(async (tx) =>
+      Promise.all(
+        activityIds.map(async (activityId) =>
+          tx.activityHistory.update({
+            where: {
+              competitionId_activityId: {
+                competitionId,
+                activityId,
+              },
+            },
+            data: {
+              endTime,
+              scheduledStartTime: null,
+              scheduledEndTime: null,
+            },
+          })
+        )
+      )
+    );
+
     activityIds.forEach((activityId) => {
       cancelScheduledActivityJob(competitionId, activityId);
     });
-
-    const activities = await Promise.all(
-      activityIds.map(async (activityId) => {
-        const activity = await db.activityHistory.update({
-          where: {
-            competitionId_activityId: {
-              competitionId,
-              activityId,
-            },
-          },
-          data: {
-            endTime: new Date(),
-            scheduledStartTime: null,
-            scheduledEndTime: null,
-          },
-        });
-
-        return activity;
-      })
-    );
-
-    await Promise.all(
-      activities.map(
-        async (activity) =>
-          await pubsub.publish('ACTIVITY_UPDATED', {
-            activityUpdated: activity,
-          })
-      )
-    );
+    await publishActivityUpdates(pubsub, activities);
 
     await scheduleAutoAdvanceIfEnabled(db, competitionId);
 
@@ -275,6 +313,38 @@ export const resetActivities: MutationResolvers<AppContext>['resetActivities'] =
   async (_, { competitionId, activityIds }, { db, user, pubsub }) => {
     await isAuthorized(db, competitionId, user);
 
+    const { findActivities } = await db.$transaction(async (tx) => {
+      await tx.activityHistory.updateMany({
+        where: {
+          competitionId,
+          ...(activityIds && {
+            activityId: {
+              in: activityIds,
+            },
+          }),
+        },
+        data: {
+          startTime: null,
+          endTime: null,
+          scheduledStartTime: null,
+          scheduledEndTime: null,
+        },
+      });
+
+      return {
+        findActivities: await tx.activityHistory.findMany({
+          where: {
+            competitionId,
+            ...(activityIds && {
+              activityId: {
+                in: activityIds,
+              },
+            }),
+          },
+        }),
+      };
+    });
+
     if (activityIds) {
       activityIds.forEach((activityId) => {
         cancelScheduledActivityJob(competitionId, activityId);
@@ -283,44 +353,7 @@ export const resetActivities: MutationResolvers<AppContext>['resetActivities'] =
       cancelCompetitionActivityJobs(competitionId);
     }
 
-    await db.activityHistory.updateMany({
-      where: {
-        competitionId,
-        ...(activityIds && {
-          activityId: {
-            in: activityIds,
-          },
-        }),
-      },
-      data: {
-        startTime: null,
-        endTime: null,
-        scheduledStartTime: null,
-        scheduledEndTime: null,
-      },
-    });
-
-    const findActivities = await db.activityHistory.findMany({
-      where: {
-        competitionId,
-        ...(activityIds && {
-          activityId: {
-            in: activityIds,
-          },
-        }),
-      },
-    });
-
-    console.log(findActivities);
-
-    await Promise.all(
-      findActivities.map(
-        async (activity) =>
-          await pubsub.publish('ACTIVITY_UPDATED', {
-            activityUpdated: activity,
-          })
-      )
-    );
+    await publishActivityUpdates(pubsub, findActivities);
 
     return findActivities;
   };
@@ -356,7 +389,7 @@ export const scheduleActivity: MutationResolvers<AppContext>['scheduleActivity']
   async (
     _,
     { competitionId, activityId, scheduledStartTime, scheduledEndTime },
-    { db, user }
+    { db, user, pubsub }
   ) => {
     await isAuthorized(db, competitionId, user);
 
@@ -389,7 +422,7 @@ export const scheduleActivities: MutationResolvers<AppContext>['scheduleActiviti
   async (
     _,
     { competitionId, activityIds, scheduledStartTime, scheduledEndTime },
-    { db, user }
+    { db, user, pubsub }
   ) => {
     await isAuthorized(db, competitionId, user);
 
@@ -413,15 +446,45 @@ export const scheduleActivities: MutationResolvers<AppContext>['scheduleActiviti
       ? { scheduledStartTime: parseScheduledTime(scheduledStartTime) }
       : { scheduledEndTime: parseScheduledTime(scheduledEndTime) };
 
+    const activities = await db.$transaction(async (tx) =>
+      Promise.all(
+        activityIds.map(async (activityId) =>
+          tx.activityHistory.upsert({
+            where: {
+              competitionId_activityId: {
+                competitionId,
+                activityId,
+              },
+            },
+            update: {
+              ...('scheduledStartTime' in props && {
+                scheduledStartTime: props.scheduledStartTime,
+                scheduledEndTime: null,
+              }),
+              ...('scheduledEndTime' in props && {
+                scheduledStartTime: null,
+                scheduledEndTime: props.scheduledEndTime,
+              }),
+            },
+            create: {
+              competitionId,
+              activityId,
+              ...('scheduledStartTime' in props && {
+                scheduledStartTime: props.scheduledStartTime,
+              }),
+              ...('scheduledEndTime' in props && {
+                scheduledEndTime: props.scheduledEndTime,
+              }),
+            },
+          })
+        )
+      )
+    );
+
     activityIds.forEach((activityId) => {
       cancelScheduledActivityJob(competitionId, activityId);
     });
-
-    const activities = await Promise.all(
-      activityIds.map(async (activityId) =>
-        activitiesController.scheduleActivity(competitionId, activityId, props)
-      )
-    );
+    await publishActivityUpdates(pubsub, activities);
 
     await Promise.all(
       activities.map(async (activity) => scheduleActivityJob(activity))
@@ -443,16 +506,32 @@ export const cancelScheduledActivity: MutationResolvers<AppContext>['cancelSched
   };
 
 export const cancelScheduledActivities: MutationResolvers<AppContext>['cancelScheduledActivities'] =
-  async (_, { competitionId, activityIds }, { db, user }) => {
+  async (_, { competitionId, activityIds }, { db, user, pubsub }) => {
     await isAuthorized(db, competitionId, user);
+
+    const activities = await db.$transaction(async (tx) =>
+      Promise.all(
+        activityIds.map(async (activityId) =>
+          tx.activityHistory.update({
+            where: {
+              competitionId_activityId: {
+                competitionId,
+                activityId,
+              },
+            },
+            data: {
+              scheduledStartTime: null,
+              scheduledEndTime: null,
+            },
+          })
+        )
+      )
+    );
 
     activityIds.forEach((activityId) => {
       cancelScheduledActivityJob(competitionId, activityId);
     });
+    await publishActivityUpdates(pubsub, activities);
 
-    return Promise.all(
-      activityIds.map(async (activityId) =>
-        activitiesController.cancelScheduledActivity(competitionId, activityId)
-      )
-    );
+    return activities;
   };

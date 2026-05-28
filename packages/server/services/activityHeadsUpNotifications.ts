@@ -1,6 +1,10 @@
 import prisma from '../db';
-import { PushDeliveryStatus } from '../prisma/generated/client';
+import {
+  PushDeliveryStatus,
+  PushSubscription,
+} from '../prisma/generated/client';
 import { sendAssignmentPush } from './webPush';
+import { runWithConcurrency } from '../lib/runWithConcurrency';
 
 const competitionGroupsUrl = (competitionId: string, wcaUserId: number) => {
   const origin = process.env.COMPETITION_GROUPS_ORIGIN;
@@ -8,7 +12,10 @@ const competitionGroupsUrl = (competitionId: string, wcaUserId: number) => {
     return undefined;
   }
 
-  return `${origin.replace(/\/$/, '')}/competitions/${competitionId}/persons/${wcaUserId}`;
+  return `${origin.replace(
+    /\/$/,
+    ''
+  )}/competitions/${competitionId}/persons/${wcaUserId}`;
 };
 
 const createDedupeKey = (
@@ -37,14 +44,21 @@ const getDelegateAndOrganizerTargets = async (competitionId: string) =>
     },
   });
 
-const getSubscriptionsForTarget = async (
+const pushDeliveryConcurrency = () => {
+  const value = Number(process.env.ACTIVITY_HEADS_UP_DELIVERY_CONCURRENCY);
+  return Number.isInteger(value) && value > 0 ? value : 10;
+};
+
+const getSubscriptionsByTarget = async (
   competitionId: string,
-  wcaUserId: number
+  wcaUserIds: number[]
 ) => {
   const watches = await prisma.assignmentWatch.findMany({
     where: {
       competitionId,
-      wcaUserId,
+      wcaUserId: {
+        in: wcaUserIds,
+      },
       pushSubscription: {
         disabledAt: null,
       },
@@ -54,7 +68,73 @@ const getSubscriptionsForTarget = async (
     },
   });
 
-  return watches.map((watch) => watch.pushSubscription);
+  return watches.reduce<Record<number, typeof watches>>((acc, watch) => {
+    acc[watch.wcaUserId] = [...(acc[watch.wcaUserId] ?? []), watch];
+    return acc;
+  }, {});
+};
+
+const sendActivityHeadsUpPushDelivery = async ({
+  competitionId,
+  activityIds,
+  startsAt,
+  targetUserId,
+  subscription,
+}: {
+  competitionId: string;
+  activityIds: number[];
+  startsAt: Date;
+  targetUserId: number;
+  subscription: PushSubscription;
+}) => {
+  const dedupeKey = createDedupeKey(
+    competitionId,
+    targetUserId,
+    activityIds,
+    startsAt
+  );
+  const existingDelivery = await prisma.pushDelivery.findFirst({
+    where: {
+      pushSubscriptionId: subscription.id,
+      dedupeKey,
+    },
+  });
+
+  if (existingDelivery) {
+    return;
+  }
+
+  const delivery = await prisma.pushDelivery.create({
+    data: {
+      pushSubscriptionId: subscription.id,
+      competitionId,
+      wcaUserId: targetUserId,
+      dedupeKey,
+      status: PushDeliveryStatus.pending,
+    },
+  });
+
+  const result = await sendAssignmentPush(subscription, {
+    type: 'activity-heads-up',
+    competitionId,
+    activityIds,
+    startsAt: startsAt.toISOString(),
+    title: 'Activity starting soon',
+    body: `${formatActivityCount(activityIds)} will start in 5 minutes.`,
+    url: competitionGroupsUrl(competitionId, targetUserId),
+  });
+
+  await prisma.pushDelivery.update({
+    where: {
+      id: delivery.id,
+    },
+    data: {
+      status: result.success
+        ? PushDeliveryStatus.sent
+        : PushDeliveryStatus.failed,
+      error: result.error ?? undefined,
+    },
+  });
 };
 
 export const sendActivityHeadsUpPush = async (
@@ -63,62 +143,27 @@ export const sendActivityHeadsUpPush = async (
   startsAt: Date
 ) => {
   const targets = await getDelegateAndOrganizerTargets(competitionId);
-
-  for (const target of targets) {
-    const subscriptions = await getSubscriptionsForTarget(
-      competitionId,
-      target.userId
-    );
-
-    for (const subscription of subscriptions) {
-      const dedupeKey = createDedupeKey(
-        competitionId,
-        target.userId,
-        activityIds,
-        startsAt
-      );
-      const existingDelivery = await prisma.pushDelivery.findFirst({
-        where: {
-          pushSubscriptionId: subscription.id,
-          dedupeKey,
-        },
-      });
-
-      if (existingDelivery) {
-        continue;
-      }
-
-      const delivery = await prisma.pushDelivery.create({
-        data: {
-          pushSubscriptionId: subscription.id,
-          competitionId,
-          wcaUserId: target.userId,
-          dedupeKey,
-          status: PushDeliveryStatus.pending,
-        },
-      });
-
-      const result = await sendAssignmentPush(subscription, {
-        type: 'activity-heads-up',
-        competitionId,
-        activityIds,
-        startsAt: startsAt.toISOString(),
-        title: 'Activity starting soon',
-        body: `${formatActivityCount(activityIds)} will start in 5 minutes.`,
-        url: competitionGroupsUrl(competitionId, target.userId),
-      });
-
-      await prisma.pushDelivery.update({
-        where: {
-          id: delivery.id,
-        },
-        data: {
-          status: result.success
-            ? PushDeliveryStatus.sent
-            : PushDeliveryStatus.failed,
-          error: result.error ?? undefined,
-        },
-      });
-    }
+  if (!targets.length) {
+    return;
   }
+
+  const subscriptionsByTarget = await getSubscriptionsByTarget(
+    competitionId,
+    targets.map((target) => target.userId)
+  );
+  const deliveries = targets.flatMap((target) =>
+    (subscriptionsByTarget[target.userId] ?? []).map((watch) => ({
+      competitionId,
+      activityIds,
+      startsAt,
+      targetUserId: target.userId,
+      subscription: watch.pushSubscription,
+    }))
+  );
+
+  await runWithConcurrency(
+    deliveries,
+    sendActivityHeadsUpPushDelivery,
+    pushDeliveryConcurrency()
+  );
 };

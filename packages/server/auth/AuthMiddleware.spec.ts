@@ -52,6 +52,17 @@ describe('AuthMiddleware', () => {
     expect(jwtVerify).not.toHaveBeenCalled();
   });
 
+  it('continues without verifying non-Bearer authorization headers', () => {
+    const request = createRequest('Basic credentials');
+    const next = jest.fn();
+
+    callAuthMiddlewareVerify(request, {}, next);
+
+    expect(next).toHaveBeenCalledWith(null);
+    expect(jwtVerify).not.toHaveBeenCalled();
+    expect(verifyCompetitionGroupsToken).not.toHaveBeenCalled();
+  });
+
   it('verifies normal bearer JWT users', () => {
     const user = { id: 123, name: 'Test User' };
     const request = createRequest('Bearer jwt-token');

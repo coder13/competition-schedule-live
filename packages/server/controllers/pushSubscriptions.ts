@@ -1,5 +1,6 @@
 import prisma from '../db';
 import { PushSubscriptionSource } from '../prisma/generated/client';
+import { sendAssignmentPush } from '../services/webPush';
 
 export interface PushWatchInput {
   competitionId: string;
@@ -167,3 +168,49 @@ export const disableCompetitionGroupsPushSubscriptionSession = async (
       disabledAt: new Date(),
     },
   });
+
+export const testCompetitionGroupsPushSubscriptionSession = async (
+  pushSubscriptionId: number,
+  externalSubject: string
+) => {
+  const subscription = await prisma.pushSubscription.findFirstOrThrow({
+    where: {
+      id: pushSubscriptionId,
+      source: PushSubscriptionSource.competitiongroups,
+      externalSubject,
+      disabledAt: null,
+    },
+  });
+
+  const result = await sendAssignmentPush(subscription, {
+    type: 'assignment-change',
+    competitionId: 'test-notification',
+    wcaUserId: 0,
+    title: 'Test notification',
+    body: 'Assignment notifications are working.',
+    url: process.env.COMPETITION_GROUPS_ORIGIN
+      ? `${process.env.COMPETITION_GROUPS_ORIGIN.replace(/\/$/, '')}/settings`
+      : undefined,
+  });
+
+  if (
+    !result.success &&
+    (result.error?.statusCode === 401 || result.error?.statusCode === 403)
+  ) {
+    await disableCompetitionGroupsPushSubscriptionSession(
+      pushSubscriptionId,
+      externalSubject
+    );
+
+    return {
+      success: false,
+      error: {
+        ...result.error,
+        message:
+          'This browser push subscription is no longer valid. Re-enable assignment notifications and try again.',
+      },
+    };
+  }
+
+  return result;
+};

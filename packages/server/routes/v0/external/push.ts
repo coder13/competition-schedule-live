@@ -4,6 +4,7 @@ import {
   disableCompetitionGroupsPushSubscription,
   disableCompetitionGroupsPushSubscriptionSession,
   PushWatchInput,
+  testCompetitionGroupsPushSubscriptionSession,
   updateCompetitionGroupsPushSubscriptionSession,
   upsertCompetitionGroupsPushSubscription,
 } from '../../../controllers/pushSubscriptions';
@@ -231,6 +232,42 @@ router.delete('/sessions/current', async (req: Request, res) => {
       claims.pushSubscriptionId,
       claims.sub
     );
+
+    res.json({ success: true });
+  } catch (e) {
+    res.status(401).json({
+      success: false,
+      message: e instanceof Error ? e.message : 'Invalid push session',
+    });
+  }
+});
+
+router.post('/sessions/current/test', async (req: Request, res) => {
+  const token = bearerToken(req);
+  if (!token) {
+    res.status(401).json({ success: false, message: 'Missing bearer token' });
+    return;
+  }
+
+  try {
+    const claims = verifyCompetitionGroupsPushSessionToken(token);
+    const result = await testCompetitionGroupsPushSubscriptionSession(
+      claims.pushSubscriptionId,
+      claims.sub
+    );
+
+    if (!result.success) {
+      const statusCode = result.error?.statusCode;
+      const responseStatus =
+        statusCode === 401 || statusCode === 403 ? 410 : 502;
+
+      res.status(responseStatus).json({
+        success: false,
+        message: result.error?.message ?? 'Unable to send test notification',
+        error: result.error,
+      });
+      return;
+    }
 
     res.json({ success: true });
   } catch (e) {

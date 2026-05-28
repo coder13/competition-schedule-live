@@ -34,26 +34,40 @@ const callUpdateAutoAdvance = updateAutoAdvance as (
   info: unknown
 ) => Promise<unknown>;
 
-const createDb = () => ({
-  competitionAccess: {
-    findFirst: jest.fn().mockResolvedValue({ userId: 123 }),
-  },
-  activityHistory: {
-    updateMany: jest.fn().mockResolvedValue({ count: 2 }),
-  },
-  competition: {
-    create: jest.fn().mockResolvedValue({
-      id: 'TestComp2026',
-      name: 'Test Competition',
-      competitionAccess: [{ userId: 123, roomId: 0 }],
-    }),
-    update: jest.fn().mockResolvedValue({
-      id: 'TestComp2026',
-      autoAdvance: false,
-      autoAdvanceDelay: 0,
-    }),
-  },
-});
+const createDb = () => {
+  const db = {
+    competitionAccess: {
+      findFirst: jest.fn().mockResolvedValue({ userId: 123 }),
+      createMany: jest.fn().mockResolvedValue({ count: 3 }),
+    },
+    activityHistory: {
+      updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+    },
+    competition: {
+      upsert: jest.fn().mockResolvedValue({
+        id: 'TestComp2026',
+        name: 'Test Competition',
+      }),
+      findFirstOrThrow: jest.fn().mockResolvedValue({
+        id: 'TestComp2026',
+        name: 'Test Competition',
+        competitionAccess: [{ userId: 123, roomId: 0 }],
+      }),
+      update: jest.fn().mockResolvedValue({
+        id: 'TestComp2026',
+        autoAdvance: false,
+        autoAdvanceDelay: 0,
+      }),
+    },
+  };
+
+  return {
+    ...db,
+    $transaction: jest.fn(async (callback: (tx: typeof db) => unknown) =>
+      callback(db)
+    ),
+  };
+};
 
 describe('CompetitionMutations.importCompetition', () => {
   it('rejects unauthenticated imports', async () => {
@@ -67,7 +81,7 @@ describe('CompetitionMutations.importCompetition', () => {
     ).rejects.toThrow('Not Authenticated');
   });
 
-  it('creates a competition with delegate and organizer access', async () => {
+  it('upserts a competition with delegate and organizer access', async () => {
     const db = createDb();
     const wcaApi = {
       getWcif: jest.fn().mockResolvedValue({
@@ -101,25 +115,60 @@ describe('CompetitionMutations.importCompetition', () => {
     });
 
     expect(wcaApi.getWcif).toHaveBeenCalledWith('TestComp2026');
-    expect(db.competition.create).toHaveBeenCalledWith({
-      include: {
-        competitionAccess: true,
+    expect(db.$transaction).toHaveBeenCalled();
+    expect(db.competition.upsert).toHaveBeenCalledWith({
+      where: {
+        id: 'TestComp2026',
       },
-      data: {
+      update: {
+        name: 'Test Competition',
+        startDate: '2026-05-01',
+        endDate: '2026-05-03',
+        country: 'US',
+      },
+      create: {
         id: 'TestComp2026',
         name: 'Test Competition',
         startDate: '2026-05-01',
         endDate: '2026-05-03',
         country: 'US',
-        competitionAccess: {
-          create: [
-            { userId: 111, roomId: 0 },
-            { userId: 222, roomId: 0 },
-            { userId: 333, roomId: 0 },
-          ],
-        },
       },
     });
+    expect(db.competitionAccess.createMany).toHaveBeenCalledWith({
+      data: [
+        { competitionId: 'TestComp2026', userId: 111, roomId: 0 },
+        { competitionId: 'TestComp2026', userId: 222, roomId: 0 },
+        { competitionId: 'TestComp2026', userId: 333, roomId: 0 },
+      ],
+      skipDuplicates: true,
+    });
+  });
+
+  it('rejects imports when the WCIF has invalid schedule metadata', async () => {
+    const db = createDb();
+    const wcaApi = {
+      getWcif: jest.fn().mockResolvedValue({
+        id: 'TestComp2026',
+        name: 'Test Competition',
+        persons: [],
+        schedule: {
+          startDate: 'not-a-date',
+          numberOfDays: 1,
+          venues: [{ countryIso2: 'US' }],
+        },
+      }),
+    };
+
+    await expect(
+      callImportCompetition(
+        {},
+        { competitionId: 'TestComp2026' },
+        { db, user: userFixture(), wcaApi },
+        {}
+      )
+    ).rejects.toThrow('WCIF competition has an invalid start date');
+
+    expect(db.competition.upsert).not.toHaveBeenCalled();
   });
 });
 
@@ -173,6 +222,88 @@ describe('CompetitionMutations.updateAutoAdvance', () => {
         autoAdvance: false,
       },
     });
+  });
+
+  it('allows Competition Groups users scoped to the competition without access rows', async () => {
+    const db = createDb();
+    db.competitionAccess.findFirst.mockResolvedValue(null);
+    db.competition.update.mockResolvedValue({
+      id: 'TestComp2026',
+      autoAdvance: false,
+      autoAdvanceDelay: 45,
+    });
+
+    await expect(
+      callUpdateAutoAdvance(
+        {},
+        {
+          competitionId: 'testcomp2026',
+          autoAdvance: null,
+          autoAdvanceDelay: 45,
+        },
+        {
+          db,
+          user: userFixture({
+            competitionGroups: {
+              competitionIds: ['TestComp2026'],
+              scopes: ['notifycomp.remote'],
+            },
+          }),
+        },
+        {}
+      )
+    ).resolves.toEqual({
+      id: 'TestComp2026',
+      autoAdvance: false,
+      autoAdvanceDelay: 45,
+    });
+
+    expect(db.competitionAccess.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('does not schedule when only updating the auto-advance delay', async () => {
+    const db = createDb();
+
+    await callUpdateAutoAdvance(
+      {},
+      {
+        competitionId: 'TestComp2026',
+        autoAdvance: null,
+        autoAdvanceDelay: 45,
+      },
+      { db, user: userFixture() },
+      {}
+    );
+
+    expect(mockFetchCompWithNoScheduledActivities).not.toHaveBeenCalled();
+    expect(mockDetermineAndScheduleCompetition).not.toHaveBeenCalled();
+    expect(db.competition.update).toHaveBeenCalledWith({
+      where: {
+        id: 'TestComp2026',
+      },
+      data: {
+        autoAdvanceDelay: 45,
+      },
+    });
+  });
+
+  it('rejects negative auto-advance delays', async () => {
+    const db = createDb();
+
+    await expect(
+      callUpdateAutoAdvance(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          autoAdvance: null,
+          autoAdvanceDelay: -1,
+        },
+        { db, user: userFixture() },
+        {}
+      )
+    ).rejects.toThrow('Auto advance delay must be non-negative');
+
+    expect(db.competition.update).not.toHaveBeenCalled();
   });
 
   it('schedules the competition when enabling auto advance and no queued activities exist', async () => {

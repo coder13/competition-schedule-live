@@ -1,25 +1,50 @@
 import prisma from '../db';
 import { createAssignmentSnapshot } from '../lib/assignmentSnapshots';
 import {
+  Prisma,
   PushDeliveryStatus,
   PushSubscription,
 } from '../prisma/generated/client';
 import { sendAssignmentPush } from './webPush';
 import { fetchWcif } from './wcif';
+import { runWithConcurrency } from '../lib/runWithConcurrency';
 
 interface WatchTarget {
   competitionId: string;
   wcaUserId: number;
 }
 
-const groupTargetsByCompetition = (targets: WatchTarget[]) =>
-  targets.reduce<Record<string, number[]>>((acc, target) => {
-    acc[target.competitionId] = [
-      ...(acc[target.competitionId] ?? []),
-      target.wcaUserId,
-    ];
-    return acc;
-  }, {});
+type ActiveWatch = WatchTarget & {
+  pushSubscription: PushSubscription;
+};
+
+const positiveIntFromEnv = (name: string, fallback: number) => {
+  const value = Number(process.env[name]);
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+};
+
+const assignmentCompetitionConcurrency = () =>
+  positiveIntFromEnv('ASSIGNMENT_POLL_COMPETITION_CONCURRENCY', 2);
+
+const assignmentDeliveryConcurrency = () =>
+  positiveIntFromEnv('ASSIGNMENT_PUSH_DELIVERY_CONCURRENCY', 10);
+
+const groupWatchesByCompetition = (watches: ActiveWatch[]) => {
+  const competitions = new Map<string, Map<number, PushSubscription[]>>();
+
+  watches.forEach((watch) => {
+    const users =
+      competitions.get(watch.competitionId) ??
+      new Map<number, PushSubscription[]>();
+    users.set(watch.wcaUserId, [
+      ...(users.get(watch.wcaUserId) ?? []),
+      watch.pushSubscription,
+    ]);
+    competitions.set(watch.competitionId, users);
+  });
+
+  return competitions;
+};
 
 const competitionGroupsUrl = (competitionId: string, wcaUserId: number) => {
   const origin = process.env.COMPETITION_GROUPS_ORIGIN;
@@ -27,7 +52,10 @@ const competitionGroupsUrl = (competitionId: string, wcaUserId: number) => {
     return undefined;
   }
 
-  return `${origin.replace(/\/$/, '')}/competitions/${competitionId}/persons/${wcaUserId}`;
+  return `${origin.replace(
+    /\/$/,
+    ''
+  )}/competitions/${competitionId}/persons/${wcaUserId}`;
 };
 
 const createDedupeKey = (
@@ -50,28 +78,9 @@ const createPayload = (
   dedupeKey: createDedupeKey(competitionId, wcaUserId, assignmentsHash),
 });
 
-const getActiveTargets = async (): Promise<WatchTarget[]> =>
+const getActiveWatches = async (): Promise<ActiveWatch[]> =>
   prisma.assignmentWatch.findMany({
-    distinct: ['competitionId', 'wcaUserId'],
-    select: {
-      competitionId: true,
-      wcaUserId: true,
-    },
     where: {
-      pushSubscription: {
-        disabledAt: null,
-      },
-    },
-  });
-
-const getSubscriptionsForTarget = async (
-  competitionId: string,
-  wcaUserId: number
-): Promise<PushSubscription[]> => {
-  const watches = await prisma.assignmentWatch.findMany({
-    where: {
-      competitionId,
-      wcaUserId,
       pushSubscription: {
         disabledAt: null,
       },
@@ -80,9 +89,6 @@ const getSubscriptionsForTarget = async (
       pushSubscription: true,
     },
   });
-
-  return watches.map((watch) => watch.pushSubscription);
-};
 
 const deliverAssignmentChange = async (
   subscription: PushSubscription,
@@ -98,19 +104,33 @@ const deliverAssignmentChange = async (
     },
   });
 
-  if (existingDelivery) {
-    return;
+  if (existingDelivery?.status === PushDeliveryStatus.sent) {
+    return true;
   }
 
-  const delivery = await prisma.pushDelivery.create({
-    data: {
-      pushSubscriptionId: subscription.id,
-      competitionId,
-      wcaUserId,
-      dedupeKey,
-      status: PushDeliveryStatus.pending,
-    },
-  });
+  if (existingDelivery?.status === PushDeliveryStatus.pending) {
+    return false;
+  }
+
+  const delivery = existingDelivery
+    ? await prisma.pushDelivery.update({
+        where: {
+          id: existingDelivery.id,
+        },
+        data: {
+          status: PushDeliveryStatus.pending,
+          error: Prisma.JsonNull,
+        },
+      })
+    : await prisma.pushDelivery.create({
+        data: {
+          pushSubscriptionId: subscription.id,
+          competitionId,
+          wcaUserId,
+          dedupeKey,
+          status: PushDeliveryStatus.pending,
+        },
+      });
 
   const result = await sendAssignmentPush(
     subscription,
@@ -125,72 +145,87 @@ const deliverAssignmentChange = async (
       status: result.success
         ? PushDeliveryStatus.sent
         : PushDeliveryStatus.failed,
-      error: result.error ?? undefined,
+      error: result.error ?? Prisma.JsonNull,
     },
   });
+
+  return result.success;
 };
 
 export const runAssignmentNotificationPoll = async () => {
-  const targets = await getActiveTargets();
-  const targetsByCompetition = groupTargetsByCompetition(targets);
+  const targetsByCompetition = groupWatchesByCompetition(
+    await getActiveWatches()
+  );
 
-  for (const [competitionId, wcaUserIds] of Object.entries(
-    targetsByCompetition
-  )) {
-    const wcif = await fetchWcif(competitionId);
+  await runWithConcurrency(
+    [...targetsByCompetition.entries()],
+    async ([competitionId, targets]) => {
+      const wcif = await fetchWcif(competitionId);
 
-    for (const wcaUserId of wcaUserIds) {
-      const nextSnapshot = createAssignmentSnapshot(wcif, wcaUserId);
-      if (!nextSnapshot) {
-        continue;
-      }
+      for (const [wcaUserId, subscriptions] of targets.entries()) {
+        const nextSnapshot = createAssignmentSnapshot(wcif, wcaUserId);
+        if (!nextSnapshot) {
+          continue;
+        }
 
-      const previousSnapshot = await prisma.assignmentSnapshot.findUnique({
-        where: {
-          competitionId_wcaUserId: {
-            competitionId,
-            wcaUserId,
+        const previousSnapshot = await prisma.assignmentSnapshot.findUnique({
+          where: {
+            competitionId_wcaUserId: {
+              competitionId,
+              wcaUserId,
+            },
           },
-        },
-      });
+        });
 
-      await prisma.assignmentSnapshot.upsert({
-        where: {
-          competitionId_wcaUserId: {
-            competitionId,
-            wcaUserId,
-          },
-        },
-        update: {
-          assignmentsHash: nextSnapshot.assignmentsHash,
-        },
-        create: nextSnapshot,
-      });
+        if (
+          !previousSnapshot ||
+          previousSnapshot.assignmentsHash === nextSnapshot.assignmentsHash
+        ) {
+          await prisma.assignmentSnapshot.upsert({
+            where: {
+              competitionId_wcaUserId: {
+                competitionId,
+                wcaUserId,
+              },
+            },
+            update: {
+              assignmentsHash: nextSnapshot.assignmentsHash,
+            },
+            create: nextSnapshot,
+          });
+          continue;
+        }
 
-      if (
-        !previousSnapshot ||
-        previousSnapshot.assignmentsHash === nextSnapshot.assignmentsHash
-      ) {
-        continue;
+        const deliveryResults = await runWithConcurrency(
+          subscriptions,
+          async (subscription) =>
+            deliverAssignmentChange(
+              subscription,
+              competitionId,
+              wcaUserId,
+              nextSnapshot.assignmentsHash
+            ),
+          assignmentDeliveryConcurrency()
+        );
+
+        if (deliveryResults.every(Boolean)) {
+          await prisma.assignmentSnapshot.upsert({
+            where: {
+              competitionId_wcaUserId: {
+                competitionId,
+                wcaUserId,
+              },
+            },
+            update: {
+              assignmentsHash: nextSnapshot.assignmentsHash,
+            },
+            create: nextSnapshot,
+          });
+        }
       }
-
-      const subscriptions = await getSubscriptionsForTarget(
-        competitionId,
-        wcaUserId
-      );
-
-      await Promise.all(
-        subscriptions.map(async (subscription) =>
-          deliverAssignmentChange(
-            subscription,
-            competitionId,
-            wcaUserId,
-            nextSnapshot.assignmentsHash
-          )
-        )
-      );
-    }
-  }
+    },
+    assignmentCompetitionConcurrency()
+  );
 };
 
 export const startAssignmentNotificationWorker = () => {
@@ -218,7 +253,11 @@ export const startAssignmentNotificationWorker = () => {
   };
 
   void poll();
-  setInterval(() => {
+  const interval = setInterval(() => {
     void poll();
   }, intervalMs);
+
+  return () => {
+    clearInterval(interval);
+  };
 };

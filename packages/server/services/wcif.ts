@@ -1,5 +1,5 @@
-import fetch from 'node-fetch';
 import { WcifPayload } from '../lib/assignmentSnapshots';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
 export const fetchWcif = async (competitionId: string): Promise<WcifPayload> => {
   const origin = process.env.WCA_ORIGIN ?? 'https://www.worldcubeassociation.org';
@@ -9,9 +9,10 @@ export const fetchWcif = async (competitionId: string): Promise<WcifPayload> => 
     headers.Authorization = `Bearer ${process.env.WCA_OAUTH_TOKEN}`;
   }
 
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${origin}/api/v0/competitions/${competitionId}/wcif`,
-    { headers }
+    { headers },
+    { retries: 2 }
   );
 
   if (!response.ok) {

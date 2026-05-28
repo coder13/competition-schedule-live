@@ -5,12 +5,15 @@ import {
 } from '@apollo/datasource-rest';
 import { isMocksMode } from '../../mocks/config';
 import { getMockCompetition } from '../../mocks/wca';
+import { fetchWithTimeout } from '../../lib/fetchWithTimeout';
 
 class WcaApi extends RESTDataSource {
   accessToken?: string;
 
   constructor(origin: string, accessToken?: string) {
-    super();
+    super({
+      fetch: async (url, init) => fetchWithTimeout(url, init, { retries: 2 }),
+    });
     this.baseURL = origin + '/api/v0/';
     this.accessToken = accessToken;
   }

@@ -13,6 +13,7 @@ import { getFlatActivities } from './utils';
 import * as activitiesController from '../controllers/activities';
 import { determineAutoAdvancePlan } from './autoAdvance';
 import { sendActivityHeadsUpPush } from '../services/activityHeadsUpNotifications';
+import { settleWithConcurrency } from '../lib/runWithConcurrency';
 
 export const CompetitionActivitiesJobsMap = new Map<
   string,
@@ -31,6 +32,14 @@ export const CompetitionActivitiesJobsMap = new Map<
 const competitionActivityKey = (competitionId: string, activityId: number) =>
   `${competitionId}_${activityId}`;
 
+const positiveIntFromEnv = (name: string, fallback: number) => {
+  const value = Number(process.env[name]);
+  return Number.isInteger(value) && value > 0 ? value : fallback;
+};
+
+const schedulerInitConcurrency = () =>
+  positiveIntFromEnv('SCHEDULER_INIT_CONCURRENCY', 4);
+
 export function cancelScheduledActivityJob(
   competitionId: string,
   activityId: number
@@ -43,13 +52,19 @@ export function cancelScheduledActivityJob(
   }
 
   entry.job.cancel();
-  entry.headsUpJob?.cancel();
+
+  const headsUpJobs = new Set<schedule.Job>();
 
   for (const [jobKey, jobEntry] of CompetitionActivitiesJobsMap.entries()) {
     if (jobEntry.job === entry.job) {
+      if (jobEntry.headsUpJob) {
+        headsUpJobs.add(jobEntry.headsUpJob);
+      }
       CompetitionActivitiesJobsMap.delete(jobKey);
     }
   }
+
+  headsUpJobs.forEach((headsUpJob) => headsUpJob.cancel());
 }
 
 export function cancelCompetitionActivityJobs(competitionId: string) {
@@ -61,6 +76,11 @@ export function cancelCompetitionActivityJobs(competitionId: string) {
       );
     }
   }
+}
+
+export async function shutdownScheduler() {
+  CompetitionActivitiesJobsMap.clear();
+  await schedule.gracefulShutdown();
 }
 
 const wcaApi = new WcaApi(WCA_ORIGIN);
@@ -89,9 +109,15 @@ export async function initScheduler() {
     },
   });
 
-  competitions.forEach(async (competition) => {
-    await determineAndScheduleCompetition(competition);
-  });
+  const competitionResults = await settleWithConcurrency(
+    competitions,
+    async (competition) => determineAndScheduleCompetition(competition),
+    schedulerInitConcurrency()
+  );
+  logRejectedResults(
+    'Failed to initialize auto-advance competition',
+    competitionResults
+  );
 
   const activities = await prisma.activityHistory.findMany({
     where: {
@@ -110,28 +136,36 @@ export async function initScheduler() {
     },
   });
 
-  activities.forEach(async (activity) => {
-    console.log(
-      'Scheduling',
-      competitionActivityKey(activity.competitionId, activity.activityId)
-    );
+  const activityResults = await settleWithConcurrency(
+    activities,
+    async (activity) => {
+      console.log(
+        'Scheduling',
+        competitionActivityKey(activity.competitionId, activity.activityId)
+      );
 
-    const scheduledStartIsFuture = Boolean(
-      activity.scheduledStartTime &&
-        new Date(activity.scheduledStartTime).getTime() > Date.now()
-    );
-    const scheduledEndIsFuture = Boolean(
-      activity.scheduledEndTime &&
-        new Date(activity.scheduledEndTime).getTime() > Date.now()
-    );
-
-    if (scheduledStartIsFuture || scheduledEndIsFuture) {
-      void scheduleActivity(activity);
-    } else {
-      console.log('Activity is in the past', activity);
-    }
-  });
+      await scheduleActivity(activity);
+    },
+    schedulerInitConcurrency()
+  );
+  logRejectedResults(
+    'Failed to initialize scheduled activity',
+    activityResults
+  );
 }
+
+const logRejectedResults = (
+  message: string,
+  results: Array<PromiseSettledResult<unknown>>
+) => {
+  results
+    .filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected'
+    )
+    .forEach((result) => {
+      console.error(message, result.reason);
+    });
+};
 
 export async function determineAndScheduleCompetition(
   competition: Competition & {
@@ -182,51 +216,60 @@ async function startAndStopActivities(
   }
 
   const job = schedule.scheduleJob(jobTime, async () => {
-    stopActivities.forEach((activity) => {
-      console.log(`Stopping activity ${activity.id} ${activity.name}`);
-    });
-    startActivities.forEach((activity) => {
-      console.log(`Starting activity ${activity.id} ${activity.name}`);
-    });
+    try {
+      stopActivities.forEach((activity) => {
+        console.log(`Stopping activity ${activity.id} ${activity.name}`);
+      });
+      startActivities.forEach((activity) => {
+        console.log(`Starting activity ${activity.id} ${activity.name}`);
+      });
 
-    await Promise.all([
-      ...stopActivities.map(async (activity) =>
-        activitiesController.stopActivity(competitionId, activity.id)
-      ),
-      ...startActivities.map(async (activity) =>
-        activitiesController.startActivity(competitionId, activity.id)
-      ),
-    ]);
-    [...stopActivities, ...startActivities].forEach((activity) => {
-      cancelScheduledActivityJob(competitionId, activity.id);
-    });
+      await Promise.all([
+        ...stopActivities.map(async (activity) =>
+          activitiesController.stopActivity(competitionId, activity.id)
+        ),
+        ...startActivities.map(async (activity) =>
+          activitiesController.startActivity(competitionId, activity.id)
+        ),
+      ]);
+      [...stopActivities, ...startActivities].forEach((activity) => {
+        cancelScheduledActivityJob(competitionId, activity.id);
+      });
 
-    const updatedCompetition = await prisma.competition.findFirst({
-      where: {
-        id: competitionId,
-        autoAdvance: true,
-        activityHistory: {
-          some: {
-            scheduledEndTime: null,
-            scheduledStartTime: null,
+      const updatedCompetition = await prisma.competition.findFirst({
+        where: {
+          id: competitionId,
+          autoAdvance: true,
+          activityHistory: {
+            some: {
+              scheduledEndTime: null,
+              scheduledStartTime: null,
+            },
           },
         },
-      },
-      include: {
-        activityHistory: activityHistoryClause,
-      },
-    });
+        include: {
+          activityHistory: activityHistoryClause,
+        },
+      });
 
-    if (!updatedCompetition) {
-      console.error(
-        193,
-        'Competition not found, really fucking weird',
-        competitionId
-      );
-      return;
+      if (!updatedCompetition) {
+        console.error(
+          'Competition not found while rescheduling',
+          competitionId
+        );
+        return;
+      }
+
+      await determineAndScheduleCompetition(updatedCompetition);
+    } catch (e) {
+      console.error('Scheduled auto-advance job failed', {
+        competitionId,
+        activityIds: [...stopActivities, ...startActivities].map(
+          (activity) => activity.id
+        ),
+        error: e,
+      });
     }
-
-    void determineAndScheduleCompetition(updatedCompetition);
   });
 
   if (!job) {
@@ -290,19 +333,89 @@ function scheduleActivityHeadsUp(
   }
 
   return schedule.scheduleJob(headsUpTime, async () => {
-    await sendActivityHeadsUpPush(
-      competitionId,
-      startActivities.map((activity) => activity.id),
-      startTime
-    );
+    try {
+      await sendActivityHeadsUpPush(
+        competitionId,
+        startActivities.map((activity) => activity.id),
+        startTime
+      );
+    } catch (e) {
+      console.error('Scheduled activity heads-up push failed', {
+        competitionId,
+        activityIds: startActivities.map((activity) => activity.id),
+        error: e,
+      });
+    }
   });
 }
+
+const handleScheduledActivityStart = async (activity: ActivityHistory) => {
+  await activitiesController.startActivity(
+    activity.competitionId,
+    activity.activityId
+  );
+  cancelScheduledActivityJob(activity.competitionId, activity.activityId);
+
+  const comp = await prisma.competition.findFirst({
+    where: {
+      id: activity.competitionId,
+      autoAdvance: true,
+    },
+    include: {
+      activityHistory: true,
+    },
+  });
+
+  if (comp) {
+    await determineAndScheduleCompetition(comp);
+  }
+};
+
+const handleScheduledActivityEnd = async (activity: ActivityHistory) => {
+  await activitiesController.stopActivity(
+    activity.competitionId,
+    activity.activityId
+  );
+  cancelScheduledActivityJob(activity.competitionId, activity.activityId);
+
+  // If this is the last activity that ends, determine the next activities to start.
+  const comp = await prisma.competition.findFirst({
+    where: {
+      id: activity.competitionId,
+      autoAdvance: true,
+    },
+    include: {
+      activityHistory: {
+        where: {
+          startTime: {
+            not: null,
+          },
+          scheduledEndTime: null,
+          scheduledStartTime: null,
+        },
+      },
+    },
+  });
+
+  if (!comp) {
+    console.error('Competition not found', activity.competitionId);
+    return;
+  }
+  if (!comp.activityHistory.length) {
+    await determineAndScheduleCompetition(comp);
+  }
+};
 
 export async function scheduleActivity(activity: ActivityHistory) {
   cancelScheduledActivityJob(activity.competitionId, activity.activityId);
 
   if (activity.scheduledStartTime) {
     const startTime = new Date(activity.scheduledStartTime);
+    if (startTime <= new Date()) {
+      await handleScheduledActivityStart(activity);
+      return;
+    }
+
     const headsUpJob = scheduleActivityHeadsUp(
       activity.competitionId,
       [
@@ -318,30 +431,21 @@ export async function scheduleActivity(activity: ActivityHistory) {
       ],
       startTime
     );
-    const job = schedule.scheduleJob(
-      startTime,
-      async () => {
-        await activitiesController.startActivity(
-          activity.competitionId,
-          activity.activityId
-        );
-        cancelScheduledActivityJob(activity.competitionId, activity.activityId);
-
-        const comp = await prisma.competition.findFirst({
-          where: {
-            id: activity.competitionId,
-            autoAdvance: true,
-          },
-          include: {
-            activityHistory: true,
-          },
+    const job = schedule.scheduleJob(startTime, async () => {
+      try {
+        await handleScheduledActivityStart(activity);
+      } catch (e) {
+        console.error('Scheduled activity start failed', {
+          competitionId: activity.competitionId,
+          activityId: activity.activityId,
+          error: e,
         });
-
-        if (comp) {
-          void determineAndScheduleCompetition(comp);
-        }
       }
-    );
+    });
+
+    if (!job) {
+      throw new Error('Scheduled activity start job could not be created');
+    }
 
     CompetitionActivitiesJobsMap.set(
       competitionActivityKey(activity.competitionId, activity.activityId),
@@ -354,50 +458,33 @@ export async function scheduleActivity(activity: ActivityHistory) {
   }
 
   if (activity.scheduledEndTime) {
-    const job = schedule.scheduleJob(
-      new Date(activity.scheduledEndTime),
-      async () => {
-        await activitiesController.stopActivity(
-          activity.competitionId,
-          activity.activityId
-        );
-        cancelScheduledActivityJob(activity.competitionId, activity.activityId);
+    const endTime = new Date(activity.scheduledEndTime);
+    if (endTime <= new Date()) {
+      await handleScheduledActivityEnd(activity);
+      return;
+    }
 
-        // If this is the last activity that ends, we should determine the next activities to start.
-
-        const comp = await prisma.competition.findFirst({
-          where: {
-            id: activity.competitionId,
-            autoAdvance: true,
-          },
-          include: {
-            activityHistory: {
-              where: {
-                startTime: {
-                  not: null,
-                },
-                scheduledEndTime: null,
-                scheduledStartTime: null,
-              },
-            },
-          },
+    const job = schedule.scheduleJob(endTime, async () => {
+      try {
+        await handleScheduledActivityEnd(activity);
+      } catch (e) {
+        console.error('Scheduled activity end failed', {
+          competitionId: activity.competitionId,
+          activityId: activity.activityId,
+          error: e,
         });
-
-        if (!comp) {
-          console.error('Competition not found', activity.competitionId);
-          return;
-        }
-        if (!comp.activityHistory.length) {
-          void determineAndScheduleCompetition(comp);
-        }
       }
-    );
+    });
+
+    if (!job) {
+      throw new Error('Scheduled activity end job could not be created');
+    }
 
     CompetitionActivitiesJobsMap.set(
       competitionActivityKey(activity.competitionId, activity.activityId),
       {
         job,
-        endTime: new Date(activity.scheduledEndTime),
+        endTime,
       }
     );
   }

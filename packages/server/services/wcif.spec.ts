@@ -1,9 +1,8 @@
 /* eslint-disable import/first */
 const fetchMock = jest.fn();
 
-jest.mock('node-fetch', () => ({
-  __esModule: true,
-  default: fetchMock,
+jest.mock('../lib/fetchWithTimeout', () => ({
+  fetchWithTimeout: fetchMock,
 }));
 
 import { fetchWcif } from './wcif';
@@ -39,7 +38,8 @@ describe('fetchWcif', () => {
         headers: {
           Authorization: 'Bearer access-token',
         },
-      }
+      },
+      { retries: 2 }
     );
   });
 
