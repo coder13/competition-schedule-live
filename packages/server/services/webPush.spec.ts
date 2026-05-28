@@ -83,6 +83,37 @@ describe('sendAssignmentPush', () => {
     );
   });
 
+  it('sends a competition start reminder payload', async () => {
+    await expect(
+      sendAssignmentPush(subscription as never, {
+        type: 'competition-start-reminder',
+        competitionId: 'TestComp2026',
+        wcaUserId: 123,
+        startsAt: '2026-01-02T09:00:00.000Z',
+        title: 'Competition tomorrow',
+        body: 'Test Competition 2026 starts within 24 hours.',
+      })
+    ).resolves.toEqual({ success: true, error: null });
+
+    expect(sendNotification).toHaveBeenCalledWith(
+      {
+        endpoint: subscription.endpoint,
+        keys: {
+          p256dh: subscription.p256dh,
+          auth: subscription.auth,
+        },
+      },
+      JSON.stringify({
+        type: 'competition-start-reminder',
+        competitionId: 'TestComp2026',
+        wcaUserId: 123,
+        startsAt: '2026-01-02T09:00:00.000Z',
+        title: 'Competition tomorrow',
+        body: 'Test Competition 2026 starts within 24 hours.',
+      })
+    );
+  });
+
   it('returns a failed result when VAPID config is missing', async () => {
     delete process.env.VAPID_PUBLIC_KEY;
 

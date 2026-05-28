@@ -10,6 +10,7 @@ jest.mock('dns', () => ({
 import {
   assertValidWebhookUrl,
   assertWebhookUrlResolvesPublicly,
+  resolvePublicWebhookUrl,
 } from './webhookUrls';
 
 describe('assertValidWebhookUrl', () => {
@@ -50,6 +51,12 @@ describe('assertValidWebhookUrl', () => {
     expect(() => assertValidWebhookUrl('https://[::1]/notify')).toThrow(
       'Webhook URL cannot target private addresses'
     );
+    expect(() =>
+      assertValidWebhookUrl('https://[::ffff:127.0.0.1]/notify')
+    ).toThrow('Webhook URL cannot target private addresses');
+    expect(() => assertValidWebhookUrl('https://203.0.113.10/notify')).toThrow(
+      'Webhook URL cannot target private addresses'
+    );
   });
 });
 
@@ -59,7 +66,7 @@ describe('assertWebhookUrlResolvesPublicly', () => {
   });
 
   it('accepts hostnames resolving to public addresses', async () => {
-    dnsLookup.mockResolvedValue([{ address: '203.0.113.10', family: 4 }]);
+    dnsLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
 
     await expect(
       assertWebhookUrlResolvesPublicly('https://hooks.example/notify')
@@ -74,5 +81,31 @@ describe('assertWebhookUrlResolvesPublicly', () => {
     await expect(
       assertWebhookUrlResolvesPublicly('https://hooks.example/notify')
     ).rejects.toThrow('Webhook URL cannot target private addresses');
+  });
+
+  it('returns an HTTPS agent pinned to the vetted public addresses', async () => {
+    dnsLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
+
+    const resolved = await resolvePublicWebhookUrl(
+      'https://hooks.example/notify'
+    );
+    const lookup = resolved.agent?.options.lookup;
+    const callback = jest.fn();
+
+    expect(resolved.url).toBe('https://hooks.example/notify');
+    expect(lookup).toBeDefined();
+
+    lookup?.('hooks.example', {}, callback);
+
+    expect(callback).toHaveBeenCalledWith(null, '93.184.216.34', 4);
+  });
+
+  it('does not add a pinned agent for direct public IP webhook URLs', async () => {
+    await expect(
+      resolvePublicWebhookUrl('https://93.184.216.34/notify')
+    ).resolves.toEqual({
+      url: 'https://93.184.216.34/notify',
+    });
+    expect(dnsLookup).not.toHaveBeenCalled();
   });
 });

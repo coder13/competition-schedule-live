@@ -1,13 +1,15 @@
 import prisma from '../db';
 import { createAssignmentSnapshot } from '../lib/assignmentSnapshots';
-import {
-  Prisma,
-  PushDeliveryStatus,
-  PushSubscription,
-} from '../prisma/generated/client';
-import { sendAssignmentPush } from './webPush';
+import { PushSubscription } from '../prisma/generated/client';
 import { fetchWcif } from './wcif';
 import { runWithConcurrency } from '../lib/runWithConcurrency';
+import { deliverAssignmentPush } from './assignmentPushDeliveries';
+import { competitionGroupsPersonUrl } from './competitionGroupsUrls';
+import {
+  deliverCompetitionStartReminders,
+  getEarliestCompetitionStartTime,
+  shouldSendCompetitionStartReminder,
+} from './competitionStartReminders';
 
 interface WatchTarget {
   competitionId: string;
@@ -46,25 +48,13 @@ const groupWatchesByCompetition = (watches: ActiveWatch[]) => {
   return competitions;
 };
 
-const competitionGroupsUrl = (competitionId: string, wcaUserId: number) => {
-  const origin = process.env.COMPETITION_GROUPS_ORIGIN;
-  if (!origin) {
-    return undefined;
-  }
-
-  return `${origin.replace(
-    /\/$/,
-    ''
-  )}/competitions/${competitionId}/persons/${wcaUserId}`;
-};
-
-const createDedupeKey = (
+const createAssignmentChangeDedupeKey = (
   competitionId: string,
   wcaUserId: number,
   assignmentsHash: string
 ) => `assignment-change:${competitionId}:${wcaUserId}:${assignmentsHash}`;
 
-const createPayload = (
+const createAssignmentChangePayload = (
   competitionId: string,
   wcaUserId: number,
   assignmentsHash: string
@@ -74,8 +64,12 @@ const createPayload = (
   wcaUserId,
   title: 'Assignment update',
   body: 'Your competition assignments changed. Open competitiongroups.com to review the latest groups.',
-  url: competitionGroupsUrl(competitionId, wcaUserId),
-  dedupeKey: createDedupeKey(competitionId, wcaUserId, assignmentsHash),
+  url: competitionGroupsPersonUrl(competitionId, wcaUserId),
+  dedupeKey: createAssignmentChangeDedupeKey(
+    competitionId,
+    wcaUserId,
+    assignmentsHash
+  ),
 });
 
 const getActiveWatches = async (): Promise<ActiveWatch[]> =>
@@ -96,63 +90,26 @@ const deliverAssignmentChange = async (
   wcaUserId: number,
   assignmentsHash: string
 ) => {
-  const dedupeKey = createDedupeKey(competitionId, wcaUserId, assignmentsHash);
-  const existingDelivery = await prisma.pushDelivery.findFirst({
-    where: {
-      pushSubscriptionId: subscription.id,
-      dedupeKey,
-    },
-  });
-
-  if (existingDelivery?.status === PushDeliveryStatus.sent) {
-    return true;
-  }
-
-  if (existingDelivery?.status === PushDeliveryStatus.pending) {
-    return false;
-  }
-
-  const delivery = existingDelivery
-    ? await prisma.pushDelivery.update({
-        where: {
-          id: existingDelivery.id,
-        },
-        data: {
-          status: PushDeliveryStatus.pending,
-          error: Prisma.JsonNull,
-        },
-      })
-    : await prisma.pushDelivery.create({
-        data: {
-          pushSubscriptionId: subscription.id,
-          competitionId,
-          wcaUserId,
-          dedupeKey,
-          status: PushDeliveryStatus.pending,
-        },
-      });
-
-  const result = await sendAssignmentPush(
-    subscription,
-    createPayload(competitionId, wcaUserId, assignmentsHash)
+  const dedupeKey = createAssignmentChangeDedupeKey(
+    competitionId,
+    wcaUserId,
+    assignmentsHash
   );
 
-  await prisma.pushDelivery.update({
-    where: {
-      id: delivery.id,
-    },
-    data: {
-      status: result.success
-        ? PushDeliveryStatus.sent
-        : PushDeliveryStatus.failed,
-      error: result.error ?? Prisma.JsonNull,
-    },
+  return deliverAssignmentPush({
+    subscription,
+    competitionId,
+    wcaUserId,
+    dedupeKey,
+    payload: createAssignmentChangePayload(
+      competitionId,
+      wcaUserId,
+      assignmentsHash
+    ),
   });
-
-  return result.success;
 };
 
-export const runAssignmentNotificationPoll = async () => {
+export const runAssignmentNotificationPoll = async (now = new Date()) => {
   const targetsByCompetition = groupWatchesByCompetition(
     await getActiveWatches()
   );
@@ -161,6 +118,20 @@ export const runAssignmentNotificationPoll = async () => {
     [...targetsByCompetition.entries()],
     async ([competitionId, targets]) => {
       const wcif = await fetchWcif(competitionId);
+      const earliestStartTime = getEarliestCompetitionStartTime(wcif);
+
+      if (
+        earliestStartTime &&
+        shouldSendCompetitionStartReminder(earliestStartTime, now)
+      ) {
+        await deliverCompetitionStartReminders({
+          competitionId,
+          competitionName: wcif.name,
+          targets,
+          earliestStartTime,
+          concurrency: assignmentDeliveryConcurrency(),
+        });
+      }
 
       for (const [wcaUserId, subscriptions] of targets.entries()) {
         const nextSnapshot = createAssignmentSnapshot(wcif, wcaUserId);

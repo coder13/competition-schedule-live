@@ -1,22 +1,8 @@
 import prisma from '../db';
-import {
-  PushDeliveryStatus,
-  PushSubscription,
-} from '../prisma/generated/client';
-import { sendAssignmentPush } from './webPush';
+import { PushSubscription } from '../prisma/generated/client';
 import { runWithConcurrency } from '../lib/runWithConcurrency';
-
-const competitionGroupsUrl = (competitionId: string, wcaUserId: number) => {
-  const origin = process.env.COMPETITION_GROUPS_ORIGIN;
-  if (!origin) {
-    return undefined;
-  }
-
-  return `${origin.replace(
-    /\/$/,
-    ''
-  )}/competitions/${competitionId}/persons/${wcaUserId}`;
-};
+import { deliverAssignmentPush } from './assignmentPushDeliveries';
+import { competitionGroupsPersonUrl } from './competitionGroupsUrls';
 
 const createDedupeKey = (
   competitionId: string,
@@ -93,46 +79,19 @@ const sendActivityHeadsUpPushDelivery = async ({
     activityIds,
     startsAt
   );
-  const existingDelivery = await prisma.pushDelivery.findFirst({
-    where: {
-      pushSubscriptionId: subscription.id,
-      dedupeKey,
-    },
-  });
-
-  if (existingDelivery) {
-    return;
-  }
-
-  const delivery = await prisma.pushDelivery.create({
-    data: {
-      pushSubscriptionId: subscription.id,
-      competitionId,
-      wcaUserId: targetUserId,
-      dedupeKey,
-      status: PushDeliveryStatus.pending,
-    },
-  });
-
-  const result = await sendAssignmentPush(subscription, {
-    type: 'activity-heads-up',
+  await deliverAssignmentPush({
+    subscription,
     competitionId,
-    activityIds,
-    startsAt: startsAt.toISOString(),
-    title: 'Activity starting soon',
-    body: `${formatActivityCount(activityIds)} will start in 5 minutes.`,
-    url: competitionGroupsUrl(competitionId, targetUserId),
-  });
-
-  await prisma.pushDelivery.update({
-    where: {
-      id: delivery.id,
-    },
-    data: {
-      status: result.success
-        ? PushDeliveryStatus.sent
-        : PushDeliveryStatus.failed,
-      error: result.error ?? undefined,
+    wcaUserId: targetUserId,
+    dedupeKey,
+    payload: {
+      type: 'activity-heads-up',
+      competitionId,
+      activityIds,
+      startsAt: startsAt.toISOString(),
+      title: 'Activity starting soon',
+      body: `${formatActivityCount(activityIds)} will start in 5 minutes.`,
+      url: competitionGroupsPersonUrl(competitionId, targetUserId),
     },
   });
 };

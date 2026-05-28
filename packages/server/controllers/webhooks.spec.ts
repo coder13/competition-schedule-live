@@ -3,14 +3,18 @@ import { HTTPMethod, Webhook } from '../prisma/generated/client';
 
 const fetchMock = jest.fn();
 const webhookFindMany = jest.fn();
-const assertWebhookUrlResolvesPublicly = jest.fn(async (url: string) => url);
+const webhookAgent = { pinned: true };
+const resolvePublicWebhookUrl = jest.fn(async (url: string) => ({
+  url,
+  agent: webhookAgent,
+}));
 
 jest.mock('../lib/fetchWithTimeout', () => ({
   fetchWithTimeout: fetchMock,
 }));
 
 jest.mock('../lib/webhookUrls', () => ({
-  assertWebhookUrlResolvesPublicly,
+  resolvePublicWebhookUrl,
 }));
 
 jest.mock('../db', () => ({
@@ -40,7 +44,7 @@ describe('webhook controllers', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     webhookFindMany.mockReset();
-    assertWebhookUrlResolvesPublicly.mockClear();
+    resolvePublicWebhookUrl.mockClear();
   });
 
   it('sends JSON data with stored webhook headers', async () => {
@@ -62,6 +66,7 @@ describe('webhook controllers', () => {
     expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
       method: 'POST',
       size: 64 * 1024,
+      agent: webhookAgent,
       headers: {
         'Content-Type': 'application/json',
         'X-Test': 'true',
@@ -91,6 +96,7 @@ describe('webhook controllers', () => {
     expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
       method: 'POST',
       size: 64 * 1024,
+      agent: webhookAgent,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -118,6 +124,7 @@ describe('webhook controllers', () => {
     expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
       method: 'GET',
       size: 64 * 1024,
+      agent: webhookAgent,
       headers: {
         'X-Test': 'true',
       },

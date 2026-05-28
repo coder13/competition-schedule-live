@@ -52,6 +52,7 @@
     "graphql-subscriptions": "^2.0.0",
     "graphql-type-json": "^0.3.2",
     "graphql-ws": "^5.11.2",
+    "ipaddr.js": "^2.4.0",
     "jsonwebtoken": "^8.5.1",
     "morgan": "^1.10.1",
     "node-fetch": "2",

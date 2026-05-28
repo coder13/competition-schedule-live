@@ -15,7 +15,11 @@ jest.mock('../lib/competitionGroupsToken', () => ({
   verifyCompetitionGroupsToken,
 }));
 
-import { authMiddlewareDecode, authMiddlewareVerify } from './AuthMiddleware';
+import {
+  authMiddlewareDecode,
+  authMiddlewareVerify,
+  authMiddlewareVerifyIgnoringExpiration,
+} from './AuthMiddleware';
 
 const createRequest = (authorization?: string) => ({
   headers: {
@@ -34,6 +38,13 @@ const callAuthMiddlewareDecode = authMiddlewareDecode as unknown as (
   res: unknown,
   next: jest.Mock
 ) => void;
+
+const callAuthMiddlewareVerifyIgnoringExpiration =
+  authMiddlewareVerifyIgnoringExpiration as unknown as (
+    req: ReturnType<typeof createRequest>,
+    res: unknown,
+    next: jest.Mock
+  ) => void;
 
 describe('AuthMiddleware', () => {
   beforeEach(() => {
@@ -74,6 +85,39 @@ describe('AuthMiddleware', () => {
     expect(jwtVerify).toHaveBeenCalledWith('jwt-token', expect.anything());
     expect(request).toMatchObject({ user });
     expect(next).toHaveBeenCalledWith(null);
+  });
+
+  it('can verify expired app JWTs for refresh without checking expiration', () => {
+    const user = { id: 123, name: 'Expired User' };
+    const request = createRequest('Bearer expired-jwt-token');
+    const next = jest.fn();
+    jwtVerify.mockReturnValue(user);
+
+    callAuthMiddlewareVerifyIgnoringExpiration(request, {}, next);
+
+    expect(jwtVerify).toHaveBeenCalledWith(
+      'expired-jwt-token',
+      expect.anything(),
+      {
+        ignoreExpiration: true,
+      }
+    );
+    expect(request).toMatchObject({ user });
+    expect(next).toHaveBeenCalledWith(null);
+  });
+
+  it('does not fall back to Competition Groups tokens for refresh JWT verification', () => {
+    const request = createRequest('Bearer competition-groups-token');
+    const next = jest.fn();
+    const jwtError = new Error('invalid jwt');
+    jwtVerify.mockImplementation(() => {
+      throw jwtError;
+    });
+
+    callAuthMiddlewareVerifyIgnoringExpiration(request, {}, next);
+
+    expect(verifyCompetitionGroupsToken).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith(jwtError);
   });
 
   it('falls back to Competition Groups tokens for remote-control users', () => {

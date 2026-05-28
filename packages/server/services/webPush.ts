@@ -9,6 +9,7 @@ export interface AssignmentPushPayload {
   title: string;
   body: string;
   url?: string;
+  dedupeKey?: string;
 }
 
 export interface ActivityHeadsUpPushPayload {
@@ -19,16 +20,33 @@ export interface ActivityHeadsUpPushPayload {
   title: string;
   body: string;
   url?: string;
+  dedupeKey?: string;
 }
 
-export type PushPayload = AssignmentPushPayload | ActivityHeadsUpPushPayload;
+export interface CompetitionStartReminderPushPayload {
+  type: 'competition-start-reminder';
+  competitionId: string;
+  wcaUserId: number;
+  startsAt: string;
+  title: string;
+  body: string;
+  url?: string;
+  dedupeKey?: string;
+}
+
+export type PushPayload =
+  | AssignmentPushPayload
+  | ActivityHeadsUpPushPayload
+  | CompetitionStartReminderPushPayload;
 
 const configureWebPush = () => {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
 
   if (!publicKey || !privateKey) {
-    throw new Error('VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be configured');
+    throw new Error(
+      'VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be configured'
+    );
   }
 
   webPush.setVapidDetails(

@@ -99,6 +99,36 @@ export const authMiddlewareVerify = (
     }
   }
 };
+
+export const authMiddlewareVerifyIgnoringExpiration = (
+  req: Request,
+  _: Response,
+  next: NextFunction
+) => {
+  const { headers } = req;
+
+  const split = headers?.authorization?.split(/\s/);
+
+  if (!split || split.length < 2) {
+    next();
+    return;
+  }
+
+  if (split[0] !== 'Bearer') {
+    next(null);
+    return;
+  }
+
+  try {
+    req.user = jwt.verify(split[1], getPublicKey(), {
+      ignoreExpiration: true,
+    }) as User | undefined;
+    next(null);
+  } catch (e) {
+    next(e);
+  }
+};
+
 export const authMiddlewareDecode = (
   req: Request,
   _: Response,
@@ -115,6 +145,7 @@ export const authMiddlewareDecode = (
 
   if (split[0] !== 'Bearer') {
     next(null);
+    return;
   }
 
   const token = split[1];
