@@ -26,7 +26,8 @@ Required push-notification environment variables:
 - `VAPID_PUBLIC_KEY`: public VAPID key returned to competitiongroups.com.
 - `VAPID_PRIVATE_KEY`: private VAPID key used to send browser push messages.
 - `COMPETITION_GROUPS_JWT_SECRET`: shared HS256 secret used to authenticate
-  CompetitionGroups subscription requests.
+  CompetitionGroups subscription requests. Also used for push session tokens
+  unless `COMPETITION_GROUPS_PUSH_SESSION_SECRET` is configured.
 
 Optional push-notification environment variables:
 
@@ -39,6 +40,10 @@ Optional push-notification environment variables:
 - `COMPETITION_GROUPS_JWT_ISSUER`: expected `iss` claim when configured.
 - `COMPETITION_GROUPS_JWT_AUDIENCE`: expected `aud` claim when configured.
 - `COMPETITION_GROUPS_ORIGIN`: origin used when building notification click URLs.
+- `COMPETITION_GROUPS_PUSH_SESSION_SECRET`: dedicated HS256 secret for durable
+  CompetitionGroups push session tokens.
+- `COMPETITION_GROUPS_PUSH_SESSION_TTL_SECONDS`: optional push session token
+  lifetime. When omitted, push sessions last until the client disables them.
 
 The question should be asked: How does the server know who is in what group? The main answer to this is through the [WCIF](https://github.com/thewca/wcif/blob/master/specification.md). But the other question is does this data get saved?
 **An argument for saving the data in databases**: potentially faster, could cache, only retreive the data you need.
