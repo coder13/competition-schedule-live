@@ -1,4 +1,7 @@
 import { promises as dns } from 'dns';
+import type { LookupAddress, LookupOptions } from 'dns';
+import https from 'https';
+import type { LookupFunction } from 'net';
 import ipaddr from 'ipaddr.js';
 
 const LOCAL_HOSTNAMES = new Set(['localhost']);
@@ -11,6 +14,48 @@ const assertPublicAddress = (address: string) => {
   if (parsedAddress.range() !== 'unicast') {
     throw new Error('Webhook URL cannot target private addresses');
   }
+};
+
+const createLookupError = () => {
+  const error = new Error(
+    'Webhook URL host could not be resolved to a public address'
+  ) as NodeJS.ErrnoException;
+  error.code = 'ENOTFOUND';
+  return error;
+};
+
+const pickAddress = (
+  addresses: LookupAddress[],
+  options: LookupOptions
+): LookupAddress[] => {
+  const family = typeof options.family === 'number' ? options.family : undefined;
+
+  if (!family) {
+    return addresses;
+  }
+
+  return addresses.filter((address) => address.family === family);
+};
+
+const createPinnedHttpsAgent = (addresses: LookupAddress[]) => {
+  const lookup: LookupFunction = (_hostname, options, callback) => {
+    const candidates = pickAddress(addresses, options);
+    const family = typeof options.family === 'number' ? options.family : 0;
+
+    if (!candidates.length) {
+      callback(createLookupError(), options.all ? [] : '', family);
+      return;
+    }
+
+    if (options.all) {
+      callback(null, candidates);
+      return;
+    }
+
+    callback(null, candidates[0].address, candidates[0].family);
+  };
+
+  return new https.Agent({ lookup });
 };
 
 export const assertValidWebhookUrl = (value: string) => {
@@ -47,12 +92,17 @@ export const assertValidWebhookUrl = (value: string) => {
 };
 
 export const assertWebhookUrlResolvesPublicly = async (value: string) => {
+  const { url } = await resolvePublicWebhookUrl(value);
+  return url;
+};
+
+export const resolvePublicWebhookUrl = async (value: string) => {
   const normalizedUrl = assertValidWebhookUrl(value);
   const { hostname } = new URL(normalizedUrl);
   const normalizedHostname = hostname.replace(/^\[|\]$/g, '').toLowerCase();
 
   if (isIpAddress(normalizedHostname)) {
-    return normalizedUrl;
+    return { url: normalizedUrl };
   }
 
   const addresses = await dns.lookup(normalizedHostname, { all: true });
@@ -64,5 +114,8 @@ export const assertWebhookUrlResolvesPublicly = async (value: string) => {
     assertPublicAddress(address);
   });
 
-  return normalizedUrl;
+  return {
+    url: normalizedUrl,
+    agent: createPinnedHttpsAgent(addresses),
+  };
 };

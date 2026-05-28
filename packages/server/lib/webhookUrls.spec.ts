@@ -10,6 +10,7 @@ jest.mock('dns', () => ({
 import {
   assertValidWebhookUrl,
   assertWebhookUrlResolvesPublicly,
+  resolvePublicWebhookUrl,
 } from './webhookUrls';
 
 describe('assertValidWebhookUrl', () => {
@@ -80,5 +81,31 @@ describe('assertWebhookUrlResolvesPublicly', () => {
     await expect(
       assertWebhookUrlResolvesPublicly('https://hooks.example/notify')
     ).rejects.toThrow('Webhook URL cannot target private addresses');
+  });
+
+  it('returns an HTTPS agent pinned to the vetted public addresses', async () => {
+    dnsLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
+
+    const resolved = await resolvePublicWebhookUrl(
+      'https://hooks.example/notify'
+    );
+    const lookup = resolved.agent?.options.lookup;
+    const callback = jest.fn();
+
+    expect(resolved.url).toBe('https://hooks.example/notify');
+    expect(lookup).toBeDefined();
+
+    lookup?.('hooks.example', {}, callback);
+
+    expect(callback).toHaveBeenCalledWith(null, '93.184.216.34', 4);
+  });
+
+  it('does not add a pinned agent for direct public IP webhook URLs', async () => {
+    await expect(
+      resolvePublicWebhookUrl('https://93.184.216.34/notify')
+    ).resolves.toEqual({
+      url: 'https://93.184.216.34/notify',
+    });
+    expect(dnsLookup).not.toHaveBeenCalled();
   });
 });

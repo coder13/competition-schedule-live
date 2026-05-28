@@ -4,6 +4,7 @@ const assignmentSnapshotFindUnique = jest.fn();
 const assignmentSnapshotUpsert = jest.fn();
 const pushDeliveryFindFirst = jest.fn();
 const pushDeliveryCreate = jest.fn();
+const pushDeliveryUpdateMany = jest.fn();
 const pushDeliveryUpdate = jest.fn();
 const sendAssignmentPush = jest.fn();
 const fetchWcif = jest.fn();
@@ -21,6 +22,7 @@ jest.mock('../db', () => ({
     pushDelivery: {
       findFirst: pushDeliveryFindFirst,
       create: pushDeliveryCreate,
+      updateMany: pushDeliveryUpdateMany,
       update: pushDeliveryUpdate,
     },
   },
@@ -67,6 +69,7 @@ describe('assignment notification worker', () => {
     assignmentSnapshotUpsert.mockReset().mockResolvedValue({});
     pushDeliveryFindFirst.mockReset().mockResolvedValue(null);
     pushDeliveryCreate.mockReset().mockResolvedValue({ id: 20 });
+    pushDeliveryUpdateMany.mockReset().mockResolvedValue({ count: 1 });
     pushDeliveryUpdate.mockReset().mockResolvedValue({ id: 20 });
     sendAssignmentPush.mockReset().mockResolvedValue({
       success: true,
@@ -179,10 +182,10 @@ describe('assignment notification worker', () => {
 
     await runAssignmentNotificationPoll();
 
-    expect(pushDeliveryUpdate).toHaveBeenCalledWith({
-      where: {
+    expect(pushDeliveryUpdateMany).toHaveBeenCalledWith({
+      where: expect.objectContaining({
         id: 99,
-      },
+      }),
       data: {
         status: 'pending',
         error: expect.anything(),
@@ -190,6 +193,22 @@ describe('assignment notification worker', () => {
     });
     expect(sendAssignmentPush).toHaveBeenCalled();
     expect(assignmentSnapshotUpsert).toHaveBeenCalled();
+  });
+
+  it('does not retry a matching push delivery that is already in flight', async () => {
+    assignmentWatchFindMany.mockResolvedValue([activeWatch]);
+    pushDeliveryFindFirst.mockResolvedValue({
+      id: 99,
+      status: 'pending',
+      updatedAt: new Date(),
+    });
+    pushDeliveryUpdateMany.mockResolvedValue({ count: 0 });
+
+    await runAssignmentNotificationPoll();
+
+    expect(pushDeliveryCreate).not.toHaveBeenCalled();
+    expect(sendAssignmentPush).not.toHaveBeenCalled();
+    expect(assignmentSnapshotUpsert).not.toHaveBeenCalled();
   });
 
   it('records failed assignment-change deliveries without a Competition Groups URL', async () => {

@@ -109,7 +109,7 @@ const loadAuth = async (
     })),
   }));
   jest.doMock('./AuthMiddleware', () => ({
-    authMiddlewareVerify: jest.fn(
+    authMiddlewareVerifyIgnoringExpiration: jest.fn(
       (req: MockRequest, _res: MockResponse, next: () => void) => next()
     ),
   }));

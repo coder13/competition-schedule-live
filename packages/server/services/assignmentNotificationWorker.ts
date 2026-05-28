@@ -1,13 +1,10 @@
 import prisma from '../db';
 import { createAssignmentSnapshot } from '../lib/assignmentSnapshots';
-import {
-  Prisma,
-  PushDeliveryStatus,
-  PushSubscription,
-} from '../prisma/generated/client';
+import { PushSubscription } from '../prisma/generated/client';
 import { sendAssignmentPush } from './webPush';
 import { fetchWcif } from './wcif';
 import { runWithConcurrency } from '../lib/runWithConcurrency';
+import { claimPushDelivery, completePushDelivery } from './pushDeliveries';
 
 interface WatchTarget {
   competitionId: string;
@@ -97,57 +94,26 @@ const deliverAssignmentChange = async (
   assignmentsHash: string
 ) => {
   const dedupeKey = createDedupeKey(competitionId, wcaUserId, assignmentsHash);
-  const existingDelivery = await prisma.pushDelivery.findFirst({
-    where: {
-      pushSubscriptionId: subscription.id,
-      dedupeKey,
-    },
+  const deliveryClaim = await claimPushDelivery({
+    pushSubscriptionId: subscription.id,
+    competitionId,
+    wcaUserId,
+    dedupeKey,
   });
 
-  if (existingDelivery?.status === PushDeliveryStatus.sent) {
+  if (deliveryClaim.status === 'already-sent') {
     return true;
   }
 
-  if (existingDelivery?.status === PushDeliveryStatus.pending) {
+  if (deliveryClaim.status === 'in-flight') {
     return false;
   }
-
-  const delivery = existingDelivery
-    ? await prisma.pushDelivery.update({
-        where: {
-          id: existingDelivery.id,
-        },
-        data: {
-          status: PushDeliveryStatus.pending,
-          error: Prisma.JsonNull,
-        },
-      })
-    : await prisma.pushDelivery.create({
-        data: {
-          pushSubscriptionId: subscription.id,
-          competitionId,
-          wcaUserId,
-          dedupeKey,
-          status: PushDeliveryStatus.pending,
-        },
-      });
 
   const result = await sendAssignmentPush(
     subscription,
     createPayload(competitionId, wcaUserId, assignmentsHash)
   );
-
-  await prisma.pushDelivery.update({
-    where: {
-      id: delivery.id,
-    },
-    data: {
-      status: result.success
-        ? PushDeliveryStatus.sent
-        : PushDeliveryStatus.failed,
-      error: result.error ?? Prisma.JsonNull,
-    },
-  });
+  await completePushDelivery(deliveryClaim.deliveryId, result);
 
   return result.success;
 };

@@ -3,6 +3,7 @@ const competitionAccessFindMany = jest.fn();
 const assignmentWatchFindMany = jest.fn();
 const pushDeliveryFindFirst = jest.fn();
 const pushDeliveryCreate = jest.fn();
+const pushDeliveryUpdateMany = jest.fn();
 const pushDeliveryUpdate = jest.fn();
 const sendAssignmentPush = jest.fn();
 
@@ -18,6 +19,7 @@ jest.mock('../db', () => ({
     pushDelivery: {
       findFirst: pushDeliveryFindFirst,
       create: pushDeliveryCreate,
+      updateMany: pushDeliveryUpdateMany,
       update: pushDeliveryUpdate,
     },
   },
@@ -53,6 +55,7 @@ describe('sendActivityHeadsUpPush', () => {
     ]);
     pushDeliveryFindFirst.mockReset().mockResolvedValue(null);
     pushDeliveryCreate.mockReset().mockResolvedValue({ id: 20 });
+    pushDeliveryUpdateMany.mockReset().mockResolvedValue({ count: 1 });
     pushDeliveryUpdate.mockReset().mockResolvedValue({ id: 20 });
     sendAssignmentPush.mockReset().mockResolvedValue({
       success: true,
@@ -120,13 +123,13 @@ describe('sendActivityHeadsUpPush', () => {
       },
       data: {
         status: 'sent',
-        error: undefined,
+        error: expect.anything(),
       },
     });
   });
 
   it('skips subscriptions that already received the same heads-up delivery', async () => {
-    pushDeliveryFindFirst.mockResolvedValue({ id: 99 });
+    pushDeliveryFindFirst.mockResolvedValue({ id: 99, status: 'sent' });
 
     await sendActivityHeadsUpPush(
       'TestComp2026',
@@ -135,8 +138,40 @@ describe('sendActivityHeadsUpPush', () => {
     );
 
     expect(pushDeliveryCreate).not.toHaveBeenCalled();
+    expect(pushDeliveryUpdateMany).not.toHaveBeenCalled();
     expect(sendAssignmentPush).not.toHaveBeenCalled();
     expect(pushDeliveryUpdate).not.toHaveBeenCalled();
+  });
+
+  it('retries failed heads-up deliveries', async () => {
+    pushDeliveryFindFirst.mockResolvedValue({ id: 99, status: 'failed' });
+
+    await sendActivityHeadsUpPush(
+      'TestComp2026',
+      [1],
+      new Date('2026-01-01T10:00:00Z')
+    );
+
+    expect(pushDeliveryCreate).not.toHaveBeenCalled();
+    expect(pushDeliveryUpdateMany).toHaveBeenCalledWith({
+      where: expect.objectContaining({
+        id: 99,
+      }),
+      data: {
+        status: 'pending',
+        error: expect.anything(),
+      },
+    });
+    expect(sendAssignmentPush).toHaveBeenCalled();
+    expect(pushDeliveryUpdate).toHaveBeenCalledWith({
+      where: {
+        id: 99,
+      },
+      data: {
+        status: 'sent',
+        error: expect.anything(),
+      },
+    });
   });
 
   it('records failed deliveries with the push error payload', async () => {

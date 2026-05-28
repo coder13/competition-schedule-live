@@ -1,7 +1,7 @@
 import fs from 'fs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { authMiddlewareVerify } from './AuthMiddleware';
+import { authMiddlewareVerifyIgnoringExpiration } from './AuthMiddleware';
 import { getMockUser, isMocksMode } from '../mocks/config';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
@@ -219,55 +219,59 @@ router.get('/wca/callback', async (req, res) => {
   }
 });
 
-router.post('/wca/refresh', authMiddlewareVerify, async (req, res) => {
-  if (!req.user) {
-    return res.status(403).send('Unauthenticated');
-  }
-
-  if (isMocksMode()) {
-    return res.json({ jwt: await resignJWT(req.user) });
-  }
-
-  const params = new URLSearchParams({
-    grant_type: 'refresh_token',
-    client_id: resolvedClientId,
-    client_secret: resolvedClientSecret,
-    refresh_token: req.user.wca.refreshToken,
-    code: req.user.wca.code,
-    scope: SCOPE,
-    redirect_uri: req.get('Referer') ?? resolvedRedirectUri,
-  });
-
-  try {
-    const response = await fetchWithTimeout(`${resolvedWcaOrigin}/oauth/token`, {
-      method: 'POST',
-      body: params,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-
-    if (!response.ok) {
-      throw await response.json();
+router.post(
+  '/wca/refresh',
+  authMiddlewareVerifyIgnoringExpiration,
+  async (req, res) => {
+    if (!req.user) {
+      return res.status(403).send('Unauthenticated');
     }
 
-    const tokens = (await response.json()) as WcaOauthRes;
+    if (isMocksMode()) {
+      return res.json({ jwt: await resignJWT(req.user) });
+    }
 
-    const token = await resignJWT({
-      ...req.user,
-      wca: {
-        ...req.user.wca,
-        accessToken: tokens.access_token,
-        expiration: new Date(Date.now() + tokens.expires_in * 1000).getTime(),
-        refreshToken: tokens.refresh_token,
-      },
+    const params = new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: resolvedClientId,
+      client_secret: resolvedClientSecret,
+      refresh_token: req.user.wca.refreshToken,
+      code: req.user.wca.code,
+      scope: SCOPE,
+      redirect_uri: req.get('Referer') ?? resolvedRedirectUri,
     });
 
-    return res.json({ jwt: token });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json(e);
+    try {
+      const response = await fetchWithTimeout(`${resolvedWcaOrigin}/oauth/token`, {
+        method: 'POST',
+        body: params,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+
+      if (!response.ok) {
+        throw await response.json();
+      }
+
+      const tokens = (await response.json()) as WcaOauthRes;
+
+      const token = await resignJWT({
+        ...req.user,
+        wca: {
+          ...req.user.wca,
+          accessToken: tokens.access_token,
+          expiration: new Date(Date.now() + tokens.expires_in * 1000).getTime(),
+          refreshToken: tokens.refresh_token,
+        },
+      });
+
+      return res.json({ jwt: token });
+    } catch (e) {
+      console.error(e);
+      res.status(500).json(e);
+    }
   }
-});
+);
 
 export default router;

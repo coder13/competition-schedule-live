@@ -2,7 +2,7 @@ import prisma from '../db';
 import { Header } from '../generated/graphql';
 import { Webhook } from '../prisma/generated/client';
 import { fetchWithTimeout } from '../lib/fetchWithTimeout';
-import { assertWebhookUrlResolvesPublicly } from '../lib/webhookUrls';
+import { resolvePublicWebhookUrl } from '../lib/webhookUrls';
 import { settleWithConcurrency } from '../lib/runWithConcurrency';
 
 const BODYLESS_METHODS = new Set(['GET', 'HEAD']);
@@ -28,12 +28,13 @@ export const webhookFetch = async (
     (acc, h) => ({ ...acc, [h.key]: h.value }),
     {}
   );
-  const url = await assertWebhookUrlResolvesPublicly(webhook.url);
+  const resolvedUrl = await resolvePublicWebhookUrl(webhook.url);
   const canSendBody = !BODYLESS_METHODS.has(webhook.method);
 
-  return fetchWithTimeout(url, {
+  return fetchWithTimeout(resolvedUrl.url, {
     method: webhook.method,
     size: MAX_WEBHOOK_RESPONSE_SIZE_BYTES,
+    ...(resolvedUrl.agent && { agent: resolvedUrl.agent }),
     headers: {
       ...(canSendBody && { 'Content-Type': 'application/json' }),
       ...headers,
