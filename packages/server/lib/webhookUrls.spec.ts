@@ -50,6 +50,12 @@ describe('assertValidWebhookUrl', () => {
     expect(() => assertValidWebhookUrl('https://[::1]/notify')).toThrow(
       'Webhook URL cannot target private addresses'
     );
+    expect(() =>
+      assertValidWebhookUrl('https://[::ffff:127.0.0.1]/notify')
+    ).toThrow('Webhook URL cannot target private addresses');
+    expect(() => assertValidWebhookUrl('https://203.0.113.10/notify')).toThrow(
+      'Webhook URL cannot target private addresses'
+    );
   });
 });
 
@@ -59,7 +65,7 @@ describe('assertWebhookUrlResolvesPublicly', () => {
   });
 
   it('accepts hostnames resolving to public addresses', async () => {
-    dnsLookup.mockResolvedValue([{ address: '203.0.113.10', family: 4 }]);
+    dnsLookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }]);
 
     await expect(
       assertWebhookUrlResolvesPublicly('https://hooks.example/notify')

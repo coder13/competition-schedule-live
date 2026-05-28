@@ -1,44 +1,14 @@
-import net from 'net';
 import { promises as dns } from 'dns';
+import ipaddr from 'ipaddr.js';
 
 const LOCAL_HOSTNAMES = new Set(['localhost']);
 
-const isPrivateIpv4 = (host: string) => {
-  const parts = host.split('.').map(Number);
-  const [first, second] = parts;
-
-  return (
-    first === 10 ||
-    first === 127 ||
-    first === 0 ||
-    first >= 224 ||
-    (first === 100 && second >= 64 && second <= 127) ||
-    (first === 169 && second === 254) ||
-    (first === 172 && second >= 16 && second <= 31) ||
-    (first === 192 && second === 0) ||
-    (first === 192 && second === 168) ||
-    (first === 198 && (second === 18 || second === 19))
-  );
-};
-
-const isPrivateIpv6 = (host: string) => {
-  const normalized = host.toLowerCase();
-  return (
-    normalized === '::1' ||
-    normalized === '::' ||
-    normalized.startsWith('fc') ||
-    normalized.startsWith('fd') ||
-    normalized.startsWith('fe80:') ||
-    normalized.startsWith('ff')
-  );
-};
+const isIpAddress = (host: string) => ipaddr.isValid(host);
 
 const assertPublicAddress = (address: string) => {
-  const ipVersion = net.isIP(address);
-  if (
-    (ipVersion === 4 && isPrivateIpv4(address)) ||
-    (ipVersion === 6 && isPrivateIpv6(address))
-  ) {
+  const parsedAddress = ipaddr.process(address);
+
+  if (parsedAddress.range() !== 'unicast') {
     throw new Error('Webhook URL cannot target private addresses');
   }
 };
@@ -69,8 +39,7 @@ export const assertValidWebhookUrl = (value: string) => {
     throw new Error('Webhook URL cannot target local hosts');
   }
 
-  const ipVersion = net.isIP(hostname);
-  if (ipVersion) {
+  if (isIpAddress(hostname)) {
     assertPublicAddress(hostname);
   }
 
@@ -82,7 +51,7 @@ export const assertWebhookUrlResolvesPublicly = async (value: string) => {
   const { hostname } = new URL(normalizedUrl);
   const normalizedHostname = hostname.replace(/^\[|\]$/g, '').toLowerCase();
 
-  if (net.isIP(normalizedHostname)) {
+  if (isIpAddress(normalizedHostname)) {
     return normalizedUrl;
   }
 
