@@ -1,10 +1,15 @@
 import prisma from '../db';
 import { createAssignmentSnapshot } from '../lib/assignmentSnapshots';
 import { PushSubscription } from '../prisma/generated/client';
-import { sendAssignmentPush } from './webPush';
 import { fetchWcif } from './wcif';
 import { runWithConcurrency } from '../lib/runWithConcurrency';
-import { claimPushDelivery, completePushDelivery } from './pushDeliveries';
+import { deliverAssignmentPush } from './assignmentPushDeliveries';
+import { competitionGroupsPersonUrl } from './competitionGroupsUrls';
+import {
+  deliverCompetitionStartReminders,
+  getEarliestCompetitionStartTime,
+  shouldSendCompetitionStartReminder,
+} from './competitionStartReminders';
 
 interface WatchTarget {
   competitionId: string;
@@ -43,25 +48,13 @@ const groupWatchesByCompetition = (watches: ActiveWatch[]) => {
   return competitions;
 };
 
-const competitionGroupsUrl = (competitionId: string, wcaUserId: number) => {
-  const origin = process.env.COMPETITION_GROUPS_ORIGIN;
-  if (!origin) {
-    return undefined;
-  }
-
-  return `${origin.replace(
-    /\/$/,
-    ''
-  )}/competitions/${competitionId}/persons/${wcaUserId}`;
-};
-
-const createDedupeKey = (
+const createAssignmentChangeDedupeKey = (
   competitionId: string,
   wcaUserId: number,
   assignmentsHash: string
 ) => `assignment-change:${competitionId}:${wcaUserId}:${assignmentsHash}`;
 
-const createPayload = (
+const createAssignmentChangePayload = (
   competitionId: string,
   wcaUserId: number,
   assignmentsHash: string
@@ -71,8 +64,12 @@ const createPayload = (
   wcaUserId,
   title: 'Assignment update',
   body: 'Your competition assignments changed. Open competitiongroups.com to review the latest groups.',
-  url: competitionGroupsUrl(competitionId, wcaUserId),
-  dedupeKey: createDedupeKey(competitionId, wcaUserId, assignmentsHash),
+  url: competitionGroupsPersonUrl(competitionId, wcaUserId),
+  dedupeKey: createAssignmentChangeDedupeKey(
+    competitionId,
+    wcaUserId,
+    assignmentsHash
+  ),
 });
 
 const getActiveWatches = async (): Promise<ActiveWatch[]> =>
@@ -93,32 +90,26 @@ const deliverAssignmentChange = async (
   wcaUserId: number,
   assignmentsHash: string
 ) => {
-  const dedupeKey = createDedupeKey(competitionId, wcaUserId, assignmentsHash);
-  const deliveryClaim = await claimPushDelivery({
-    pushSubscriptionId: subscription.id,
+  const dedupeKey = createAssignmentChangeDedupeKey(
+    competitionId,
+    wcaUserId,
+    assignmentsHash
+  );
+
+  return deliverAssignmentPush({
+    subscription,
     competitionId,
     wcaUserId,
     dedupeKey,
+    payload: createAssignmentChangePayload(
+      competitionId,
+      wcaUserId,
+      assignmentsHash
+    ),
   });
-
-  if (deliveryClaim.status === 'already-sent') {
-    return true;
-  }
-
-  if (deliveryClaim.status === 'in-flight') {
-    return false;
-  }
-
-  const result = await sendAssignmentPush(
-    subscription,
-    createPayload(competitionId, wcaUserId, assignmentsHash)
-  );
-  await completePushDelivery(deliveryClaim.deliveryId, result);
-
-  return result.success;
 };
 
-export const runAssignmentNotificationPoll = async () => {
+export const runAssignmentNotificationPoll = async (now = new Date()) => {
   const targetsByCompetition = groupWatchesByCompetition(
     await getActiveWatches()
   );
@@ -127,6 +118,20 @@ export const runAssignmentNotificationPoll = async () => {
     [...targetsByCompetition.entries()],
     async ([competitionId, targets]) => {
       const wcif = await fetchWcif(competitionId);
+      const earliestStartTime = getEarliestCompetitionStartTime(wcif);
+
+      if (
+        earliestStartTime &&
+        shouldSendCompetitionStartReminder(earliestStartTime, now)
+      ) {
+        await deliverCompetitionStartReminders({
+          competitionId,
+          competitionName: wcif.name,
+          targets,
+          earliestStartTime,
+          concurrency: assignmentDeliveryConcurrency(),
+        });
+      }
 
       for (const [wcaUserId, subscriptions] of targets.entries()) {
         const nextSnapshot = createAssignmentSnapshot(wcif, wcaUserId);

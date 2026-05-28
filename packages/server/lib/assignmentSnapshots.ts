@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import type { Schedule } from '@wca/helpers';
 
 export interface WcifPersonAssignment {
   activityId?: number;
@@ -13,7 +14,9 @@ export interface WcifPerson {
 
 export interface WcifPayload {
   id: string;
+  name?: string | null;
   persons: WcifPerson[];
+  schedule?: Schedule | null;
 }
 
 const sortObject = (value: unknown): unknown => {

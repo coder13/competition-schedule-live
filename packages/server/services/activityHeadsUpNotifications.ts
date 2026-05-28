@@ -1,20 +1,8 @@
 import prisma from '../db';
 import { PushSubscription } from '../prisma/generated/client';
-import { sendAssignmentPush } from './webPush';
 import { runWithConcurrency } from '../lib/runWithConcurrency';
-import { claimPushDelivery, completePushDelivery } from './pushDeliveries';
-
-const competitionGroupsUrl = (competitionId: string, wcaUserId: number) => {
-  const origin = process.env.COMPETITION_GROUPS_ORIGIN;
-  if (!origin) {
-    return undefined;
-  }
-
-  return `${origin.replace(
-    /\/$/,
-    ''
-  )}/competitions/${competitionId}/persons/${wcaUserId}`;
-};
+import { deliverAssignmentPush } from './assignmentPushDeliveries';
+import { competitionGroupsPersonUrl } from './competitionGroupsUrls';
 
 const createDedupeKey = (
   competitionId: string,
@@ -91,28 +79,21 @@ const sendActivityHeadsUpPushDelivery = async ({
     activityIds,
     startsAt
   );
-  const deliveryClaim = await claimPushDelivery({
-    pushSubscriptionId: subscription.id,
+  await deliverAssignmentPush({
+    subscription,
     competitionId,
     wcaUserId: targetUserId,
     dedupeKey,
+    payload: {
+      type: 'activity-heads-up',
+      competitionId,
+      activityIds,
+      startsAt: startsAt.toISOString(),
+      title: 'Activity starting soon',
+      body: `${formatActivityCount(activityIds)} will start in 5 minutes.`,
+      url: competitionGroupsPersonUrl(competitionId, targetUserId),
+    },
   });
-
-  if (deliveryClaim.status !== 'claimed') {
-    return;
-  }
-
-  const result = await sendAssignmentPush(subscription, {
-    type: 'activity-heads-up',
-    competitionId,
-    activityIds,
-    startsAt: startsAt.toISOString(),
-    title: 'Activity starting soon',
-    body: `${formatActivityCount(activityIds)} will start in 5 minutes.`,
-    url: competitionGroupsUrl(competitionId, targetUserId),
-  });
-
-  await completePushDelivery(deliveryClaim.deliveryId, result);
 };
 
 export const sendActivityHeadsUpPush = async (
