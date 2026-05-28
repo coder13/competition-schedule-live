@@ -46,6 +46,12 @@ const subscription = {
   auth: 'auth',
 };
 
+const activeWatch = {
+  competitionId: 'TestComp2026',
+  wcaUserId: 123,
+  pushSubscription: subscription,
+};
+
 describe('assignment notification worker', () => {
   const env = process.env;
 
@@ -91,14 +97,20 @@ describe('assignment notification worker', () => {
   });
 
   it('updates snapshots and sends pushes when assignments change', async () => {
-    assignmentWatchFindMany
-      .mockResolvedValueOnce([
-        { competitionId: 'TestComp2026', wcaUserId: 123 },
-      ])
-      .mockResolvedValueOnce([{ pushSubscription: subscription }]);
+    assignmentWatchFindMany.mockResolvedValue([activeWatch]);
 
     await runAssignmentNotificationPoll();
 
+    expect(assignmentWatchFindMany).toHaveBeenCalledWith({
+      where: {
+        pushSubscription: {
+          disabledAt: null,
+        },
+      },
+      include: {
+        pushSubscription: true,
+      },
+    });
     expect(fetchWcif).toHaveBeenCalledWith('TestComp2026');
     expect(assignmentSnapshotUpsert).toHaveBeenCalledWith({
       where: {
@@ -124,7 +136,9 @@ describe('assignment notification worker', () => {
         wcaUserId: 123,
         title: 'Assignment update',
         url: 'https://groups.example/competitions/TestComp2026/persons/123',
-        dedupeKey: expect.stringContaining('assignment-change:TestComp2026:123:'),
+        dedupeKey: expect.stringContaining(
+          'assignment-change:TestComp2026:123:'
+        ),
       })
     );
     expect(pushDeliveryUpdate).toHaveBeenCalledWith({
@@ -133,15 +147,13 @@ describe('assignment notification worker', () => {
       },
       data: {
         status: 'sent',
-        error: undefined,
+        error: expect.anything(),
       },
     });
   });
 
   it('does not send a push for first snapshots or unchanged assignments', async () => {
-    assignmentWatchFindMany.mockResolvedValueOnce([
-      { competitionId: 'TestComp2026', wcaUserId: 123 },
-    ]);
+    assignmentWatchFindMany.mockResolvedValue([activeWatch]);
     assignmentSnapshotFindUnique.mockResolvedValue(null);
 
     await runAssignmentNotificationPoll();
@@ -150,27 +162,39 @@ describe('assignment notification worker', () => {
     expect(sendAssignmentPush).not.toHaveBeenCalled();
   });
 
-  it('skips delivery when a matching push delivery already exists', async () => {
-    assignmentWatchFindMany
-      .mockResolvedValueOnce([
-        { competitionId: 'TestComp2026', wcaUserId: 123 },
-      ])
-      .mockResolvedValueOnce([{ pushSubscription: subscription }]);
-    pushDeliveryFindFirst.mockResolvedValue({ id: 99 });
+  it('skips delivery when a matching push delivery was already sent', async () => {
+    assignmentWatchFindMany.mockResolvedValue([activeWatch]);
+    pushDeliveryFindFirst.mockResolvedValue({ id: 99, status: 'sent' });
 
     await runAssignmentNotificationPoll();
 
     expect(pushDeliveryCreate).not.toHaveBeenCalled();
     expect(sendAssignmentPush).not.toHaveBeenCalled();
+    expect(assignmentSnapshotUpsert).toHaveBeenCalled();
+  });
+
+  it('retries failed deliveries before advancing the assignment snapshot', async () => {
+    assignmentWatchFindMany.mockResolvedValue([activeWatch]);
+    pushDeliveryFindFirst.mockResolvedValue({ id: 99, status: 'failed' });
+
+    await runAssignmentNotificationPoll();
+
+    expect(pushDeliveryUpdate).toHaveBeenCalledWith({
+      where: {
+        id: 99,
+      },
+      data: {
+        status: 'pending',
+        error: expect.anything(),
+      },
+    });
+    expect(sendAssignmentPush).toHaveBeenCalled();
+    expect(assignmentSnapshotUpsert).toHaveBeenCalled();
   });
 
   it('records failed assignment-change deliveries without a Competition Groups URL', async () => {
     delete process.env.COMPETITION_GROUPS_ORIGIN;
-    assignmentWatchFindMany
-      .mockResolvedValueOnce([
-        { competitionId: 'TestComp2026', wcaUserId: 123 },
-      ])
-      .mockResolvedValueOnce([{ pushSubscription: subscription }]);
+    assignmentWatchFindMany.mockResolvedValue([activeWatch]);
     sendAssignmentPush.mockResolvedValue({
       success: false,
       error: { message: 'push failed' },
@@ -193,6 +217,7 @@ describe('assignment notification worker', () => {
         error: { message: 'push failed' },
       },
     });
+    expect(assignmentSnapshotUpsert).not.toHaveBeenCalled();
   });
 
   it('leaves the worker disabled unless assignment pushes are enabled', () => {
@@ -200,6 +225,8 @@ describe('assignment notification worker', () => {
 
     startAssignmentNotificationWorker();
 
-    expect(console.info).toHaveBeenCalledWith('Assignment push worker disabled');
+    expect(console.info).toHaveBeenCalledWith(
+      'Assignment push worker disabled'
+    );
   });
 });

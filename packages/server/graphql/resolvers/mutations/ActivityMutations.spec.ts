@@ -122,31 +122,48 @@ const callCancelScheduledActivity = cancelScheduledActivity as (
   info: unknown
 ) => Promise<unknown>;
 
-const createDb = () => ({
-  competitionAccess: {
-    findFirst: jest.fn().mockResolvedValue({ userId: 123 }),
-  },
-  competition: {
-    findFirst: jest.fn().mockResolvedValue({ id: 'TestComp2026' }),
-  },
-  activityHistory: {
-    update: jest.fn().mockImplementation(async ({ where }) => ({
-      competitionId: where.competitionId_activityId.competitionId,
-      activityId: where.competitionId_activityId.activityId,
-    })),
-    updateMany: jest.fn().mockResolvedValue({ count: 2 }),
-    findMany: jest.fn().mockResolvedValue([
-      { competitionId: 'TestComp2026', activityId: 1 },
-      { competitionId: 'TestComp2026', activityId: 2 },
-    ]),
-    findUnique: jest.fn().mockResolvedValue({
-      competitionId: 'TestComp2026',
-      activityId: 1,
-      startTime: new Date('2026-01-01T10:00:00Z'),
-      endTime: null,
-    }),
-  },
-});
+const createDb = () => {
+  const db = {
+    competitionAccess: {
+      findFirst: jest.fn().mockResolvedValue({ userId: 123 }),
+    },
+    competition: {
+      findFirst: jest.fn().mockResolvedValue({ id: 'TestComp2026' }),
+    },
+    activityHistory: {
+      upsert: jest.fn().mockImplementation(async ({ where, update, create }) => ({
+        competitionId:
+          where.competitionId_activityId?.competitionId ?? create.competitionId,
+        activityId: where.competitionId_activityId?.activityId ?? create.activityId,
+        ...create,
+        ...update,
+      })),
+      update: jest.fn().mockImplementation(async ({ where, data = {} }) => ({
+        competitionId: where.competitionId_activityId.competitionId,
+        activityId: where.competitionId_activityId.activityId,
+        ...data,
+      })),
+      updateMany: jest.fn().mockResolvedValue({ count: 2 }),
+      findMany: jest.fn().mockResolvedValue([
+        { competitionId: 'TestComp2026', activityId: 1 },
+        { competitionId: 'TestComp2026', activityId: 2 },
+      ]),
+      findUnique: jest.fn().mockResolvedValue({
+        competitionId: 'TestComp2026',
+        activityId: 1,
+        startTime: new Date('2026-01-01T10:00:00Z'),
+        endTime: null,
+      }),
+    },
+  };
+
+  return {
+    ...db,
+    $transaction: jest.fn(async (callback: (tx: typeof db) => unknown) =>
+      callback(db)
+    ),
+  };
+};
 
 describe('ActivityMutations scheduling', () => {
   beforeEach(() => {
@@ -230,6 +247,44 @@ describe('ActivityMutations scheduling', () => {
     ).rejects.toThrow('Not Authorized');
 
     expect(mockStartActivityController).not.toHaveBeenCalled();
+  });
+
+  it('allows Competition Groups users scoped to the competition without delegate access rows', async () => {
+    const db = createDb();
+    db.competitionAccess.findFirst.mockResolvedValue(null);
+
+    await expect(
+      callStartActivity(
+        {},
+        {
+          competitionId: 'testcomp2026',
+          activityId: 1,
+          startTime: '2026-01-01T09:55:00Z',
+        },
+        {
+          db,
+          user: userFixture({
+            competitionGroups: {
+              competitionIds: ['TestComp2026'],
+              scopes: ['notifycomp.remote'],
+            },
+          }),
+          wcaApi: {
+            getWcif: jest.fn().mockResolvedValue({
+              id: 'TestComp2026',
+              persons: [],
+            }),
+          },
+        },
+        {}
+      )
+    ).resolves.toEqual({
+      competitionId: 'testcomp2026',
+      activityId: 1,
+      startTime: new Date('2026-01-01T09:55:00Z'),
+    });
+
+    expect(db.competitionAccess.findFirst).not.toHaveBeenCalled();
   });
 
   it('rejects users without delegate access', async () => {
@@ -350,7 +405,12 @@ describe('ActivityMutations scheduling', () => {
     ).rejects.toThrow('Only a running activity can have its end time queued');
   });
 
-  it('schedules multiple activities and cancels stale jobs first', async () => {
+  it('schedules multiple activities transactionally and cancels stale jobs after persistence', async () => {
+    const db = createDb();
+    const pubsub = {
+      publish: jest.fn().mockResolvedValue(undefined),
+    };
+
     await expect(
       callScheduleActivities(
         {},
@@ -360,11 +420,13 @@ describe('ActivityMutations scheduling', () => {
           scheduledStartTime: '2026-01-01T10:05:00Z',
           scheduledEndTime: null,
         },
-        { db: createDb(), user: userFixture() },
+        { db, user: userFixture(), pubsub },
         {}
       )
     ).resolves.toHaveLength(2);
 
+    expect(db.$transaction).toHaveBeenCalled();
+    expect(db.activityHistory.upsert).toHaveBeenCalledTimes(2);
     expect(mockCancelScheduledActivityJob).toHaveBeenCalledTimes(2);
     expect(mockCancelScheduledActivityJob).toHaveBeenCalledWith(
       'TestComp2026',
@@ -374,7 +436,8 @@ describe('ActivityMutations scheduling', () => {
       'TestComp2026',
       2
     );
-    expect(mockScheduleActivityController).toHaveBeenCalledTimes(2);
+    expect(pubsub.publish).toHaveBeenCalledTimes(2);
+    expect(mockScheduleActivityController).not.toHaveBeenCalled();
     expect(mockScheduleActivityJob).toHaveBeenCalledTimes(2);
   });
 
@@ -386,7 +449,6 @@ describe('ActivityMutations scheduling', () => {
         persons: [],
       }),
     };
-
     await expect(
       callStartActivity(
         {},
@@ -434,6 +496,9 @@ describe('ActivityMutations scheduling', () => {
         persons: [],
       }),
     };
+    const pubsub = {
+      publish: jest.fn().mockResolvedValue(undefined),
+    };
 
     await expect(
       callStartActivities(
@@ -443,10 +508,10 @@ describe('ActivityMutations scheduling', () => {
           activityIds: [1, 2],
           startTime: '2026-01-01T09:55:00Z',
         },
-        { db, user: userFixture(), wcaApi },
+        { db, user: userFixture(), wcaApi, pubsub },
         {}
       )
-    ).resolves.toEqual([
+    ).resolves.toMatchObject([
       {
         competitionId: 'TestComp2026',
         activityId: 1,
@@ -459,8 +524,11 @@ describe('ActivityMutations scheduling', () => {
       },
     ]);
 
+    expect(db.$transaction).toHaveBeenCalled();
+    expect(db.activityHistory.upsert).toHaveBeenCalledTimes(2);
     expect(mockCancelScheduledActivityJob).toHaveBeenCalledTimes(2);
-    expect(mockStartActivityController).toHaveBeenCalledTimes(2);
+    expect(pubsub.publish).toHaveBeenCalledTimes(2);
+    expect(mockStartActivityController).not.toHaveBeenCalled();
     expect(mockDetermineAndScheduleCompetition).toHaveBeenCalledWith({
       id: 'TestComp2026',
     });
@@ -540,7 +608,7 @@ describe('ActivityMutations scheduling', () => {
         { db, user: userFixture(), pubsub },
         {}
       )
-    ).resolves.toEqual([
+    ).resolves.toMatchObject([
       { competitionId: 'TestComp2026', activityId: 1 },
       { competitionId: 'TestComp2026', activityId: 2 },
     ]);
@@ -642,7 +710,7 @@ describe('ActivityMutations scheduling', () => {
         { db, user: userFixture(), pubsub },
         {}
       )
-    ).resolves.toEqual({ competitionId: 'TestComp2026', activityId: 1 });
+    ).resolves.toMatchObject({ competitionId: 'TestComp2026', activityId: 1 });
 
     expect(db.activityHistory.update).toHaveBeenCalledWith({
       where: {
@@ -659,25 +727,36 @@ describe('ActivityMutations scheduling', () => {
       },
     });
     expect(pubsub.publish).toHaveBeenCalledWith('ACTIVITY_UPDATED', {
-      activityUpdated: { competitionId: 'TestComp2026', activityId: 1 },
+      activityUpdated: expect.objectContaining({
+        competitionId: 'TestComp2026',
+        activityId: 1,
+      }),
     });
   });
 
-  it('cancels queued activity times for multiple activities', async () => {
+  it('cancels queued activity times for multiple activities transactionally', async () => {
+    const db = createDb();
+    const pubsub = {
+      publish: jest.fn().mockResolvedValue(undefined),
+    };
+
     await expect(
       callCancelScheduledActivities(
         {},
         { competitionId: 'TestComp2026', activityIds: [1, 2] },
-        { db: createDb(), user: userFixture() },
+        { db, user: userFixture(), pubsub },
         {}
       )
-    ).resolves.toEqual([
+    ).resolves.toMatchObject([
       { competitionId: 'TestComp2026', activityId: 1 },
       { competitionId: 'TestComp2026', activityId: 2 },
     ]);
 
+    expect(db.$transaction).toHaveBeenCalled();
+    expect(db.activityHistory.update).toHaveBeenCalledTimes(2);
     expect(mockCancelScheduledActivityJob).toHaveBeenCalledTimes(2);
-    expect(mockCancelScheduledActivityController).toHaveBeenCalledTimes(2);
+    expect(pubsub.publish).toHaveBeenCalledTimes(2);
+    expect(mockCancelScheduledActivityController).not.toHaveBeenCalled();
   });
 
   it('cancels one queued activity time', async () => {

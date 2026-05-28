@@ -26,6 +26,8 @@ model Competition {
   competitionAccess CompetitionAccess[]
   activityHistory   ActivityHistory[]
   webhooks          Webhook[]
+
+  @@index([autoAdvance, status], map: "Competition_autoAdvance_status_idx")
 }
 
 model CompetitionAccess {
@@ -35,20 +37,25 @@ model CompetitionAccess {
   competition   Competition @relation(fields: [competitionId], references: [id])
 
   @@unique([competitionId, userId])
+  @@index([userId], map: "CompetitionAccess_userId_idx")
+  @@index([competitionId, roomId, userId], map: "CompetitionAccess_competitionId_roomId_userId_idx")
 }
 
 model ActivityHistory {
-  competitionId String      @db.VarChar(255)
-  activityId    Int
-  startTime     DateTime?
-  endTime       DateTime?
+  competitionId      String    @db.VarChar(255)
+  activityId         Int
+  startTime          DateTime?
+  endTime            DateTime?
   // For autoAdvance competitions, the server will advance to the next activity when the scheduledEnd is reached
   scheduledStartTime DateTime?
   scheduledEndTime   DateTime?
 
-  competition   Competition @relation(fields: [competitionId], references: [id])
+  competition Competition @relation(fields: [competitionId], references: [id])
 
   @@unique([competitionId, activityId])
+  @@index([scheduledStartTime], map: "ActivityHistory_scheduledStartTime_idx")
+  @@index([scheduledEndTime], map: "ActivityHistory_scheduledEndTime_idx")
+  @@index([competitionId, startTime, scheduledStartTime, scheduledEndTime], map: "ActivityHistory_comp_start_sched_idx")
 }
 
 enum HTTPMethod {
@@ -88,6 +95,7 @@ model PushSubscription {
   deliveries PushDelivery[]
 
   @@index([source, externalSubject])
+  @@index([disabledAt], map: "PushSubscription_disabledAt_idx")
 }
 
 model AssignmentWatch {

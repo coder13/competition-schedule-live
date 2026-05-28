@@ -32,7 +32,7 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import WcaApi from './graphql/datasources/WcaApi';
 import { authMiddlewareVerify } from './auth/AuthMiddleware';
 import { WCA_ORIGIN } from './env';
-import { initScheduler } from './scheduler';
+import { initScheduler, shutdownScheduler } from './scheduler';
 import { pubsub } from './graphql/pubsub';
 import pushRouter from './routes/v0/external/push';
 import { startAssignmentNotificationWorker } from './services/assignmentNotificationWorker';
@@ -47,20 +47,41 @@ export interface AppContext {
   wcaApi: WcaApi;
 }
 
-export async function init() {
+export interface AppHttpServer extends http.Server {
+  shutdown: () => Promise<void>;
+}
+
+const shouldRunBackgroundJobs = () =>
+  process.env.BACKGROUND_JOBS_ENABLED !== 'false';
+
+const shouldLogGraphqlQueries = () =>
+  process.env.LOG_GRAPHQL_QUERIES === 'true';
+
+export async function init(): Promise<AppHttpServer> {
   if (isMocksMode()) {
     await seedMockCompetition(db);
   }
 
-  await initScheduler();
+  if (shouldRunBackgroundJobs()) {
+    await initScheduler();
+  } else {
+    console.info('Background jobs disabled');
+  }
 
   const app = express();
-  startAssignmentNotificationWorker();
+  const stopAssignmentNotificationWorker = shouldRunBackgroundJobs()
+    ? startAssignmentNotificationWorker()
+    : undefined;
 
   app.use(cors<cors.CorsRequest>());
   app.use(json());
 
-  app.use(morgan('tiny'));
+  app.use(
+    morgan('tiny', {
+      skip: (req) =>
+        req.path === '/ping' && process.env.LOG_HEALTHCHECKS !== 'true',
+    })
+  );
 
   app.get('/', (_, res) => {
     res.end('Hello World!');
@@ -134,7 +155,10 @@ export async function init() {
         return next();
       }
 
-      console.log('graphql', req.body.query);
+      if (shouldLogGraphqlQueries()) {
+        console.log('graphql', req.body.operationName ?? 'anonymous');
+      }
+
       return next();
     },
     expressMiddleware(server, {
@@ -147,5 +171,18 @@ export async function init() {
     })
   );
 
-  return httpServer;
+  let shutdownStarted = false;
+  const shutdown = async () => {
+    if (shutdownStarted) {
+      return;
+    }
+
+    shutdownStarted = true;
+    stopAssignmentNotificationWorker?.();
+    await server.stop();
+    await shutdownScheduler();
+    await db.$disconnect();
+  };
+
+  return Object.assign(httpServer, { shutdown });
 }

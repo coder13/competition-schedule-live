@@ -1,9 +1,9 @@
 import fs from 'fs';
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import fetch from 'node-fetch';
-import { authMiddlewareDecode } from './AuthMiddleware';
+import { authMiddlewareVerify } from './AuthMiddleware';
 import { getMockUser, isMocksMode } from '../mocks/config';
+import { fetchWithTimeout } from '../lib/fetchWithTimeout';
 
 // TODO Should really be fetched from environment variables
 // Depending on how we want to deploy this
@@ -15,7 +15,7 @@ const { WCA_ORIGIN, CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } = process.env;
 console.log('Loading values from environment variables', {
   WCA_ORIGIN,
   CLIENT_ID,
-  CLIENT_SECRET,
+  CLIENT_SECRET: CLIENT_SECRET ? '[redacted]' : undefined,
   REDIRECT_URI,
 });
 
@@ -183,7 +183,7 @@ router.get('/wca/callback', async (req, res) => {
   });
 
   try {
-    const response = await fetch(`${resolvedWcaOrigin}/oauth/token`, {
+    const response = await fetchWithTimeout(`${resolvedWcaOrigin}/oauth/token`, {
       method: 'POST',
       body: params,
       headers: {
@@ -197,9 +197,13 @@ router.get('/wca/callback', async (req, res) => {
 
     const wcaToken = (await response.json()) as WcaOauthRes;
 
-    const profileRes = await fetch(`${resolvedWcaOrigin}/api/v0/me`, {
-      headers: createHeaders(wcaToken.access_token),
-    });
+    const profileRes = await fetchWithTimeout(
+      `${resolvedWcaOrigin}/api/v0/me`,
+      {
+        headers: createHeaders(wcaToken.access_token),
+      },
+      { retries: 2 }
+    );
 
     if (!profileRes.ok) {
       throw await profileRes.json();
@@ -215,7 +219,7 @@ router.get('/wca/callback', async (req, res) => {
   }
 });
 
-router.post('/wca/refresh', authMiddlewareDecode, async (req, res) => {
+router.post('/wca/refresh', authMiddlewareVerify, async (req, res) => {
   if (!req.user) {
     return res.status(403).send('Unauthenticated');
   }
@@ -235,7 +239,7 @@ router.post('/wca/refresh', authMiddlewareDecode, async (req, res) => {
   });
 
   try {
-    const response = await fetch(`${resolvedWcaOrigin}/oauth/token`, {
+    const response = await fetchWithTimeout(`${resolvedWcaOrigin}/oauth/token`, {
       method: 'POST',
       body: params,
       headers: {

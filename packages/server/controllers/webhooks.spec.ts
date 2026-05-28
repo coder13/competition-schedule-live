@@ -1,10 +1,16 @@
 /* eslint-disable import/first */
+import { HTTPMethod, Webhook } from '../prisma/generated/client';
+
 const fetchMock = jest.fn();
 const webhookFindMany = jest.fn();
+const assertWebhookUrlResolvesPublicly = jest.fn(async (url: string) => url);
 
-jest.mock('node-fetch', () => ({
-  __esModule: true,
-  default: fetchMock,
+jest.mock('../lib/fetchWithTimeout', () => ({
+  fetchWithTimeout: fetchMock,
+}));
+
+jest.mock('../lib/webhookUrls', () => ({
+  assertWebhookUrlResolvesPublicly,
 }));
 
 jest.mock('../db', () => ({
@@ -22,11 +28,11 @@ import {
   webhookFetch,
 } from './webhooks';
 
-const webhook = {
+const webhook: Webhook = {
   id: 1,
   competitionId: 'TestComp2026',
   url: 'https://hooks.example/notify',
-  method: 'POST',
+  method: HTTPMethod.POST,
   headers: [{ key: 'X-Test', value: 'true' }],
 };
 
@@ -34,6 +40,7 @@ describe('webhook controllers', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     webhookFindMany.mockReset();
+    assertWebhookUrlResolvesPublicly.mockClear();
   });
 
   it('sends JSON data with stored webhook headers', async () => {
@@ -54,6 +61,7 @@ describe('webhook controllers', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
       method: 'POST',
+      size: 64 * 1024,
       headers: {
         'Content-Type': 'application/json',
         'X-Test': 'true',
@@ -62,6 +70,57 @@ describe('webhook controllers', () => {
         competitionId: 'TestComp2026',
         notifications: [{ type: 'ping' }],
       }),
+    });
+  });
+
+  it('sends webhooks without stored headers', async () => {
+    const response = {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: jest.fn().mockResolvedValue(''),
+    };
+    fetchMock.mockResolvedValue(response);
+
+    const webhookWithoutHeaders: Webhook = { ...webhook, headers: null };
+
+    await webhookFetch(webhookWithoutHeaders, {
+      competitionId: 'TestComp2026',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
+      method: 'POST',
+      size: 64 * 1024,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        competitionId: 'TestComp2026',
+      }),
+    });
+  });
+
+  it('does not attach a JSON body to GET webhooks', async () => {
+    const response = {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: jest.fn().mockResolvedValue(''),
+    };
+    fetchMock.mockResolvedValue(response);
+
+    const getWebhook: Webhook = { ...webhook, method: HTTPMethod.GET };
+
+    await webhookFetch(getWebhook, {
+      competitionId: 'TestComp2026',
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
+      method: 'GET',
+      size: 64 * 1024,
+      headers: {
+        'X-Test': 'true',
+      },
     });
   });
 

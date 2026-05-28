@@ -5,15 +5,25 @@ import {
   CompetitionGroupsClaims,
   verifyCompetitionGroupsToken,
 } from '../lib/competitionGroupsToken';
-const PUBLIC_KEY = process.env.PUBLIC_KEY ?? fs.readFileSync('public.key');
 const COMPETITION_GROUPS_REMOTE_SCOPE = 'notifycomp.remote';
+
+let cachedPublicKey: string | Buffer | undefined;
+
+const getPublicKey = () => {
+  if (process.env.PUBLIC_KEY) {
+    return process.env.PUBLIC_KEY;
+  }
+
+  cachedPublicKey ??= fs.readFileSync('public.key');
+  return cachedPublicKey;
+};
 
 const scopesForClaims = (claims: CompetitionGroupsClaims) => [
   ...(Array.isArray(claims.scope)
     ? claims.scope
     : claims.scope
-      ? [claims.scope]
-      : []),
+    ? [claims.scope]
+    : []),
   ...(claims.scopes ?? []),
 ];
 
@@ -70,12 +80,13 @@ export const authMiddlewareVerify = (
 
   if (split[0] !== 'Bearer') {
     next(null);
+    return;
   }
 
   const token = split[1];
 
   try {
-    req.user = jwt.verify(token, PUBLIC_KEY) as User | undefined;
+    req.user = jwt.verify(token, getPublicKey()) as User | undefined;
     next(null);
   } catch (e) {
     try {

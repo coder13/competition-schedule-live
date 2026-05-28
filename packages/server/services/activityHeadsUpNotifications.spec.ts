@@ -47,6 +47,7 @@ describe('sendActivityHeadsUpPush', () => {
     competitionAccessFindMany.mockReset().mockResolvedValue([{ userId: 123 }]);
     assignmentWatchFindMany.mockReset().mockResolvedValue([
       {
+        wcaUserId: 123,
         pushSubscription: subscription,
       },
     ]);
@@ -84,7 +85,9 @@ describe('sendActivityHeadsUpPush', () => {
     expect(assignmentWatchFindMany).toHaveBeenCalledWith({
       where: {
         competitionId: 'TestComp2026',
-        wcaUserId: 123,
+        wcaUserId: {
+          in: [123],
+        },
         pushSubscription: {
           disabledAt: null,
         },
