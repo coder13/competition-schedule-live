@@ -54,6 +54,19 @@ const activeWatch = {
   pushSubscription: subscription,
 };
 
+const otherSubscription = {
+  id: 11,
+  endpoint: 'https://push.example/other-subscription',
+  p256dh: 'other-p256dh',
+  auth: 'other-auth',
+};
+
+const otherActiveWatch = {
+  competitionId: 'OtherComp2026',
+  wcaUserId: 456,
+  pushSubscription: otherSubscription,
+};
+
 const pollNow = new Date('2026-01-01T10:00:00Z');
 
 interface TestActivity {
@@ -224,6 +237,67 @@ describe('assignment notification worker', () => {
         error: expect.anything(),
       },
     });
+  });
+
+  it('continues polling other competitions when one WCIF fetch fails', async () => {
+    assignmentWatchFindMany.mockResolvedValue([activeWatch, otherActiveWatch]);
+    fetchWcif.mockImplementation(async (competitionId: string) => {
+      if (competitionId === 'TestComp2026') {
+        throw new Error('WCA unavailable');
+      }
+
+      return {
+        id: 'OtherComp2026',
+        persons: [
+          {
+            wcaUserId: 456,
+            assignments: [
+              {
+                activityId: 2,
+                assignmentCode: 'competitor',
+                stationNumber: null,
+              },
+            ],
+          },
+        ],
+      };
+    });
+
+    await runAssignmentNotificationPoll();
+
+    expect(fetchWcif).toHaveBeenCalledWith('TestComp2026');
+    expect(fetchWcif).toHaveBeenCalledWith('OtherComp2026');
+    expect(sendAssignmentPush).toHaveBeenCalledWith(
+      otherSubscription,
+      expect.objectContaining({
+        type: 'assignment-change',
+        competitionId: 'OtherComp2026',
+        wcaUserId: 456,
+      })
+    );
+    expect(assignmentSnapshotUpsert).toHaveBeenCalledWith({
+      where: {
+        competitionId_wcaUserId: {
+          competitionId: 'OtherComp2026',
+          wcaUserId: 456,
+        },
+      },
+      update: {
+        assignmentsHash: expect.any(String),
+      },
+      create: {
+        competitionId: 'OtherComp2026',
+        wcaUserId: 456,
+        assignmentsHash: expect.any(String),
+      },
+    });
+    expect(console.error).toHaveBeenCalledWith(
+      'Assignment notification poll failed for competition',
+      expect.objectContaining({
+        competitionId: 'TestComp2026',
+        error: expect.any(Error),
+      })
+    );
   });
 
   it('does not send a push for first snapshots or unchanged assignments', async () => {

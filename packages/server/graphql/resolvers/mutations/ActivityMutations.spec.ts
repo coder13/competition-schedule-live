@@ -200,6 +200,7 @@ describe('ActivityMutations scheduling', () => {
     );
     mockSendWebhooksForCompetition.mockReset().mockResolvedValue([]);
     jest.spyOn(console, 'log').mockImplementation(() => undefined);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -488,6 +489,45 @@ describe('ActivityMutations scheduling', () => {
     );
   });
 
+  it('returns a started activity when WCIF notification fetch fails after local updates', async () => {
+    const db = createDb();
+    const wcaApi = {
+      getWcif: jest.fn().mockRejectedValue(new Error('WCA unavailable')),
+    };
+
+    await expect(
+      callStartActivity(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          activityId: 1,
+          startTime: '2026-01-01T09:55:00Z',
+        },
+        { db, user: userFixture(), wcaApi },
+        {}
+      )
+    ).resolves.toEqual({
+      competitionId: 'TestComp2026',
+      activityId: 1,
+      startTime: new Date('2026-01-01T09:55:00Z'),
+    });
+
+    await Promise.resolve();
+
+    expect(mockStartActivityController).toHaveBeenCalled();
+    expect(mockDetermineAndScheduleCompetition).toHaveBeenCalled();
+    expect(wcaApi.getWcif).toHaveBeenCalledWith('TestComp2026');
+    expect(mockSendWebhooksForCompetition).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith(
+      'Activity webhook notification failed',
+      expect.objectContaining({
+        competitionId: 'TestComp2026',
+        activityIds: [1],
+        error: expect.any(Error),
+      })
+    );
+  });
+
   it('starts multiple activities and sends one webhook payload', async () => {
     const db = createDb();
     const wcaApi = {
@@ -542,6 +582,56 @@ describe('ActivityMutations scheduling', () => {
           { type: 'activity', id: 2 },
         ],
       }
+    );
+  });
+
+  it('returns started activities when WCIF notification fetch fails after local updates', async () => {
+    const db = createDb();
+    const wcaApi = {
+      getWcif: jest.fn().mockRejectedValue(new Error('WCA unavailable')),
+    };
+    const pubsub = {
+      publish: jest.fn().mockResolvedValue(undefined),
+    };
+
+    await expect(
+      callStartActivities(
+        {},
+        {
+          competitionId: 'TestComp2026',
+          activityIds: [1, 2],
+          startTime: '2026-01-01T09:55:00Z',
+        },
+        { db, user: userFixture(), wcaApi, pubsub },
+        {}
+      )
+    ).resolves.toMatchObject([
+      {
+        competitionId: 'TestComp2026',
+        activityId: 1,
+        startTime: new Date('2026-01-01T09:55:00Z'),
+      },
+      {
+        competitionId: 'TestComp2026',
+        activityId: 2,
+        startTime: new Date('2026-01-01T09:55:00Z'),
+      },
+    ]);
+
+    await Promise.resolve();
+
+    expect(db.activityHistory.upsert).toHaveBeenCalledTimes(2);
+    expect(pubsub.publish).toHaveBeenCalledTimes(2);
+    expect(mockDetermineAndScheduleCompetition).toHaveBeenCalled();
+    expect(wcaApi.getWcif).toHaveBeenCalledWith('TestComp2026');
+    expect(mockSendWebhooksForCompetition).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledWith(
+      'Activity webhook notification failed',
+      expect.objectContaining({
+        competitionId: 'TestComp2026',
+        activityIds: [1, 2],
+        error: expect.any(Error),
+      })
     );
   });
 

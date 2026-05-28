@@ -65,6 +65,7 @@ describe('webhook controllers', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
       method: 'POST',
+      redirect: 'error',
       size: 64 * 1024,
       agent: webhookAgent,
       headers: {
@@ -95,6 +96,7 @@ describe('webhook controllers', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
       method: 'POST',
+      redirect: 'error',
       size: 64 * 1024,
       agent: webhookAgent,
       headers: {
@@ -123,6 +125,7 @@ describe('webhook controllers', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://hooks.example/notify', {
       method: 'GET',
+      redirect: 'error',
       size: 64 * 1024,
       agent: webhookAgent,
       headers: {
@@ -141,6 +144,21 @@ describe('webhook controllers', () => {
 
     await expect(sendWebhook(webhook as never, {})).rejects.toThrow(
       'Webhook failed with status code 500 and message Server Error: boom'
+    );
+  });
+
+  it('configures fetch to reject redirects instead of following them', async () => {
+    fetchMock.mockRejectedValue(new Error('redirect mode is set to error'));
+
+    await expect(sendWebhook(webhook as never, {})).rejects.toThrow(
+      'redirect mode is set to error'
+    );
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://hooks.example/notify',
+      expect.objectContaining({
+        redirect: 'error',
+      })
     );
   });
 

@@ -117,82 +117,89 @@ export const runAssignmentNotificationPoll = async (now = new Date()) => {
   await runWithConcurrency(
     [...targetsByCompetition.entries()],
     async ([competitionId, targets]) => {
-      const wcif = await fetchWcif(competitionId);
-      const earliestStartTime = getEarliestCompetitionStartTime(wcif);
-
-      if (
-        earliestStartTime &&
-        shouldSendCompetitionStartReminder(earliestStartTime, now)
-      ) {
-        await deliverCompetitionStartReminders({
-          competitionId,
-          competitionName: wcif.name,
-          targets,
-          earliestStartTime,
-          concurrency: assignmentDeliveryConcurrency(),
-        });
-      }
-
-      for (const [wcaUserId, subscriptions] of targets.entries()) {
-        const nextSnapshot = createAssignmentSnapshot(wcif, wcaUserId);
-        if (!nextSnapshot) {
-          continue;
-        }
-
-        const previousSnapshot = await prisma.assignmentSnapshot.findUnique({
-          where: {
-            competitionId_wcaUserId: {
-              competitionId,
-              wcaUserId,
-            },
-          },
-        });
+      try {
+        const wcif = await fetchWcif(competitionId);
+        const earliestStartTime = getEarliestCompetitionStartTime(wcif);
 
         if (
-          !previousSnapshot ||
-          previousSnapshot.assignmentsHash === nextSnapshot.assignmentsHash
+          earliestStartTime &&
+          shouldSendCompetitionStartReminder(earliestStartTime, now)
         ) {
-          await prisma.assignmentSnapshot.upsert({
+          await deliverCompetitionStartReminders({
+            competitionId,
+            competitionName: wcif.name,
+            targets,
+            earliestStartTime,
+            concurrency: assignmentDeliveryConcurrency(),
+          });
+        }
+
+        for (const [wcaUserId, subscriptions] of targets.entries()) {
+          const nextSnapshot = createAssignmentSnapshot(wcif, wcaUserId);
+          if (!nextSnapshot) {
+            continue;
+          }
+
+          const previousSnapshot = await prisma.assignmentSnapshot.findUnique({
             where: {
               competitionId_wcaUserId: {
                 competitionId,
                 wcaUserId,
               },
             },
-            update: {
-              assignmentsHash: nextSnapshot.assignmentsHash,
-            },
-            create: nextSnapshot,
           });
-          continue;
-        }
 
-        const deliveryResults = await runWithConcurrency(
-          subscriptions,
-          async (subscription) =>
-            deliverAssignmentChange(
-              subscription,
-              competitionId,
-              wcaUserId,
-              nextSnapshot.assignmentsHash
-            ),
-          assignmentDeliveryConcurrency()
-        );
+          if (
+            !previousSnapshot ||
+            previousSnapshot.assignmentsHash === nextSnapshot.assignmentsHash
+          ) {
+            await prisma.assignmentSnapshot.upsert({
+              where: {
+                competitionId_wcaUserId: {
+                  competitionId,
+                  wcaUserId,
+                },
+              },
+              update: {
+                assignmentsHash: nextSnapshot.assignmentsHash,
+              },
+              create: nextSnapshot,
+            });
+            continue;
+          }
 
-        if (deliveryResults.every(Boolean)) {
-          await prisma.assignmentSnapshot.upsert({
-            where: {
-              competitionId_wcaUserId: {
+          const deliveryResults = await runWithConcurrency(
+            subscriptions,
+            async (subscription) =>
+              deliverAssignmentChange(
+                subscription,
                 competitionId,
                 wcaUserId,
+                nextSnapshot.assignmentsHash
+              ),
+            assignmentDeliveryConcurrency()
+          );
+
+          if (deliveryResults.every(Boolean)) {
+            await prisma.assignmentSnapshot.upsert({
+              where: {
+                competitionId_wcaUserId: {
+                  competitionId,
+                  wcaUserId,
+                },
               },
-            },
-            update: {
-              assignmentsHash: nextSnapshot.assignmentsHash,
-            },
-            create: nextSnapshot,
-          });
+              update: {
+                assignmentsHash: nextSnapshot.assignmentsHash,
+              },
+              create: nextSnapshot,
+            });
+          }
         }
+      } catch (e) {
+        console.error('Assignment notification poll failed for competition', {
+          competitionId,
+          error: e,
+        });
       }
     },
     assignmentCompetitionConcurrency()

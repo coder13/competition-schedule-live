@@ -33,6 +33,7 @@ export const webhookFetch = async (
 
   return fetchWithTimeout(resolvedUrl.url, {
     method: webhook.method,
+    redirect: 'error',
     size: MAX_WEBHOOK_RESPONSE_SIZE_BYTES,
     ...(resolvedUrl.agent && { agent: resolvedUrl.agent }),
     headers: {

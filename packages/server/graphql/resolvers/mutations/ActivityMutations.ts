@@ -150,6 +150,39 @@ const publishActivityUpdates = async (
   );
 };
 
+const sendActivityWebhooksAfterStart = async ({
+  competitionId,
+  activityIds,
+  wcaApi,
+}: {
+  competitionId: string;
+  activityIds: number[];
+  wcaApi: AppContext['wcaApi'];
+}) => {
+  try {
+    const wcif = await wcaApi.getWcif(competitionId);
+    const payload = await createNotificationsForActivity(wcif, activityIds);
+    const results = await sendWebhooksForCompetition(competitionId, payload);
+    const rejectedResults = results.filter(
+      (result): result is PromiseRejectedResult => result.status === 'rejected'
+    );
+
+    rejectedResults.forEach((result) => {
+      console.error('Activity webhook delivery failed', {
+        competitionId,
+        activityIds,
+        error: result.reason,
+      });
+    });
+  } catch (e) {
+    console.error('Activity webhook notification failed', {
+      competitionId,
+      activityIds,
+      error: e,
+    });
+  }
+};
+
 export const startActivity: MutationResolvers<AppContext>['startActivity'] =
   async (_, { competitionId, activityId, startTime }, { db, user, wcaApi }) => {
     await isAuthorized(db, competitionId, user);
@@ -163,27 +196,10 @@ export const startActivity: MutationResolvers<AppContext>['startActivity'] =
     );
     await scheduleAutoAdvanceIfEnabled(db, competitionId);
 
-    const wcif = await wcaApi.getWcif(competitionId);
-
-    void sendWebhooksForCompetition(
+    void sendActivityWebhooksAfterStart({
       competitionId,
-      await createNotificationsForActivity(wcif, [activityId])
-    ).then((res) => {
-      console.log(
-        {
-          competitionId,
-          activityId,
-        },
-        competitionId,
-        'Sucessfully pinged',
-        res.filter((r) => r.status === 'fulfilled').length,
-        'webhooks'
-      );
-      res
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .forEach((r) => {
-          console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
-        });
+      activityIds: [activityId],
+      wcaApi,
     });
 
     return activity;
@@ -233,27 +249,10 @@ export const startActivities: MutationResolvers<AppContext>['startActivities'] =
 
     await scheduleAutoAdvanceIfEnabled(db, competitionId);
 
-    const wcif = await wcaApi.getWcif(competitionId);
-
-    void sendWebhooksForCompetition(
+    void sendActivityWebhooksAfterStart({
       competitionId,
-      await createNotificationsForActivity(wcif, activityIds)
-    ).then((res) => {
-      console.log(
-        {
-          competitionId,
-          activityIds,
-        },
-        competitionId,
-        'Sucessfully pinged',
-        res.filter((r) => r.status === 'fulfilled').length,
-        'webhooks'
-      );
-      res
-        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-        .forEach((r) => {
-          console.log(competitionId, 'WEBHOOK REJECTED', r.reason);
-        });
+      activityIds,
+      wcaApi,
     });
 
     return activities;
