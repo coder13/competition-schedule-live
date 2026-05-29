@@ -39,6 +39,7 @@ import { startAssignmentNotificationWorker } from './services/assignmentNotifica
 import { isMocksMode } from './mocks/config';
 import mockWcaRouter from './mocks/routes';
 import { seedMockCompetition } from './mocks/seed';
+import { getHealthCheck } from './health/healthCheck';
 
 export interface AppContext {
   user?: User;
@@ -89,6 +90,11 @@ export async function init(): Promise<AppHttpServer> {
 
   app.get('/ping', (_, res) => {
     res.end('pong');
+  });
+
+  app.get('/health', async (_, res) => {
+    const health = await getHealthCheck(db);
+    res.status(health.status === 'ok' ? 200 : 503).json(health);
   });
 
   app.use('/auth', AuthRouter);
