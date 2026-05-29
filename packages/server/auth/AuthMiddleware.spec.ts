@@ -47,10 +47,17 @@ const callAuthMiddlewareVerifyIgnoringExpiration =
   ) => void;
 
 describe('AuthMiddleware', () => {
+  const originalPublicKey = process.env.PUBLIC_KEY;
+
   beforeEach(() => {
+    process.env.PUBLIC_KEY = 'test-public-key';
     jwtVerify.mockReset();
     jwtDecode.mockReset();
     verifyCompetitionGroupsToken.mockReset();
+  });
+
+  afterAll(() => {
+    process.env.PUBLIC_KEY = originalPublicKey;
   });
 
   it('continues without a user when no authorization header is present', () => {
