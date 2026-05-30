@@ -40,6 +40,7 @@ import { isMocksMode } from './mocks/config';
 import mockWcaRouter from './mocks/routes';
 import { seedMockCompetition } from './mocks/seed';
 import { getHealthCheck } from './health/healthCheck';
+import { createTrafficReporter } from './middlewares/trafficReport';
 
 export interface AppContext {
   user?: User;
@@ -73,9 +74,11 @@ export async function init(): Promise<AppHttpServer> {
   const stopAssignmentNotificationWorker = shouldRunBackgroundJobs()
     ? startAssignmentNotificationWorker()
     : undefined;
+  const trafficReporter = createTrafficReporter();
 
   app.use(cors<cors.CorsRequest>());
   app.use(json());
+  app.use(trafficReporter.middleware);
 
   app.use(
     morgan('tiny', {
@@ -185,6 +188,7 @@ export async function init(): Promise<AppHttpServer> {
 
     shutdownStarted = true;
     stopAssignmentNotificationWorker?.();
+    trafficReporter.shutdown();
     await server.stop();
     await shutdownScheduler();
     await db.$disconnect();
