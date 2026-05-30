@@ -137,6 +137,7 @@ export const importCompetition: MutationResolvers<AppContext>['importCompetition
           startDate: competition.schedule.startDate,
           endDate,
           country,
+          autoAdvance: false,
         },
       });
 

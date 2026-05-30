@@ -132,6 +132,7 @@ describe('CompetitionMutations.importCompetition', () => {
         startDate: '2026-05-01',
         endDate: '2026-05-03',
         country: 'US',
+        autoAdvance: false,
       },
     });
     expect(db.competitionAccess.createMany).toHaveBeenCalledWith({
